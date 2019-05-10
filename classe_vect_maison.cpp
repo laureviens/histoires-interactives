@@ -3,21 +3,8 @@
 \\\||================================---Classe personalisée pour imiter les vecteurs---================================||///
 */
 
-/*
-		#### Serait pertinent d'avoir une synthaxe plus claire quant aux opérateurs.
-		Idéalement, avoir += pour ajouter des affaires à la suite.
-		
-		Mais après, comment on le différentie des opérations qui enlève les entrées dans des positions précises?
-		
-		Également, il serait charmant d'avoir des opérations de simple addition numérique; 
-			+ et - et * et /, avec les vecteurs numériques (de int ou double).
-					Mais c'est quand même très optionnel. Juste logique + souhaitable. Mais pas nécessaire.
-		
-		
-		#### Aussi, serait bien d'overloader la fonction get() pour des vecteurs ou des arr?
-				Mais, hum, je viens de me rappeler. Return ne peut que retourner un seul objet.
-				Faudrait alors retourner un nouvel objet de type vect. Ce qui serait très possible.
-				
+/*		
+						
 		#### Finalement, il faudrait également élargir cette classe à des entrées autres que des integers.
 		     Genre les doubles, qui ne devraient pas causer de problèmes.
 		     Surtout les characters, probablement du type wchar_t. Pour que ce soit en unicode.
@@ -64,12 +51,13 @@ template <class T> //Créer un "template" de type, qui pourra être des int, des c
 	
 	template <class T, int N>
 	class arr 
-	{
+		{
 		friend class vect<T>;	//Déclarer vect comme ami de arr, pour que vect puisse avoir accès aux valeurs privées de arr
-	    static const int nb = N;  //Associer N avec le nombre d'éléments dans l'array; private, pour être sûre
-	public:
-	    T pt[N];  //Créer un array fixe (pas dynamique) de la bonne taille; publique, pour pouvoir le changer et le créer facilement
-	    
+		//Valeurs membres	
+		private:	
+	    	static const int nb = N;  //Déclarer le nombre d'éléments dans l'array comme N
+		public:
+		    T pt[nb];  //Déclarer un array fixe (pas dynamique) de la bonne taille; publique, pour pouvoir le changer et le créer facilement
 	};
 	
 	//2) Créer la classe
@@ -78,9 +66,9 @@ template <class T> //Créer un "template" de type, qui pourra être des int, des c
 		{
 		//Valeurs membres	
 		public:
-			T* pt;  //Créer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
+			T* pt;  //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
 		private:
-			int nb;  //Créer le nombre d'objets de l'array comme privé, pour qu'on ne puisse que le changer par += et -=.
+			int nb;  //Déclarer le nombre d'objets de l'array comme privé, pour qu'on ne puisse que le changer par += et -=.
 		public:
 		//Constructeurs	
 			vect<T>() {nb=0 ; pt = new T;}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
@@ -158,22 +146,23 @@ template <class T> //Créer un "template" de type, qui pourra être des int, des c
 				return(nb);
 			}
 			
-		//Fonctions d'accès	: retourner le vecteur
+		//Fonctions d'accès	: retourner certains positions
 			int get(int pos) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
 				return(pt[pos]);
 			}
-			
-			vect get(vect<int> pos) { //Même fonction, mais overloadée pour un objet de type vect (plusieurs positions)
-				T* gtpt = new T [pos.nb];  //Déclarer un array transitoire
-				for(int a=0; a<pos.nb; a++)  gtpt[a] =  pt[pos.get(a)]; //Remplir avec les valeurs dans les bonnes positions
-				return(gtpt); 
+			vect<T> get(vect<int> pos) { //Même fonction, mais overloadée pour un objet de type vect (plusieurs positions)
+				arr<T,pos.nb> gtar;  //Déclarer un arr transitoire
+				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos.pt[a]]; //Remplir avec les valeurs dans les bonnes positions
+				vect<T> gtvc = gtar; //Créer un objet vect à l'aide de l'arr
+				return(gtvc); 
 			}
 		template <int N>
-			arr<T,N> get(arr<int,N> pos) { //Même fonction, mais overloadée pour un objet de type arr (plusieurs positions)
-				T* gtpt = new T [pos.nb];  //Déclarer un array transitoire
-				for(int a=0; a<pos.nb; a++)  gtpt[a] =  pt[pos[a]]; //Remplir avec les valeurs dans les bonnes positions
-				return(gtpt); 
-			}			
+			vect<T> get(arr<int,N> pos) { //Même fonction, mais overloadée pour un objet de type arr (plusieurs positions)
+				arr<T,pos.nb> gtar;  //Déclarer un arr transitoire
+				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos.pt[a]]; //Remplir avec les valeurs dans les bonnes positions
+				vect<T> gtvc = gtar; //Créer un objet vect à l'aide de l'arr
+				return(gtvc);
+			}
 			
 		//Fonctions d'accès	: afficher le vecteur			
 			void see(void) { //Créer une fonction pour simplement afficher l'array
@@ -218,14 +207,19 @@ int main()
 	cout << "\nEt maintenant, Test 2 ressemble à:";
 	test2.see();
 	
+	cout << "\n\n Et si j'essaie de voir ce qu'il y a en position [0,2,4] (faire +1 pour comprendre les positions de C++): \n";
+	arr<int,3>testget = {{0,2,4}};
+	test2.get(testget).see();
+	
 	cout << "\n\nEt là, je vais enlever la deuxième position:\n";
 	test2.del(1);
 	test2.see();
 	
-	cout << "\n\nEt là, les positions [0,2,3] (faire +1 pour comprendre les positions en C++): \n";
-	arr<int,3> testenl = {{0,2,3}};
-	test2.del(testenl);
+	cout << "\n\nEt là, les positions [0,2,3] (faire +1 pour comprendre les positions de C++): \n";
+	arr<int,3> testdel = {{0,2,3}};
+	test2.del(testdel);
 	test2.see();
+	
 	
 }	
 
