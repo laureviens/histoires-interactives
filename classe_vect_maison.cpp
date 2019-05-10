@@ -5,6 +5,9 @@
 
 /*		
 						
+		#### L'indexation de arr à partir de vect ne marche toujours pas...				
+					##Au pire, 	
+						
 		#### Finalement, il faudrait également élargir cette classe à des entrées autres que des integers.
 		     Genre les doubles, qui ne devraient pas causer de problèmes.
 		     Surtout les characters, probablement du type wchar_t. Pour que ce soit en unicode.
@@ -52,15 +55,31 @@ template <class T> //Créer un "template" de type, qui pourra être des int, des c
 	template <class T, int N>
 	class arr 
 		{
-		friend class vect<T>;	//Déclarer vect comme ami de arr, pour que vect puisse avoir accès aux valeurs privées de arr
 		//Valeurs membres	
-		private:	
-	    	static const int nb = N;  //Déclarer le nombre d'éléments dans l'array comme N
 		public:
+	    	static const int nb = N;  //Déclarer le nombre d'éléments dans l'array comme N
 		    T pt[nb];  //Déclarer un array fixe (pas dynamique) de la bonne taille; publique, pour pouvoir le changer et le créer facilement
+		//Fonctions d'accès	: retourner certains positions (Opérateur [])
+			int operator [] (int pos) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
+				return(pt[pos]);
+			}			
+			/*  
+			vect<T> operator [] (vect<int> pos) { //Même fonction, mais overloadée pour un objet de type vect (plusieurs positions)
+				arr<T,pos.nb> gtar;  //Déclarer un arr transitoire
+				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos[a]]; //Remplir avec les valeurs dans les bonnes positions
+				vect<T> gtvc = gtar; //Créer un objet vect à l'aide de l'arr
+				return(gtvc); 
+			}*/                                    //Ne semble pas se compiler ici, probablement parce que vect n'est pas encore bien explicité?
+			template<int M>            //Créer un nouveau template, pour que N et M diffèrent (habituellement, M<N)
+			vect<T> operator [] (arr<int,M> pos) { //Même fonction, mais overloadée pour un objet de type arr (plusieurs positions)
+				arr<T,pos.nb> gtar;  //Déclarer un arr transitoire
+				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos[a]]; //Remplir avec les valeurs dans les bonnes positions
+				vect<T> gtvc = gtar; //Créer un objet vect à l'aide de l'arr
+				return(gtvc);
+			}
 	};
 	
-	//2) Créer la classe
+//2) Créer la classe
 	template <class T> //Créer un "template" de type, qui pourra être des int, des char... ce que je veux! 
 		class vect
 		{
@@ -141,29 +160,23 @@ template <class T> //Créer un "template" de type, qui pourra être des int, des c
 				delete[] pt;  //Éliminer le viel array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
 			}	
-		//Fonctions d'accès	: retourner la longueur du vecteur
-			int count(void) {  //Créer une fonction permettant d'aller chercher la longueur de l'array
-				return(nb);
-			}
-			
-		//Fonctions d'accès	: retourner certains positions
-			int get(int pos) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
+		//Fonctions d'accès	: retourner certains positions (Opérateur [])
+			int operator [] (int pos) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
 				return(pt[pos]);
 			}
-			vect<T> get(vect<int> pos) { //Même fonction, mais overloadée pour un objet de type vect (plusieurs positions)
+			vect<T> operator [] (vect<int> pos) { //Même fonction, mais overloadée pour un objet de type vect (plusieurs positions)
 				arr<T,pos.nb> gtar;  //Déclarer un arr transitoire
-				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos.pt[a]]; //Remplir avec les valeurs dans les bonnes positions
+				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos[a]]; //Remplir avec les valeurs dans les bonnes positions
 				vect<T> gtvc = gtar; //Créer un objet vect à l'aide de l'arr
 				return(gtvc); 
 			}
 		template <int N>
-			vect<T> get(arr<int,N> pos) { //Même fonction, mais overloadée pour un objet de type arr (plusieurs positions)
+			vect<T> operator [] (arr<int,N> pos) { //Même fonction, mais overloadée pour un objet de type arr (plusieurs positions)
 				arr<T,pos.nb> gtar;  //Déclarer un arr transitoire
-				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos.pt[a]]; //Remplir avec les valeurs dans les bonnes positions
+				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos[a]]; //Remplir avec les valeurs dans les bonnes positions
 				vect<T> gtvc = gtar; //Créer un objet vect à l'aide de l'arr
 				return(gtvc);
 			}
-			
 		//Fonctions d'accès	: afficher le vecteur			
 			void see(void) { //Créer une fonction pour simplement afficher l'array
 				cout << "[";
@@ -172,7 +185,28 @@ template <class T> //Créer un "template" de type, qui pourra être des int, des c
 			}
 					
 	};
-
+	
+	/*		        
+	//Tenter de définir l'indexation de arr par vect ici (après avoir bien défini vect):
+		//template<class T>
+			template <class T, int N>
+			vect<T> arr<T,N>::operator [] (vect<int> pos) { //Même fonction, mais overloadée pour un objet de type vect (plusieurs positions)
+				arr<T,pos.nb> gtar;  //Déclarer un arr transitoire
+				for(int a=0; a<pos.nb; a++)  gtar.pt[a] =  pt[pos[a]]; //Remplir avec les valeurs dans les bonnes positions
+				vect<T> gtvc = gtar; //Créer un objet vect à l'aide de l'arr
+				return(gtvc); 
+			}*/	
+	
+			//Ok, si mettons j'essaie de simplement overloader avec une fonction dummy, juste pour voir si j'ACCÈDE au moins à l'overload?
+			
+	/*		
+	//Tenter de définir l'indexation de arr par vect ici (après avoir bien défini vect):
+			template <class T, int N>
+			void arr<T,N>::operator [] (vect<int> pos) { //Même fonction, mais overloadée pour un objet de type vect (plusieurs positions)
+				cout << "hello world"; 
+			}		
+	*/                                   //Ne marche même pas.  'Pense que je vais laisser tomber.
+	
 	
 //3) Tester
 int main()
@@ -181,14 +215,14 @@ int main()
 	vect<int> test;
 	test+=3;
 	cout << "\nSupposé contenir la valeur 3 (avec référence normale): " << test.pt[0];
-	cout << "\nSupposé contenir la valeur 3 (avec fonction membre): " << test.get(0);
+	cout << "\nSupposé contenir la valeur 3 (avec fonction membre): " << test[0];
 
 	test+=44;
 	cout << "\nEt là, supposé avoir 44 en deuxième position (avec référence normale) : " << test.pt[1];
-	cout << "\nEt là, supposé avoir 44 en deuxième position (avec fonction membre) : " << test.get(1);	
+	cout << "\nEt là, supposé avoir 44 en deuxième position (avec fonction membre) : " << test[1];	
 	
 	test+=(22);
-	cout << "\nEt si j'ose une troisième augmentation, avec 22 : " << test.get(2);	
+	cout << "\nEt si j'ose une troisième augmentation, avec 22 : " << test[2];	
 	
 	cout << "\n\nAu total, l'objet ressemble à: "; test.see();
 	
@@ -208,8 +242,8 @@ int main()
 	test2.see();
 	
 	cout << "\n\n Et si j'essaie de voir ce qu'il y a en position [0,2,4] (faire +1 pour comprendre les positions de C++): \n";
-	arr<int,3>testget = {{0,2,4}};
-	test2.get(testget).see();
+	arr<int,3> testget = {{0,2,4}};
+	test2[testget].see();
 	
 	cout << "\n\nEt là, je vais enlever la deuxième position:\n";
 	test2.del(1);
@@ -220,6 +254,19 @@ int main()
 	test2.del(testdel);
 	test2.see();
 	
+	/*cout << "\n\nMais, disons, si je veux tester l'opérateur [] des arr... Voir ce que [0,2,4] cache en position [0,2]: \n";
+	arr<int,2> testget2 = {{0,2}};
+	vect<int> testget3 = testget[testget2];
+	testget3.see(); */                          //Ne marche pas encore!!!!
 	
+	cout << "\n\nMais, disons, si je veux tester l'opérateur [] des arr... Voir ce que [0,2,4] cache en position [0,2]: \n";
+	arr<int,2> testget2 = {{0,2}};
+	vect<int> testget3 = testget[testget2];
+	testget3.see();
+	
+	cout << "\n\nEt... maintenant, encore avec arr[], qu'est-ce que ça donne... avec des doubles? Voir [0.23,0.34,0.45], même positions: \n";
+	arr<double,3> testget4 = {{0.23,0.34,0.45}};
+	vect<double> testget5 = testget4[testget2];
+	testget5.see();	
 }	
 
