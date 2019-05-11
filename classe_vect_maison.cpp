@@ -29,9 +29,8 @@
 
 
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
-#include <iostream>
-using namespace std;
-
+#include <iostream>      //Librairie comprenant les fonctions d'entrée et de sortie de base
+#include <fcntl.h>       //Librairie comprenant la magie permettant d'afficher les unicodes dans la console 
 	
 //1) Créer la classe
 	template <class T> //Créer un "template" de type, qui pourra être des int, des char... ce que je veux! 
@@ -61,7 +60,7 @@ using namespace std;
 				delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
 			}		
-			//Fonction de modification: supprimer des positions	(opérateur -)
+		//Fonction de modification: supprimer des positions	(opérateur -)
 			void operator - (int pos) { //Fonction permettant de supprimer les valeurs à une position spécifique
 				T* nwpt = new T [nb-1];  //Déclarer le nouvel array (transitoire)
 				int nwpos = 0;  //Déclarer un compteur pour les positions actuelles
@@ -87,7 +86,7 @@ using namespace std;
 				delete[] pt;  //Éliminer le viel array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
 			}	
-			//Fonctions d'accès	: retourner certains positions (Opérateur [])
+		//Fonctions d'accès	: retourner certains positions (Opérateur [])
 			int operator [] (int pos) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
 				return(pt[pos]);
 			}
@@ -98,73 +97,77 @@ using namespace std;
 				vect<T> gtvc {indx,pos.nb}; //Créer un objet vect à l'aide de l'array
 				return(gtvc); 
 			}
-			//Fonctions d'accès	: afficher le vecteur en entier (Opérateur ~)
+		//Fonctions d'accès	: afficher le vecteur en entier (Opérateur ~)
 								//Attention! L'opérateur ~ doit être placé au-devant de l'objet vect!			
 			void operator ~ (void) { //Créer une fonction pour simplement afficher l'array
-				cout << "[";
-				for(int a=0; a< nb-1; a++) cout << pt[a] << ",";
-				cout << pt[nb-1] << "]";
+				std::wcout << "[";
+				for(int a=0; a< nb-1; a++) std::cout << pt[a] << ",";
+				std::wcout << pt[nb-1] << "]";
 			}
-					
 	};
 
+//2) Créer la classe-fille avec des strings
 
-//2) Tester
-int main()
-{
-	cout << "\nFait que là... \n\n\n";
-	vect<int> test;
-	test+=3;
-	cout << "\nSupposé contenir la valeur 3 (avec référence normale): " << test.pt[0];
-	cout << "\nSupposé contenir la valeur 3 (avec fonction membre): " << test[0];
+	class s : public vect<char> {
+		public:
+	//Constructeur spécialisé
+		s (std::string str) {
+			nb = str.length();
+			pt = new char [nb];
+			for(int a=0; a < nb; a++) pt[a] = str[a];
+		};
+	//Fonction de modification : ajouter des éléments à la suite (Opérateur +=)	
+		void operator += (const std::string nxt) { //Même fonction qu'en haut, mais overloadée pour ajouter un objet de type string
+			char* nwpt = new char [nb+nxt.length()];  //Déclarer le nouvel array (transitoire)
+			for(int a=0; a < nb; a++) nwpt[a] = pt[a];  //Remplir avec les vieilles valeurs
+			for(int a=0; a < nxt.length(); a++) nwpt[a+nb] = nxt[a];  //Ajouter les nouvelles valeurs
+			nb+=nxt.length();  //Noter le nombre de valeurs qu'on ajoute
+			delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
+			pt = nwpt;  //Assigner le pointeur à l'array actuel
+		}			
+	//Fonctions d'accès	: afficher le vecteur en entier (Opérateur ~)
+							//Attention: overload de l'ancienne fonction!	
+		void operator ~ (void) { //Créer une fonction pour simplement afficher la phrase
+			for(int a=0;a<nb;a++){
+				if(pt[a]=='À') std::wcout << L"\u00C0";
+				else if(pt[a]=='à') std::wcout << L"\u00E0";
+				else if(pt[a]=='Ç') std::wcout << L"\u00C7";		
+				else if(pt[a]=='ç') std::wcout << L"\u00E7";
+				else if(pt[a]=='É') std::wcout << L"\u00C9";		
+				else if(pt[a]=='é') std::wcout << L"\u00E9";
+				else if(pt[a]=='È') std::wcout << L"\u00C8";
+				else if(pt[a]=='è') std::wcout << L"\u00E8";
+				else if(pt[a]=='Î') std::wcout << L"\u00CE";
+				else if(pt[a]=='î') std::wcout << L"\u00EE";
+				else if(pt[a]=='Ï') std::wcout << L"\u00CF";
+				else if(pt[a]=='ï') std::wcout << L"\u00EF";						
+				else if(pt[a]=='Ô') std::wcout << L"\u00D4";
+				else if(pt[a]=='ô') std::wcout << L"\u00F4";
+				else if(pt[a]=='Ù') std::wcout << L"\u00D9";
+				else if(pt[a]=='ù') std::wcout << L"\u00F9";	
+				else if(pt[a]=='Û') std::wcout << L"\u00DB";
+				else if(pt[a]=='û') std::wcout << L"\u00FB";	
+				else {std::wcout << pt[a];}
+			}
+		}
+	};
+	
 
-	test+=44;
-	cout << "\nEt là, supposé avoir 44 en deuxième position (avec référence normale) : " << test.pt[1];
-	cout << "\nEt là, supposé avoir 44 en deuxième position (avec fonction membre) : " << test[1];	
+
+//3) Tester
+int main(){
 	
-	test+=22;
-	cout << "\nEt si j'ose une troisième augmentation, avec 22 : " << test[2];	
+	//Important: permet de mettre le output en unicode (je pense)! De la librairie <fcntl.h> 
+	_setmode(_fileno(stdout), _O_U16TEXT);
 	
-	cout << "\n\nAu total, l'objet ressemble à: "; ~test;
+	std::wcout << "\nOk, là on passe aux choses sérieuses.";
+	std::wcout << "\n\nOn va essayer de faire un beau vecteur sans accent:\n       ";
+	s phrase {"J'aime les bananes au pot, mmmmmhhhh...'"}; ~phrase;
+	std::wcout << "\n(ca devrait parler de bananes)";
 	
-	cout << "\n\nOk, là j'vais essayer de créer un nouveau vecteur et d'additionner tout:";
-	vect<int> test2;
-	test2+=55;
-	cout << "\nTest 2 ressemble maintenant à: "; ~test2;
-	cout << "\nEt là j'ajoute le premier objet au deuxième:";
-	test2+=test;
-	cout << "\n\nEt le deuxième ressemble maintenant à: ";
-	~test2;
+	s phrase2 {"\n\nEh, mais là, ça veut dire... \n                que j'ai même plus besoin de jouer avec des \"std::cout\" pour écrire!"}; ~phrase2;
 	
-	cout << "\n\nOk, et si j'essaie d'ajouter un array complet:";
-	int arr[3] {4,4,4};
-	vect<int> test3 = {arr,3};
-	test2+=test3;
-	cout << "\nEt maintenant, Test 2 ressemble à:";
-	~test2;
+	s phrase3 {"\n        Wouhouooooo! Ça a marché, comme dû, le code a la pêche!"}; ~phrase3;
 	
-	cout << "\n\n Et si j'essaie de voir ce qu'il y a en position [0,2,4] (faire +1 pour comprendre les positions de C++): \n";
-	int arrget[3] {0,2,4}; vect<int> testget = {arrget,3};
-	~test2[testget];
-	
-	cout << "\n\nEt là, je vais enlever la deuxième position:\n";
-	test2-1;
-	~test2;
-	
-	cout << "\n\nEt là, les positions [0,2,3] (faire +1 pour comprendre les positions de C++): \n";
-	int arrdel[3] {0,2,3}; vect<int> testdel {arrdel,3};
-	test2-testdel;
-	~test2;
-	
-	cout << "\n\nMais, disons, si je veux tester l'opérateur [] des arr... Voir ce que [0,2,4] cache en position [0,2]: \n";
-	int arrget2[2] = {0,2} ; vect<int> testget2 {arrget2,2};
-	vect<int> testget3 = testget[testget2];
-	~testget3;
-	
-	cout << "\n\nEt... maintenant, encore avec arr[], qu'est-ce que ça donne... avec des doubles? Voir [0.23,0.34,0.45], même positions: \n";
-	double arrget3[3] = {0.23,0.34,0.45}; 
-	vect<double> testget4 {arrget3,3};
-	vect<double> testget5 = testget4[testget2];
-	~testget5;	
-	}	
+}	
 
