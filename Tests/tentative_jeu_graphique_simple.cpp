@@ -50,22 +50,22 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	
 	//Création du paysage
 														// Les symboles \ et " sont précédés de \, pour les compter comme des characters
-	 string p0 = "                            _                         _____          (__)           ____      ";
-	 string p1 = "                           (_)            __         (     )                      _(    )     ";
-	 string p2 = "             __                          (__)         (____)                    _(     )      ";
-	 string p3 = "            (__)             ___                                               (_______)      ";
-	 string p4 = "      __                    /   \\                              __                             ";
-	 string p5 = "    _/  \\     ___          /     \\____       _____            /  \\___                         ";
-	 string p6 = "   /     \\___/   |        /           \\     /     \\__________/       \\                        ";
-	 string p7 = "__/               \\______/             \\___/                          \\______________________ ";
-	 string p8 = "                                                                                              ";
-	 string p9 = "     \"  \" \"    \\/            .             .     \\/        '           ' \\/   \\/      '       ";
-	string p10 = "\\/    '  \"  '      '    \\/         \\|/                   \"     '          \\|/  \\/    .  \\|/   ";
-	string p11 = "        \\|/' '                                                   \\|/         \\/               ";
-	string p12 = "   \\/      \" '        .     \\/          .    \\|/          \\/              '                   ";
+	 string p0 = "                            _                         _____          (__)           ____                    (_)         ";
+	 string p1 = "                           (_)            __         (     )                      _(    )           __                  ";
+	 string p2 = "             __                          (__)         (____)                    _(     )           (  )                 ";
+	 string p3 = "            (__)             ___                                               (_______)          (___)                 ";
+	 string p4 = "      __                    /   \\                              __                                                  ___  ";
+	 string p5 = "    _/  \\     ___          /     \\____       _____            /  \\___                                             |FIN| ";
+	 string p6 = "   /     \\___/   |        /           \\     /     \\__________/       \\                                              |   ";
+	 string p7 = "__/               \\______/             \\___/                          \\_____________________________________________|__ ";
+	 string p8 = "                                                                                                                    |   ";
+	 string p9 = "     \"  \" \"    \\/            .             .     \\/        '           ' \\/   \\/      '       . \'     .             |   ";
+	string p10 = "\\/    '  \"  '      '    \\/         \\|/                   \"     '          \\|/  \\/    .  \\|/    \"                \\/  |   ";
+	string p11 = "        \\|/' '                                                   \\|/         \\/                     .   \\/   '   \"      ";
+	string p12 = "   \\/      \" '        .     \\/          .    \\|/          \\/              '                  \"          \\|/             ";
 
 					//13 lignes de hauteur, 
-					//94 colonnes de longueur (sans les '\' en surplus)
+					//120 colonnes de longueur (sans les '\' en surplus)
 
 		//Mise en array du paysage:
 		string paysage[13] = {p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12}; 
@@ -123,16 +123,16 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 
 	//Fonction pour changer de couleur facilement
 	void chgcol(string color) {
-		int code;
-		if(color=="vert sombre") code = 2;         
-			else if(color=="rouge sombre") code = 4;
-			else if(color=="brun") code = 6;
-			else if(color=="gris") code = 7;
-			else if(color=="gris sombre") code = 8;
-			else if(color=="vert") code = 10;
-			else if(color=="cyan") code = 11;
-			else if(color=="rouge") code =12;
-			else if(color=="blanc") code =15;
+		WORD code;                                            //Voir la bibliothèque pour la légende
+		if(color=="vert sombre") code = 0x02;         
+			else if(color=="rouge sombre") code = 0x04;
+			else if(color=="brun") code = 0x06;
+			else if(color=="gris") code = 0x07;
+			else if(color=="gris sombre") code = 0x08;
+			else if(color=="vert") code = 0x0A;
+			else if(color=="cyan") code = 0x0B;
+			else if(color=="rouge") code =0x0C;
+			else if(color=="blanc") code =0x0F;
 		SetConsoleTextAttribute(constxt, code);}
 	
 	//Fonction pour afficher le paysage                
@@ -142,7 +142,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		int ncol = 27;
 
 		//Créer les objets de limites horizontales à l'image
-		int maxlimfen = 66;                                         //Dernière position acceptée (juste avant l'espace-buffer) (92-26 = 66)
+		int maxlimfen = 94;                                         //Dernière position acceptée (juste avant l'espace-buffer) (120-26 = 94)
 		int minlimfen = 0;
 		int limfen = 0;                                           //Commencer à l'extrémité gauche de l'image  
                             //Pour obtenir la limite droite de l'image, simplement faire limfen + 26
@@ -154,19 +154,23 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			for(int j=0; j<nlin ; j++) {
 				int ilim = limfen + (ncol-1);                                 //Définir la limite au compteur i
 				if(j<4) {                              //Background de nuages                  
-					chgcol("blanc");   
+					chgcol("blanc"); 
 					for(int i=limfen; i<ilim ; i++) cout << (paysage[j]) [i];              
 				}
 				else if(j<8) {                         //Background de montagnes
-					chgcol("brun");      
-					for(int i=limfen; i<ilim ; i++) cout << (paysage[j]) [i];
+					for(int i=limfen; i<ilim ; i++) {
+						char symbole = (paysage[j]) [i]; 
+						if(symbole == 'F' | symbole == 'I' | symbole == 'N') SetConsoleTextAttribute(constxt, 0xCF);   //Texte blanc, fond rouge
+	                    else chgcol("brun");                                    //Montagnes      
+						cout << symbole;
 					}
+				}
 				else {                                 //Herbes et cailloux
 					for(int i=limfen; i<ilim ; i++) {
 						char symbole = (paysage[j]) [i]; 
 						if(symbole == '\'' | symbole == '\"' ) chgcol("vert");   //petites herbes
-						else if(symbole == '.') chgcol("gris");                          //cailloux
-						else chgcol("vert sombre");                                                //grandes herbes
+						else if(symbole == '.') chgcol("gris");                  //cailloux
+						else chgcol("vert sombre");                              //grandes herbes
 						cout << symbole;
 					}	
 				}	
@@ -180,11 +184,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Position du centre du chat
 			int mincposx = 6;                                    //Il y aura une marge de 7 entre le rebord de l'image et l'extrême gauche du chat
 			int maxcposx = ncol - mincposx;
-			int cposx = mincposx;                                //le chat commence à gauche de l'image    
-					
+			int cposx = mincposx;                                //le chat commence à gauche de l'image   
+			 
+		    int mincposy = 8;
+	        int maxcposy = 12;
 			int cposy = 10;
-					//Éventuellement: peut-être permettre un déplacement vertical, sans changer d'avatar?
-					
+						
 			//Postures du chat
 			int dir = 0;                                        //Par défaut, le chat est orienté vers la droite
 			int posture = 1;
@@ -218,26 +223,35 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Fonction pour recueillir ce qui a été pressé
 		char deplac() {
 			
-			//Recueillir les changements de position
-			bool bouge = FALSE;                              //Enregistre si le chat s'est déplacée	
+			//Recueillir les touches pressées qui ont un sens ici
 			char key = 127; key = _getch();                  //Enregistrer quelle touche a été pressée
 			if (key == 0 || key == -32) {                    //La valeur est spéciale: elle nécessite de la ré-examiner
 				key = _getch();                              //Re-prendre la valeur (elle change??)
-				if (key == 75| key=='a') {  //flèche gauche
-					dir = 1;
-					if(cposx==mincposx) {if(limfen>minlimfen) {limfen--; bouge = TRUE;} }                 //Chat à l'extrême gauche : le paysage recule
-					else {cposx--; bouge = TRUE;}                                                         //Le chat recule
-				}
-				else if (key == 77 | key =='d') {    //flèche droite
-					dir = 0 ;
-					bouge = TRUE;	
-					if(cposx==maxcposx) {if(limfen<maxlimfen) {limfen++; bouge = TRUE;} }                 //Chat à l'extrême droite : le paysage avance
-					else {cposx++; bouge = TRUE;}                                                         //Le chat avance					
-				}
+				if (key == 75) key = 'a';       //flèche gauche
+				else if (key == 77) key = 'd';  //flèche droite
+				else if (key == 72) key = 'w';  //Flèche du haut
+				else if (key == 80) key = 's';  //Flèche du bas
 			}
-				//else if (key == 72) ; //up arrow
-				//else if (key == 80) ; //down arrow
-				
+			
+			//Définir les changements de position
+				bool bouge = FALSE;                                                                //Enregistre si le chat s'est déplacée	
+
+				if (key=='a') {  //flèche gauche
+					dir = 1;
+					if(cposx==mincposx) {if(limfen>minlimfen) {limfen--; bouge = TRUE;} }           //Chat à l'extrême gauche : le paysage recule
+					else {cposx--; bouge = TRUE;}                                                   //Le chat recule
+				}
+				else if (key =='d') {    //flèche droite
+					dir = 0 ;
+					if(cposx==maxcposx) {if(limfen<maxlimfen) {limfen++; bouge = TRUE;} }           //Chat à l'extrême droite : le paysage avance
+					else {cposx++; bouge = TRUE;}                                                   //Le chat avance					
+				}
+				else if (key =='w') { //Flèche du haut
+					if(cposy>mincposy) {cposy-- ; bouge = TRUE;}
+				}
+				else if (key =='s') { //Flèche du bas
+					if(cposy<maxcposy) {cposy++ ; bouge = TRUE;}
+				}
 			//Recueillir les changements de posture
 				//les pattes
 				if(bouge) {
@@ -256,8 +270,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			if(bouge) {affpays(); affchat();}
 			
 			//Mettre le message de sortie
-			chgcol("blanc") ; curspos(0,0) ; cout << "Pressez ESCAPE pour quitter";
-			
+			if(limfen==maxlimfen) chgcol("blanc"); else chgcol("gris sombre"); 
+			curspos(0,0) ; cout << "Pressez ESCAPE pour quitter";
+
 			return(key);                                     //Retourne ce qui a été pressé; ESCAPE est la touche '27'
 		}
 
