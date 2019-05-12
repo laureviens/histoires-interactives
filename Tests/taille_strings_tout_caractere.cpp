@@ -17,4 +17,9 @@ int main() {
 	string test5 = " ";
 	std::cout << "La longueur de " << "<espace>" << "  est de " << test5.length() << ".\n";
 
+	string test6 = "\\\"";
+	std::cout << "la longueur de " << "\\\\\\\"" << "  est de " << test6.length() << ".\n";
+	std::cout << "De plus, sa première position est " << test6[0] << ".\n";
+	std::cout << "Et sa deuxième position est " << test6[1] << ".\n";
+
 }

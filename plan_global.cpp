@@ -8,6 +8,19 @@
 #include <vector>
 using namespace std;
 
+//B) Tenter de mettre de la couleur dans nos coeurs?
+	/*
+	En bref, seules 15 couleurs sont disponibles sur Windows. Ouin, j'ai vraiment pas trouvé mieux en cherchant sur Google. Inexistant.
+	
+	La bonne nouvelle, c'est toutefois qu'elles peuvent être changées soit pour toute la console, soit pour seulement le texte
+	écrit après le changement de commande.
+	
+	Donc, en jouant avec les positions, on pourrait faire des bordures de différentes couleurs, des cartes bien lisibles, des menus, etc.
+	
+	Btw, pour le faire en linux, voir : https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
+	et : https://stackoverflow.com/questions/138383/colored-grep/138528#138528
+	*/
+	
 
 //P-T) Classe personalisée pour imiter les vecteurs?????
 //------------------------------------------------------------------------------------------------------------------------------------------------------
