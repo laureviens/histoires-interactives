@@ -155,6 +155,7 @@
 
 
 //3) Tester
+/*
 int main(){
 	
 	//Important: permet de mettre le output en unicode (je pense)! De la librairie <fcntl.h> 
@@ -169,5 +170,5 @@ int main(){
 	
 	s phrase3 {"\n        Wouhouooooo! Ça a marché, comme dû, le code a la pêche!"}; ~phrase3;
 	
-}	
+}	*/
 

@@ -4,25 +4,37 @@
 */
 
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
-#include <iostream>
-#include <vector>
-using namespace std;
+#include <iostream>   //Pour les entrées/sorties0
+using namespace std;           //Pour faciliter l'utilisation de cout, cin, string, etc. (sans spécifier ces fonctions proviennent de quel enviro)
+
+# include "C:/Users/Cyrille/Desktop/fictions_interactives_cplusplus/classe_vect_maison.cpp"  //Pour les vecteurs maisons
+
 
 //A) Fonction pour repérer des mots
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 				// x est le mot à repérer,
 				// p est la phrase dans laquelle repérer le mot
 	
-		//ATTENTION: J'aurais aussi très bien pu utiliser la fonction .find, déjà incluse comme membre de la classe string (dans std).
-	
-		//ATTENTION!!! Pour trouver la longueur des strings, j'utilise .length(), qui calcule la mémoire utilisée.
-		//Ça va bien quand j'utilise de simples char, car leur taille est 1 bt. Mais les accents vont probablement pas entrer là-dedans...
-				
-		//ATTENTION!!! Je pourrais utiliser, au lieu de string comme type, de mettre const string&.
-		//Présentement (avec string), le string est copié pour caller la fonction.
-		//Avec l'alternative (const string&), seulement une référence (pointeur) est copiée, et "const"	assure que l'objet original n'est pas changé.	
-
-	//Optimisée
+		//Notes:
+		/*      Je n'aurais pas pu utiliser la fonction string::find(), car elle ne trouve que la première occurence,
+				et non TOUTES les occurences.
+		*/
+		
+		/*
+				Je devrais faire deux versions de la fonction: 
+				Une pour la classe vect, et une pour la classe string.
+					Au pire, faire un template, et dériver "nb" de chq argument avec un choix if( "is.comme.dans.R()" == "string")...
+					Mais je viens de regarder, et on dirait qu'il n'y a pas vraiment de fonctions comme cela déjà existantes.
+					Ce qui pourrait être fait, au pire, c'est d'inclure un membre static const string "nom", qui est le nom de la classe.
+					Comme ça, ça pourrait permettre de garder les fonctions en template même s'il y a de mineures différences entre les arguments.
+					Ouin, j'suis mieux d'opter pour ça, une fois que la fonction sera terminée.  
+		*/
+		
+		/*
+				Je devrai éventuellement mettre les variables en const  & (ex: const string&), pour les appeler par référence (plus efficace)
+		*/
+		
+	//i) Logical (oui ou non, x est dans p au moins une fois)
 	bool lfind(string x, string p)  //Pour "logical find" 
 	{
 		//Trouver la longueur de chaque variable
@@ -56,53 +68,32 @@ using namespace std;
 			else xpos = 0; //Si ce n'était pas le mot, on retourne à la première lettre
 			if(ppos>pnchar) return(-1); //Si la phrase est terminée sans avoir trouvé le mot, retourner -1 (valeur d'erreur choisie ici)  
 		}
-	}												
+	}										
+			
 	//iii) Position toutes occurences  //Pour "multiple find"
-		//Attention: Ici, j'utilise la classe "vector", que je ne maîtrise pas tout à fait
-		//ISSSSHHHHHHKKKKK!!! Je n'arrive pas à retourner un array complet! Comment retourner plusieurs valeurs??
-				//Il semble que je doive retourner UN SEUL objet, mais d'un type qui me permet de stocker plusieurs informations.
-				//How 'bout je crée un objet de type "array" personalisé, qui possède le pointeur + le nombre d'objets contenus?
-				//Je pourrais tant qu'à faire simplement créer mon type personalisé genre "vecteur", seulement pour les int.
-				//Pour avoir un raccourci à utiliser dans ce code-ci.
-	int mfind(string x, string p)
+	vect<int> mfind(string x, string p)
 	{
 		//Trouver la longueur de chaque variable
 		int xnchar = x.length() ; int pnchar =  p.length();
 		//Créer des compteurs
-		int xpos = 0 ; int ppos = 0; int xnb = 0;
+		int xpos = 0 ; int ppos = 0;
 		//Créer un vecteur (personalisé) pour contenir chaque occurence
-		vect mult;
+		vect<int> mult;
 		while(true)
 		{
 			if(x[xpos++]==p[ppos++]) //Évaluer pour la présente lettre, mais en profiter pour passer à la prochaine
 			{
 				if(xpos==xnchar) 
 				{
-				vec.push_back(ppos-xpos); xnb++;  //Si le mot à repérer a été repéré au complet, sauvegarder sa position dans le vecteur
-				cout << "\n>À l'assignation: " << ppos-xpos;	
+				mult+=(ppos-xpos);  //Si le mot à repérer a été repéré au complet, sauvegarder sa position dans le vecteur
 				xpos = 0; //Puisque c'est terminé avec cette itération, on remet le mot à son début
 				}	
 			} 
 			else xpos = 0; //Si ce n'était pas le mot, on retourne à la première lettre
-			if(ppos>pnchar) //Si on est rendues à la fin de la phrase, transformer le vecteur en format exportable (array)
+			if(ppos>pnchar) //Si on est rendues à la fin de la phrase, retourner le résultat
 			{
-				if(xnb!=0)
-				{
-					//Je devrais: Soit passer l'array + SON NOMBRE D'ÉLÉMENTS en return(),
-					//ou bien simplement passer le vecteur (ou tout autre type de classe que je décide de créer à sa place)
-					
-					int * arr;
-					arr = new int [xnb]; //Déclarer l'array (en tant que dynamique, pointé par l'objet arr)
-					cout << "\nIl y a " << xnb << " occurences de " << x;
-					for(int a=0 ; a<xnb ; a++) 
-					{
-						arr[a] = vec.at(a) ; 
-						cout << "\nDans le vecteur: "<< vec.at(a); cout << "\nDans l'array: "<< arr[a];
-					}
-					cout << "\nDans la fonction, l'array montre: " << *arr;
-					return(*arr);
-				}
-				else return(-1); //Si la phrase est terminée sans avoir trouvé le mot, retourner -1 (valeur d'erreur choisie ici)  
+				if(mult.nb!=0) {return(mult);}
+				else return(vect<int> {-1}); //Si la phrase est terminée sans avoir trouvé le mot, retourner -1 (valeur d'erreur choisie ici)  
 			}
 		}
 	}	
@@ -110,10 +101,11 @@ using namespace std;
 //Z) Test, en utilisant la fonction main() ; va être réécrit beaucoup, c'est juste pour voir si tout marche
 int main()
 {
-	string x = "salade" ; string p = "J'aime la Salade.";
-	cout << "\n" << x << " est présent dans " << p << " : " << lfind(x,p); 
-	cout << "\nDe plus, " << x << " commence à la lettre " << pfind(x,p); 
-	string z = "ét" ; string d = "j'étais étonnée et étourdie."; 
-	cout << "\nDans " << d << ", " << z << " se trouve aux emplacements " << mfind(z,d);
+	string x = "salade" ; string p = "J'aime la Salade."; ; string o = "J'aime la salade.";
+	cout << "\n" << x << " est present dans " << p << " : " << lfind(x,p); 
+	cout << "\n" << x << " est present dans " << o << " : " << lfind(x,o); 	
+	cout << "\nDe plus, dans cette derniere phrase, " << x << " commence en position " << pfind(x,o) << " (on veut 10)"; 
+	cout << "\nDe plus, dans la premiere phrase, " << x << " commence en position " << pfind(x,p) << " (on veut -1)."; 
+	string z = "et" ; string d = "j'etais etonnee et etourdie."; 
+	cout << "\nDans " << d << ", " << z << " se trouve aux emplacements "; ~mfind(z,d);
 }
-

@@ -297,7 +297,7 @@ int main() {
 
 	//Afficher le chat et le paysage, et le message d'instruction
 	affpays() ; affchat() ; 
-	chgcol("blanc") ; curspos(0,0) ; cout << "Utilisez les fleches du clavier pour deplacer le chat";
+	chgcol("blanc") ; curspos(0,0) ; cout << "Utilisez les fleches du \nclavier pour deplacer \nle raton-laveur";
 	
 	//Faire bouger le chat
 	char touche;                            //déclaration de l'objet "de sortie"
