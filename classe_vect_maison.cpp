@@ -4,17 +4,6 @@
 */
 
 /*			
-		#### Je vais essayer de me débarrasser de la classe arr; car elle m'encombre et est redondante.
-			 C'est bien, le code est ainsi beaucoup plus clair.	
-
-			 #### Le seul désavantage, c'est que je perds la définition facile des arrays (en une ligne).
-			      Au moins, pour les strings, je vais avoir un moyen facile de définir tout ensemble de characters.
-			      Pour les autres listes que je compte faire, elles seront probablement davantage des listes de "strings".
-			      Ou peut-être pas. Je verrai rendue là si je réssucite les arr.
-			  
-	
-		#### L'opérateur [] semble faire une job similaire à -, mais en plus efficace.
-			 Penser à simplifier - (et peut-être +=)? basé sur cela.
 	
 		#### Il reste à créer une spécialisation de vect en vect<char>, qui prend des strings comme entrées (constructeur).
 			 Pour faire cela, je pourrais toujours overloader l'opérateur de "string litteral" ("").

@@ -1,6 +1,6 @@
 /*
-///||================================---2018/0i/27---================================||\\\
-\\\||================================---Cadre de travail pour histoires interactives---================================||///
+			///||================================---2018/0i/27---================================||\\\
+\\\||================================---Fonction find() personnalisée (strings)---================================||///
 */
 
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
@@ -10,7 +10,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 # include "C:/Users/Cyrille/Desktop/fictions_interactives_cplusplus/classe_vect_maison.cpp"  //Pour les vecteurs maisons
 
 
-//A) Fonction pour repérer des mots
+//1) Fonction pour repérer des mots
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 				// x est le mot à repérer,
 				// p est la phrase dans laquelle repérer le mot
@@ -98,7 +98,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		}
 	}	
 
-//Z) Test, en utilisant la fonction main() ; va être réécrit beaucoup, c'est juste pour voir si tout marche
+//2) Test
 int main()
 {
 	string x = "salade" ; string p = "J'aime la Salade."; ; string o = "J'aime la salade.";
