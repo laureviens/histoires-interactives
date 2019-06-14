@@ -3,6 +3,11 @@
 #include <chrono>
 #include <iostream>   //Pour les entrées/sorties
 
+	int timems (void) {
+		return(std::chrono::duration_cast< std::chrono::milliseconds >(
+	    std::chrono::system_clock::now().time_since_epoch()
+	).count());
+	}
 
 int ms = std::chrono::duration_cast< std::chrono::milliseconds >(
     std::chrono::system_clock::now().time_since_epoch()
@@ -17,8 +22,8 @@ int ms = std::chrono::duration_cast< std::chrono::milliseconds >(
 		//Je crois que de préciser le time_since_epoch est... optionnel?
 /*int ms_flou = std::chrono::duration_cast< std::chrono::milliseconds >(
     std::chrono::system_clock::now()
-).count();/*                             Nope, pas optionnel; cette dernière ligne ne fonctionne pas!
- 
+).count();                             Nope, pas optionnel; cette dernière ligne ne fonctionne pas!
+ */
 
 int main()
 {

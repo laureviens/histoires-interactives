@@ -49,7 +49,7 @@
 				nwpt[nb++] = nxt; //Ajouter la nouvelle valeur (en même temps de noter que c'est un objet de plus)
 				delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition
+				delete[] nwpt;   //Éliminer l'array de transition
 			}		
 			void operator += (const vect& nxt) { //Même fonction, mais overloadée pour ajouter un objet de type vect
 				Type* nwpt = new Type [nb+nxt.nb];  //Déclarer le nouvel array (transitoire)
@@ -58,7 +58,7 @@
 				nb+=nxt.nb;  //Noter le nombre de valeurs qu'on ajoute
 				delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition				
+				delete[] nwpt;   //Éliminer l'array de transition				
 			}		
 		//Fonction de modification: ajouter des posititions	(opérateur +)  - les ajoutes à la suite de "pos"
 			void operator + (int pos) {
@@ -72,7 +72,7 @@
 				nb++;   //Noter le nombre de valeur qu'on enlève
 				delete[] pt;  //Éliminer le vieil array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition
+				delete[] nwpt;   //Éliminer l'array de transition
 			}
 						//N'EST PAS ENCORE OVERRIDÉ POUR DES OBJETS DE TYPES VECT, CAR JE N'EN VOIS PAS ENCORE L'UTILITÉ
 		//Fonction de modification: supprimer des positions	(opérateur -)
@@ -86,7 +86,7 @@
 				nb--;  //Noter le nombre de valeur qu'on enlève
 				delete[] pt;  //Éliminer le viel array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition				
+				delete[] nwpt;   //Éliminer l'array de transition				
 			}		
 			void operator - (const vect<int>& nxt) { //Même fonction, mais overloadée pour un objet de type vect
 				Type* nwpt = new Type [nb+nxt.nb];  //Déclarer le nouvel array (transitoire)
@@ -101,7 +101,7 @@
 				nb-=nxt.nb;  //Noter le nombre de valeurs qu'on enlève
 				delete[] pt;  //Éliminer le viel array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition
+				delete[] nwpt;   //Éliminer l'array de transition
 			}	
 		//Fonctions d'accès	: retourner certains positions (Opérateur [])
 			Type operator [] (int pos) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
@@ -146,7 +146,7 @@
 			nb+=nxt.length();  //Noter le nombre de valeurs qu'on ajoute
 			delete[] pt;  //Éliminer le vieux array trop petit 
 			pt = nwpt;  //Assigner le pointeur à l'array actuel
-			//delete[] nwpt;   //Éliminer l'array de transition
+			delete[] nwpt;   //Éliminer l'array de transition
 		}			
 		void operator += (const StringAsVect& nxt) { //Même fonction, mais overloadée pour ajouter un objet de type StringAsVect
 			char* nwpt = new char [nb+nxt.nb];  //Déclarer le nouvel array (transitoire)
@@ -155,7 +155,7 @@
 			nb+=nxt.nb;  //Noter le nombre de valeurs qu'on ajoute
 			delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
 			pt = nwpt;  //Assigner le pointeur à l'array actuel
-			//delete[] nwpt;   //Éliminer l'array de transition			
+			delete[] nwpt;   //Éliminer l'array de transition			
 		}				
 	//Fonctions d'accès	: afficher le vecteur en entier 
 		void out (void) { //Créer une fonction pour simplement afficher la phrase
@@ -186,7 +186,7 @@
 
 
 //3) Tester
-/*
+
 int main(){
 	
 	//Important: permet de mettre le output en unicode (je pense)! De la librairie <fcntl.h> 
@@ -205,4 +205,4 @@ int main(){
 	phrase4+=phrase3; phrase4.out();
 	
 }	
-*/
+
