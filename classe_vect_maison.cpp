@@ -44,26 +44,26 @@
 			~vect<Type>() {delete[] pt;}
 		//Fonction de modification : ajouter des éléments à la suite (Opérateur +=)	
 			void operator += (Type nxt) { //Changer un opérateur permettant d'ajouter un integer à la suite du vecteur
-				Type* nwpt = new Type [nb+1];  //Déclarer le nouvel array (transitoire)
+				Type* nwpt = new Type [nb+1];  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 				for(int pos=0; pos < nb; pos++) nwpt[pos] = pt[pos];  //Remplir avec les vieilles valeurs
 				nwpt[nb++] = nxt; //Ajouter la nouvelle valeur (en même temps de noter que c'est un objet de plus)
 				delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition
+				nwpt = nullptr;    //Rendre nul le pointeur temporaire
 			}		
 			void operator += (const vect& nxt) { //Même fonction, mais overloadée pour ajouter un objet de type vect
-				Type* nwpt = new Type [nb+nxt.nb];  //Déclarer le nouvel array (transitoire)
+				Type* nwpt = new Type [nb+nxt.nb];  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 				for(int pos=0; pos < nb; pos++) nwpt[pos] = pt[pos];  //Remplir avec les vieilles valeurs
 				for(int pos=0; pos < nxt.nb; pos++) nwpt[pos+nb] = nxt.pt[pos];  //Ajouter les nouvelles valeurs
 				nb+=nxt.nb;  //Noter le nombre de valeurs qu'on ajoute
 				delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition				
+				nwpt = nullptr;    //Rendre nul le pointeur temporaire
 			}		
 		//Fonction de modification: ajouter des posititions	(opérateur +)  - les ajoutes à la suite de "pos"
 			void operator + (int pos) {
 				int emptypos = pos + 1;   //Calculer la position qui sera vide
-				Type* nwpt = new Type [nb+1];  //Déclarer le nouvel array (transitoire)
+				Type* nwpt = new Type [nb+1];  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 				int oldpos = 0;  //Déclarer un compteur pour les vieilles positions				
 				for(int nwpos=0; nwpos < nb; nwpos++) {  //Remplir, en laissant une position vide
 					if(nwpos==emptypos) {continue;} 
@@ -72,12 +72,12 @@
 				nb++;   //Noter le nombre de valeur qu'on enlève
 				delete[] pt;  //Éliminer le vieil array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition
+				nwpt = nullptr;    //Rendre nul le pointeur temporaire
 			}
 						//N'EST PAS ENCORE OVERRIDÉ POUR DES OBJETS DE TYPES VECT, CAR JE N'EN VOIS PAS ENCORE L'UTILITÉ
 		//Fonction de modification: supprimer des positions	(opérateur -)
 			void operator - (int pos) { //Fonction permettant de supprimer les valeurs à une position spécifique
-				Type* nwpt = new Type [nb-1];  //Déclarer le nouvel array (transitoire)
+				Type* nwpt = new Type [nb-1];  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 				int nwpos = 0;  //Déclarer un compteur pour les positions actuelles
 				for(int oldpos=0; oldpos < nb; oldpos++) {  //Remplir avec les vieilles valeurs
 					if(oldpos==pos) continue;
@@ -86,10 +86,10 @@
 				nb--;  //Noter le nombre de valeur qu'on enlève
 				delete[] pt;  //Éliminer le viel array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition				
+				nwpt = nullptr;    //Rendre nul le pointeur temporaire
 			}		
 			void operator - (const vect<int>& nxt) { //Même fonction, mais overloadée pour un objet de type vect
-				Type* nwpt = new Type [nb+nxt.nb];  //Déclarer le nouvel array (transitoire)
+				Type* nwpt = new Type [nb+nxt.nb];  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 				int nwpos = 0;  //Déclarer un compteur pour les positions actuelles
 				bool skip;  //Déclarer un compteur pour les positions à retirer
 				for(int oldpos=0; oldpos < nb; oldpos++) {  //Remplir avec les vieilles valeurs
@@ -101,7 +101,7 @@
 				nb-=nxt.nb;  //Noter le nombre de valeurs qu'on enlève
 				delete[] pt;  //Éliminer le viel array
 				pt = nwpt;  //Assigner le pointeur à l'array actuel
-				//delete[] nwpt;   //Éliminer l'array de transition
+				nwpt = nullptr;    //Rendre nul le pointeur temporaire
 			}	
 		//Fonctions d'accès	: retourner certains positions (Opérateur [])
 			Type operator [] (int pos) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
@@ -140,22 +140,22 @@
 		};
 	//Fonction de modification : ajouter des éléments à la suite (Opérateur +=)	
 		void operator += (const std::string nxt) { //Même fonction qu'en haut, mais overloadée pour ajouter un objet de type string
-			char* nwpt = new char [nb+nxt.length()];  //Déclarer le nouvel array (transitoire)
+			char* nwpt = new char [nb+nxt.length()];  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 			for(int pos=0; pos < nb; pos++) nwpt[pos] = pt[pos];  //Remplir avec les vieilles valeurs
 			for(int pos=0; pos < nxt.length(); pos++) nwpt[pos+nb] = nxt[pos];  //Ajouter les nouvelles valeurs
 			nb+=nxt.length();  //Noter le nombre de valeurs qu'on ajoute
 			delete[] pt;  //Éliminer le vieux array trop petit 
 			pt = nwpt;  //Assigner le pointeur à l'array actuel
-			//delete[] nwpt;   //Éliminer l'array de transition
+			nwpt = nullptr;    //Rendre nul le pointeur temporaire
 		}			
 		void operator += (const StringAsVect& nxt) { //Même fonction, mais overloadée pour ajouter un objet de type StringAsVect
-			char* nwpt = new char [nb+nxt.nb];  //Déclarer le nouvel array (transitoire)
+			char* nwpt = new char [nb+nxt.nb];  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 			for(int pos=0; pos < nb; pos++) nwpt[pos] = pt[pos];  //Remplir avec les vieilles valeurs
 			for(int pos=0; pos < nxt.nb; pos++) nwpt[pos+nb] = nxt.pt[pos];  //Ajouter les nouvelles valeurs
 			nb+=nxt.nb;  //Noter le nombre de valeurs qu'on ajoute
 			delete[] pt;  //Éliminer le vieux array trop petit (il semble que si on ne spécifie pas combien d'éléments éliminer entre braquettes, ça élimine tout)
 			pt = nwpt;  //Assigner le pointeur à l'array actuel
-			//delete[] nwpt;   //Éliminer l'array de transition			
+			nwpt = nullptr;    //Rendre nul le pointeur temporaire
 		}				
 	//Fonctions d'accès	: afficher le vecteur en entier 
 		void out (void) { //Créer une fonction pour simplement afficher la phrase
