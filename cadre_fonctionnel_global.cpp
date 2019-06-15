@@ -6,20 +6,6 @@
 //Debbugg: pour avoir l'option de "sleep"
 #include <unistd.h>
 
-		//ATTENTION!!!!!		
-				//Je viens de me rendre compte que, de la manière dont je calcule les lignes, ça ressemble à:
-				/*
-				 0 1 2 3 4 5 6 7 8 
-				0
-				1
-				2
-				3
-				4
-				5
-				6
-						ce qui peut être mélangeant pour l'axe des y. Just bear with me, though, j'pense que c'est la méthode la plus simple.
-				*/
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
 #include <iostream>   //Pour les entrées/sorties
@@ -92,26 +78,45 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int debut;    //Déclarer la position de la première valeur
 			int fin;      //Déclarer la position de la dernière valeur
 		//Constructeurs	
-			StringAsVect() : nb(TailleBase), debut(0), fin(0), pt(new char [nb]) {}  //Défaut
-			StringAsVect(char nxt) : nb(TailleBase), debut(0), fin(1), pt(new char [nb]) {  //À partir d'une seule valeur
+			StringAsVect() : nb(TailleBase), debut(0), fin(0) {  //Défaut
+					try{pt =new char [nb];}        //Essayer d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)			
+				pt =new char [nb];             		//Vraiment allouer l'espace					
+			}
+			StringAsVect(char nxt) : nb(TailleBase), debut(0), fin(1) {  //À partir d'une seule valeur
+					try{pt =new char [nb];}        //Essayer d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)			
+				pt =new char [nb];             		//Vraiment allouer l'espace
 				pt[0] = nxt;
-				}
-			StringAsVect(char nxt[], int nbpos) : nb(nbpos + TailleBase), debut(0), fin(nbpos), pt(new char [nb]) {   //À partir d'un array
-				for(int pos=0; pos<fin; pos++) pt[pos] = nxt[pos];
-				}
-			StringAsVect(std::string nxt) : nb(nxt.length() + TailleBase), debut(0), fin(nxt.length()), pt(new char [nb]) {      //À partir d'un string
-				for(int pos=0; pos<fin; pos++) pt[pos] = nxt[pos];
+			}
+			StringAsVect(char nxt[], int nbpos) : nb(nbpos + TailleBase), debut(0), fin(nbpos) {   //À partir d'un array
+					try{pt =new char [nb];}        //Essayer d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)			
+				pt =new char [nb];             		//Vraiment allouer l'espace
+					for(int pos=0; pos<fin; pos++) pt[pos] = nxt[pos];
+			}
+			StringAsVect(std::string nxt) : nb(nxt.length() + TailleBase), debut(0), fin(nxt.length()) {      //À partir d'un string
+					try{pt =new char [nb];}        //Essayer d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)			
+				pt =new char [nb];             		//Vraiment allouer l'espace
+					for(int pos=0; pos<fin; pos++) pt[pos] = nxt[pos];
 			}	
 		//Destructeur
 			~StringAsVect() {delete[] pt;}	
 		//Copy constructor
-			StringAsVect(const StringAsVect& nxt) : nb(nxt.nb), debut(nxt.debut), fin(nxt.fin), pt(new char{*nxt.pt}) {}
+			StringAsVect(const StringAsVect& nxt) : nb(nxt.nb), debut(nxt.debut), fin(nxt.fin) {
+					try{pt = new char{*nxt.pt};}        //Essayer d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)			
+				pt = new char{*nxt.pt};             	//Vraiment allouer l'espace			
+			}
 		//Copy assignment
 			StringAsVect& operator= (const StringAsVect& nxt) {
 				delete[] pt;     //Efface l'array vers lequel je pointe actuellement
 				nb = nxt.nb;     //Change le nombre d'éléments
 				debut = nxt.debut; fin = nxt.fin;           //Change la position de début et de fin du vecteur accessible
-				pt = new char [nb] {*nxt.pt};     //Alloue un nouvel espace pour le nouvel objet, et copie
+					try{pt = new char [nb] {*nxt.pt};}  //Essayer d'allouer l'espace 
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)				
+				pt = new char [nb] {*nxt.pt};     		//Vraiment allouer un nouvel espace pour le nouvel objet, et copie
 				return *this;                        //???????? Pourquoi retourner quelque chose dans un = ?
 			}	
 		//Move constructor
@@ -129,14 +134,16 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		   char operator[] (int pos) {return(pt[debut + pos]);}
 		//Fonction d'accès : nbactif
 			int nbactif (void) {return(debut-fin);}		
-		//Opérateur de modification : +          //Ajoute les valeurs en right-hand à la SUITE des valeurs déjà contenues
-		   void operator+ (char nxt) {
+		//Fonction de modification : ajout          //Ajoute les valeurs en right-hand à la SUITE des valeurs déjà contenues
+		   void ajout (char nxt) {
 		   		if(fin + 1 < nb) {      //Pas besoin de ré-allouer la mémoire
 		   			pt[fin] = nxt; fin++;
 				} else {                //Besoin de ré-allouer
 					int NombreActifVieux = debut - fin;      	//Déterminer le nombre d'éléments actifs déjà contenus dans l'objet
 					int NombreActifNeuf = NombreActifVieux + 1; //Déterminer le nombre d'éléments actifs à contenir dans l'objet
 					nb = NombreActifNeuf + TailleBase;             	//Déterminer le nombre d'éléments du prochain bloc de mémoire
+						try{char* nwpt = new char [nb];} 			//Essayer d'allouer l'espace 
+					  	catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)
 					char* nwpt = new char [nb];                   	//Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 					int posNeuf = 0; for(int posVieux=debut; posVieux<fin; posVieux++) {   //Remplir le nouveau bloc de mémoire des vieux éléments
       	  				nwpt[posNeuf++] = pt[posVieux];
@@ -148,7 +155,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
       	  			nwpt = nullptr;                             //Rendre nul le pointeur temporaire
 				}
 		   }
-		   void operator+ (string nxt) {
+		   void ajout (string nxt) {
 		   		if(fin + nxt.length() < nb) {      //Pas besoin de ré-allouer la mémoire
 		   			int nbnxt = nxt.length();
 		   			int nwend = fin + nbnxt; 
@@ -159,6 +166,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					int NombreActifVieux = debut - fin;      	//Déterminer le nombre d'éléments actifs déjà contenus dans l'objet
 					int NombreActifNeuf = NombreActifVieux + nbnxt; //Déterminer le nombre d'éléments actifs à contenir dans l'objet
 					nb = NombreActifNeuf + TailleBase;             	//Déterminer le nombre d'éléments du prochain bloc de mémoire
+						try{char* nwpt = new char [nb];} 			//Essayer d'allouer l'espace 					
+						catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)
 					char* nwpt = new char [nb];                   	//Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 					int posNeuf = 0; for(int posVieux=debut; posVieux<fin; posVieux++) {   //Remplir le nouveau bloc de mémoire des vieux éléments
       	  				nwpt[posNeuf++] = pt[posVieux];
@@ -170,7 +179,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
       	  			nwpt = nullptr;                             //Rendre nul le pointeur temporaire
 				}
 		   }		   
-		   void operator+ (StringAsVect nxt) {
+		   void ajout (StringAsVect nxt) {
 		   		if(fin + nxt.nb < nb) {      //Pas besoin de ré-allouer la mémoire
 		   			int nbnxt = nxt.nb;
 		   			int nwend = fin + nbnxt; 
@@ -181,6 +190,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					int NombreActifVieux = debut - fin;      	//Déterminer le nombre d'éléments actifs déjà contenus dans l'objet
 					int NombreActifNeuf = NombreActifVieux + nbnxt; //Déterminer le nombre d'éléments actifs à contenir dans l'objet
 					nb = NombreActifNeuf + TailleBase;             	//Déterminer le nombre d'éléments du prochain bloc de mémoire
+							try{char* nwpt = new char [nb];} 			//Essayer d'allouer l'espace 					
+						catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)
 					char* nwpt = new char [nb];                   	//Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 					int posNeuf = 0; for(int posVieux=debut; posVieux<fin; posVieux++) {   //Remplir le nouveau bloc de mémoire des vieux éléments
       	  				nwpt[posNeuf++] = pt[posVieux];
@@ -192,9 +203,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
       	  			nwpt = nullptr;                             //Rendre nul le pointeur temporaire
 				}
 		   }
-		//Opérateur de modification : -          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
-			void operator- (int pos) {
-				if(pos > debut - fin) debut = fin; else debut+=pos; 
+		//Opérateur de modification : supprim          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
+			void supprim (int pos) {
+				if(pos > fin-debut) debut = fin; else debut+=pos; 
 			}
 	};		
 
@@ -213,6 +224,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				nbcol = 1;
 				frontline = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
 				nbligne = TailleBase;            
+					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
 				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
 				for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}    //Créer les lignes pour chaque colonne
 			}
@@ -221,6 +234,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				nbcol = ncol;
 				frontline = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
 				nbligne = TailleBase;            
+					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
 				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
 				for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}    //Créer les lignes pour chaque colonne
 			}			//Destructeur
@@ -231,16 +246,18 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			char acces (int posx, int posy) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
 				return(souvenir[posx][posy]);
 			}
-			//Fonction de modification : ajouter une ligne à la suite de la position spécifiée (Opérateur +) 
-			void operator + (int pos) {
+			//Fonction de modification : newline ; ajouter une ligne à la suite de la position spécifiée (Opérateur +) 
+			void newline (int pos) {
 				if(frontline+1<nbligne) {
 					int emptypos = pos + 1;   //Calculer la position qui sera vide
 					for(int col = 0; col < nbcol; col++) souvenir[col][emptypos];   //Remplir la position vide
 					//Déplacer de 1 tout ce qui vient ensuite, en commençant par la fin
-						for(int lin = frontline; lin > emptypos+1; lin--) for(int col = 0; col < nbcol; col++) souvenir[col][lin+1]=souvenir[col][lin]; 
+					for(int lin = frontline; lin > emptypos+1; lin--) for(int col = 0; col < nbcol; col++) souvenir[col][lin+1]=souvenir[col][lin]; 
 					frontline++;   //Noter qu'on ajoute une ligne
 				} else {
 					int emptypos = pos + 1;   //Calculer la position qui sera vide
+						try{char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}}  //Tenter d'allouer l'espace
+					  	catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)
 					char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 					int oldpos = 0;  //Déclarer un compteur pour les vieilles positions				
 					for(int nwpos=0; nwpos < frontline; nwpos++) {  //Remplir, en laissant une position vide
@@ -252,11 +269,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					for(int col=0; col<nbcol ; col++) delete[] souvenir[col] ; delete[] souvenir;  //Supprimer le contenu du viel array
 					souvenir = nwsouv;  //Copier seulement le pointeur, sans faire une copie du contenue
 					for(int col=0; col<nbcol ; col++) nwsouv[col] = nullptr; nwsouv = nullptr;    //Rendre nuls les pointeurs temporaires
-
 				}
 			}
 		};
-		//memoire mem;
+		memoire mem {27};                   //INITIALISATION DE L'OBJET; VÉRIFIER AVEC LES BONNES DIMENSIONS POUR LA FENÊTRE!!!
+		
+							//ENCORE MIEUX: METTRE L'OBJET DE MÉMOIRE EN TANT QU'ARGUMENT DE READ, POUR QU'ON PUISSE LE DÉFINIR QUAND ON VEUT!
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //2) Définir les fonctions et objets de manipulation
@@ -305,23 +323,58 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	}
 
 	//vi) Fonction : CodeSpecialLong ; retourne la longueur d'un code spécial ('§' compris)
-	int CodeSpecialLongueur(StringAsVect str){
-		int pos = str.debut + 1;        //Commencer à la position [1], le [0] étant occupé par '§'
+	int CodeSpecialLongueur(const StringAsVect& str){
 		int longueur = 1;               //Initier l'objet à retourner
 		bool fini = false;              
-		while(!fini&pos<str.fin) {longueur++; if(str[pos]=='§') fini = true;} 
+			
+		/*		
+			//DEBUGGING
+			cout << "\n Longueur, avant la boucle while()";
+
+			cout << "\nLongueur : Le string passé est:";
+			for(int a=str.debut; a<str.fin; a++) out(str.pt[a]); Sleep(5000);
+		
+			cout<< "\nLongueur : la longueur donnée est: " << longueur; Sleep(5000);
+		*/
+			
+		
+			//for(int pos = str.debut + 1; !fini&pos<str.fin ; pos++) {longueur++; out(str[pos]); Sleep(1000); if(str[pos]=='§') {fini = true; cout<< "DEBUGGINGGGG!!!!!"; Sleep(1000);}} 
+	
+		for(int pos = str.debut + 1; !fini&pos<str.fin ; pos++) {longueur++; if(str.pt[pos]=='§') fini = true;} 
+		
+		
+		
+			
 		return(longueur);		
 	}
 
 	//vii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
-	double CodeSpecialExtractDouble(StringAsVect str, int longueur){
+	double CodeSpecialExtractDouble(const StringAsVect& str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int nbonlypos = 0; for(int pos=2; pos<longueur; pos++) nbonly[nbonlypos++] += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
+		int longmax = longueur - 1 + str.debut;      //Le dernier caractère étant le '§'
+		
+		/*
+			//DEBUGGING
+			cout << "\nExtract : Le string passé est:";
+			for(int a=str.debut; a<str.fin; a++) out(str.pt[a]); Sleep(5000);
+		*/	
+
+
+			
+		for(int pos=2+str.debut; pos<longmax; pos++) nbonly += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
+		
+		/*
+			//DEBUGGING
+			cout << "\n Extract, avant la conversion de \"" << nbonly << "\"";
+		*/
+
+		
 		return(stod(nbonly));           //La fonction stod convertit les strings en doubles (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
 	}		
-	int CodeSpecialExtractInt(StringAsVect str, int longueur){
+	int CodeSpecialExtractInt(StringAsVect& str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int nbonlypos = 0; for(int pos=2; pos<longueur; pos++) nbonly[nbonlypos++] += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
+		int longmax = longueur - 1;      //Le dernier caractère étant le '§'
+		int nbonlypos = 0; for(int pos=2; pos<longmax; pos++) nbonly[nbonlypos++] += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
 		return(stoi(nbonly));           //La fonction stoi convertit les strings en int (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
 	}		
 
@@ -343,7 +396,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		canal() {nxtt = timems() ; delay = 400 ; posx = -1; posy = 0; actif = false; vit = 1;}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 	};
 
-/*
 
 	//ii) Classe : fen ; permet de sauvegarder les paramètres relatifs aux caractéristiques de la fenêtre de sortie (console)
 	class fen {
@@ -359,9 +411,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	};
 		//Créer l'objet base, qui contiendra les information sur la fenêtre de base
 		fen base(27,13);     //EN CE MOMENT, A LES DIMENSIONS DE 27 COLONNES ET 13 LIGNES (VOIR JEU GRAPHIQUE SIMPLE)
-				
-	//vi) Objet : canaux ; assemblage de tous les canaux utilisés
-	arr<canal> canaux [1];
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -371,37 +420,87 @@ read(canal& can) {
 	can.nxtt += can.delay;
 	//Interpréter les "codes spéciaux" (§...§)
 	if(can.txt[0]=='§'){		
+	
+			//DEBUGGGINGGG
+	
+	/*
+				cout << "\n\n\n\nWouhouuu!! Code spécial!!!";
+	*/
+	
+	
+	
 		//Déterminer la longueur du code spécial
 			int CodeSpecialLong = CodeSpecialLongueur(can.txt);	
+	
+	/*		
+					//DEBUGGING
+						cout << "\nLa longueur du code spécial est connue!!";
+	*/
+									
+			
 		//Lire le code spécial		
 			if(can.txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture
+			
+		/*	
+					//DEBUGGING
+						cout << "\nLe code spécial a ete reconnu!";
+		*/
+			
+			
 				double val = CodeSpecialExtractDouble(can.txt,CodeSpecialLong);       //Extraire le temps que durera la pause
 				can.nxtt += round(val * can.vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
+
+		/*	
+				//DEBUGGGING
+					cout << "\nLe temps d'attente extrait est: " << val*can.vit;
+		*/
+
+
 			} else if(can.txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
 				double val = CodeSpecialExtractDouble(can.txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
 				can.vit = val;
-			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE		
+			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE
+			
+			/*
+					//DEBUGGING
+						cout << "\nLe code spécial a ete computed";
+			*/
+			
+			/*
+					//DEBUGGING
+						cout << "\nLa longueur du code spécial était de: " << CodeSpecialLong;
+			*/
+			
+					
 		//Effacer le code spécial du canal
-		can.txt-CodeSpecialLong;                       
+		can.txt.supprim(CodeSpecialLong);                 
+		
+		/*
+				//DEBUGGINGGGGG
+					cout << "\nMaintenant, le reste du texte est:";
+					for(int a=can.txt.debut; a<can.txt.fin; a++) out(can.txt[a]);
+		*/
+		
+		      
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
-			if(can.txt[0]=='\n'|can.posx>=base.charx) jump = true;
+			if(can.txt[0]=='\n'|can.posx>=base.charx-1) jump = true;     //base.charx - 1 ; car c'est en integer, et can.posx commence à 0!
 			if(jump) {
 				
+				
+			
 				//DÉBUGGGINNGGG
-				
+			/*	
 				cout << "\nJUMP! \n    JUMP! \n           JUMP!";  //détecter les jumps
-				
-				
-				
+			*/	
 				
 				
 				
 				
 				//Sauter une ligne dans la mémoire
 				for(int countx = can.posx + 1; countx < base.charx ; countx++) mem.souvenir[countx][can.posy] = ' ';     //Effacer le reste de la ligne avec des espaces    
-				mem + can.posy;                         //Cet opérateur introduit une nouvelle ligne à la suite de la position qui lui est fournie			
+				mem.newline(can.posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie			
 				//Updater le correctif de décalage de la console par rapport à la mémoire
 					if(base.refoule) base.consy++; else if(mem.frontline>base.chary) {base.refoule = true; base.consy++;} 					
 				//Sauter une ligne dans la console
@@ -435,7 +534,7 @@ read(canal& can) {
 				for(int countcan = 0 ; countcan < canx.nb ; countcan++) {        
 					if(canx[countcan].posy > can.posy) canx[countcan].posy++;         //la mémoire refoule toujours vers le bas!
 				}            
-				//En passant, je l'ai effacé, mais canx est un argument de read() de type arr<canal>& 
+				//En passant, je l'ai effacé, mais canx est un argument de read() de type arr<canal>&   */
 				
 				
 				
@@ -448,29 +547,42 @@ read(canal& can) {
 		//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du charactère actuel (dans la mémoire)!		
 		if(can.txt[0]!='\n') {
 			curspos(can.posx,can.posy-base.consy) ; out(can.txt[0]);     //Inscrire dans la console
+			
+			/*
+						/////DDEEBBUUGGINNGG
+						curspos(0,can.posx + 8); cout << can.posx;	
+			*/
+			
 			mem.souvenir[can.posx][can.posy] = can.txt[0];   //Inscrire dans la mémoire
+				
+				/*		
+						////////DDDDDDDEBUGING
+						curspos(1,can.posx + 8); cout << "Mem recorded on " << can.posx << cout << " : " << mem.souvenir[can.posx][can.posy];
+				*/
+						
 		}	
 		//Effacer le caractère du canal
-		can.txt-1;                     
+		can.txt.supprim(1);                     
 		
-		
+	/*
 		//       DDDDDDDDDEEEEEEEEEEEEEEEEEEEBBBBBBBBBBBUUUUUUUUUUUUUUUUGGGGGGGGGGGGGGGGGGIIIIIIIIIIIIINNNNNNNNNNNNNNNGGGGGGGGGGGG//////////////
 		//Écrire les positions en x et y!
-		curspos(1,can.posy-base.consy+4); cout << "posx: "<< can.posx << "; posy: " << can.posy;
+		curspos(1,can.posy-base.consy+4); cout << "posx: "<< can.posx << "; posy: " << can.posy << "; debut: " << can.txt.debut << "; fin: " << can.txt.fin;
 		sleep(1);
-		curspos(1,can.posy-base.consy+4); cout << "                     ";		  
-		
+		curspos(1,can.posy-base.consy+4); cout << "                                    ";		  
+	*/	
 		   
 	}
+	//Tester si le canal est toujours actif
+	if(can.txt.debut==can.txt.fin) can.actif = false;
 }
 
-	*/
 	
 //Et maintenant... Tester?
 						//Avec les dimensions du jeu graphique simple!
 
 
-					
+		/*			
 					
 							
 int main(void) {
@@ -483,36 +595,45 @@ int main(void) {
 	out('H'); out('e'); out('l'); out('l'); out('o'); out('?');	out('\n');  //Fonctionne!
 
 	canal can1;
-	can1.txt + "Je pèse des éléphants géants, malheureusement.";
+	can1.txt.ajout("Je pèse des éléphants géants, malheureusement.");
 
 	string teststring = "Lalalilalere";
 	int testpos = 0;
 
 	StringAsVect teststringas;
-	teststringas + "Lalalilalere";
+	teststringas.ajout("Lalalilalere");
 	
-	/*
 	StringAsVect teststringasaccent;
-	teststringasaccent + "LéLôlùlà";
-	*/
+	teststringasaccent.ajout("LéLôlùlà");
+	
 
 	int currentt = timems();
 	int nxtt = currentt + 500;
 
+	cout << "  Initialisation terminée";
+
+
 	while(true){
 		currentt = timems();
-		if(currentt>nxtt) {cout << "Test"; nxtt = currentt + 500;}	//Fonctionne		
-		//if(currentt>nxtt) {read(can1); nxtt = currentt + 500;}			//Ne s'affiche pas + avorte le processus
-		//if(currentt>nxtt) {out(can1.txt[0]); can1.txt-1; nxtt = currentt + 500;}			//Ne s'affiche pas
-		//if(currentt>nxtt) {mem.souvenir[can1.posx][can1.posy] = can1.txt[0]; nxtt = currentt + 500; can1.posx++;}     //Avorte le process
+		//if(currentt>nxtt) {cout << "Test"; nxtt = currentt + 200;}	//Fonctionne		
+		if(currentt>nxtt) {read(can1); nxtt = currentt + 200;}			//Commence à s'afficher, mais avorte le processus après invariablement le 4e caractère
+														//Si on enlève la ligne qui alloue à la mémoire, ça marche bien.
+		
+		
+		
+				/////Ce qui suit devrait théoriquement +- marche, selon moi; mais je n'ai pas testé. 
+		
+		//if(currentt>nxtt) {out(can1.txt[0]); can1.txt-1; nxtt = currentt + 200;}			//Ne s'affiche pas
+		//if(currentt>nxtt) {mem.souvenir[can1.posx][can1.posy] = can1.txt[0]; nxtt = currentt + 200; can1.posx++;}     //Avorte le process
 		/*if(currentt>nxtt) {
 			mem.souvenir[testpos][0] = teststring[testpos];                         //Avorte le process, mais s'affiche (avant de crasher)
-			cout << mem.souvenir[testpos][0] ; nxtt = currentt + 500; testpos++;}     
-		}*/
-		//if(currentt>nxtt) {cout << teststringas[testpos]; nxtt = currentt + 500; testpos++;}    //S'affiche complètement.	                                         
-		//if(currentt>nxtt) {out(teststringas[testpos]); nxtt = currentt + 500; testpos++;}    //S'affiche complètement... Des fois. Sinon s'avorte.	                                         
-		//if(currentt>nxtt) {out(teststringasaccent[testpos]); nxtt = currentt + 500; testpos++;}    //S'est affiché à un moment donné? Sinon s'avorte.                        
-		
+			cout << mem.souvenir[testpos][0] ; nxtt = currentt + 200; testpos++;}     
+		}
+		//if(currentt>nxtt) {cout << teststringas[testpos]; nxtt = currentt + 200; testpos++;}    //S'affiche complètement.	                                         
+		//if(currentt>nxtt) {out(teststringas[testpos]); nxtt = currentt + 200; testpos++;}    //S'affiche complètement... Des fois. Sinon s'avorte.	                                         
+		//if(currentt>nxtt) {out(teststringasaccent[testpos]); nxtt = currentt + 200; testpos++;}    //S'est affiché à un moment donné? Sinon s'avorte.                        
+		//if(currentt>nxtt) {out(teststringas[0]); teststringas-1; nxtt = currentt + 200;}			//S'affiche n'importe comment
+
 	}
 }
 				//Conclusions:
@@ -557,7 +678,20 @@ int main(void) {
 					//Indice: J'ai encore eu un std::bad_alloc, même si je n'ai maintenant que 3 StringAsFactor d'actifs.
 					//        Je ne comprends définitivement pas ce qui se passe.
 					
-			/*				
+					//Indice: J'ai fermé le logiciel d'écriture+compilation en c++, et l'ai rouvert. Ça marche maintenant.
+					
+					//Indice: Le texte qui ne s'affichait pas était dû simplement à une erreur dans StringAsVect operator- (debut-fin au lieu de fin-debut). Corrigée.
+					
+					//Indice: Je pensais que les erreurs étaient dues à un manque d'espace d'allocation.
+								//Mais après avoir ajouté des message d'erreur contre ces erreurs, rien n'apparaît.
+								//Ça plante sans rien dire.
+							
+						//C'était juste parce que je n'avais pas la bonne taille pour la mémoire, finalement. Il semble.
+					
+					//Là, tout semble marcher.
+					
+					
+							
 int main(void) {
 
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
@@ -570,27 +704,36 @@ int main(void) {
 	canal can2;
 	
 	//Test: changer les délais manuellement
-	can1.delay = 240;
-	can2.delay = 430;
+	can1.delay = 140;
+	can2.delay = 230;
 	
-	//Les ajouter à l'objet canaux
-	canaux += can1; canaux +=can2;
+	//Test: changer les positions manuellement
+	can2.posy = 6;
 	
 	//Ajouter du texte aux canaux
 	string txt0 = "Ceci est du texte! Je dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
-	string txt1 = "Le canal 1 est sooooo boring. Ark. §p10000§\n Je suis le canal 2.";
-	canaux[0].txt = txt0;
-	//canaux[0].delay = 200;              //Error: using temporary as lvalue [-fpermissive]
+	string txt1 = "Le canal 1 est sooooo boring. Ark. §p1000§\n Je suis le canal 2.";
+	can1.txt.ajout(txt0); can2.txt.ajout(txt1);
 	
-	canaux[1].txt = txt1;
-	//canaux[1].delay = 400;
-
+	//Rendre manuellement les canaux actifs
+	can1.actif = true; can2.actif = true;	
+	
 	//Faire une boucle pour que les canaux s'expriment!
 	while(true){
 		int currentt = timems();
-		for(int canpos = 1; canpos<canaux.nb; canpos++){
-			if(canaux[canpos].nxtt>currentt) read(canaux[canpos]);
-			}
+			if(can1.actif&can1.nxtt<currentt) read(can1);
+			if(can2.actif&can2.nxtt<currentt) read(can2);
 		}
 }					
-*/
+
+			//Conclusion: Ça marche... jusqu'à geler éventuellement? 
+					//Ça gèle quand ça tombe sur le code spécial...
+	
+					//C'était dû à des erreurs dans les fonctions de conversions. Dont des erreurs de compteurs d'itération.
+						//Mais y'avait aussi des fuck avec les types utilisés;
+							//Pour passer les strings correctement, fallait les passer comme constantes;
+								//Mais ça empêchait d'utiliser l'opérateur[] overridé; mais comme str.pt[], ça marche.
+
+
+		//Right. Faudrait juste ajouter un truc pour que la fonction read() s'arrête un jour. Genre s'inactive. J'avais oublié ça.
+						//Done!
