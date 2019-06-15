@@ -54,7 +54,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool actif;			//Déclarer le compteur d'activité
 			double vit;         //Déclarer la vitesse actuelle de défilement et de pauses (toujours par rapport à la base, 1)
 		//Constructeur
-		canal() {nxtt = timems() ; delay = 400 ; posx = 1; posy = 1; actif = false; vit = 1;}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
+		canal() {nxtt = timems() ; delay = 400 ; posx = -1; posy = 0; actif = false; vit = 1;}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 	};
 
 	//ii) Classe : fen ; permet de sauvegarder les paramètres relatifs aux caractéristiques de la fenêtre de sortie (console)
@@ -76,11 +76,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		class memoire{
 			//Membres
 			public: 
-				int nbligne;
+				int nbligne;                //Nombre de lignes totales de stockage (pour éviter de ré-allouer la mémoire tout le temps)
+				int frontline;              //Ligne à laquelle est rendue l'écriture
 				char** souvenir;            //L'objet contient, en façades, des pointeurs pointant à d'autres pointeurs
 			//Constructeur par défaut
 			memoire() {
-				nbligne = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
+				frontline = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
+				nbligne = 500;            
 				souvenir = new char* [base.charx];   //Créer un premier array contenant des pointers
 				for(int col=0; col<base.charx ; col++) {souvenir[col] = new char [nbligne];}    //Créer les lignes pour chaque colonne
 			}
@@ -94,18 +96,26 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 			//Fonction de modification : ajouter une ligne à la suite de la position spécifiée (Opérateur +) 
 			void operator + (int pos) {
-				int emptypos = pos + 1;   //Calculer la position qui sera vide
-				char** nwsouv = new char* [base.charx] ; for(int xpos = 0; xpos<base.charx ; xpos++) {nwsouv [xpos] = new char [nbligne+1];}  //Déclarer le nouvel array (transitoire)
-				int oldpos = 0;  //Déclarer un compteur pour les vieilles positions				
-				for(int nwpos=0; nwpos < nbligne; nwpos++) {  //Remplir, en laissant une position vide
-					if(nwpos==emptypos) {continue;} 
-					for(int xpos = 0; xpos<base.charx ; xpos++) {nwsouv[xpos][nwpos] = souvenir[xpos][oldpos];}
-					oldpos++;
+				if(frontline+1<nbligne) {
+					int emptypos = pos + 1;   //Calculer la position qui sera vide
+					for(int col = 0; col < base.charx; col++) souvenir[col][emptypos];   //Remplir la position vide
+					//Déplacer de 1 tout ce qui vient ensuite, en commençant par la fin
+						for(int lin = frontline; lin > emptypos+1; lin--) for(int col = 0; col < base.charx; col++) souvenir[col][lin+1]=souvenir[col][lin]; 
+					frontline++;   //Noter qu'on ajoute une ligne
+				} else {
+					int emptypos = pos + 1;   //Calculer la position qui sera vide
+					char** nwsouv = new char* [base.charx] ; for(int col = 0; col<base.charx ; col++) {nwsouv [col] = new char [nbligne+500];}  //Déclarer le nouvel array (transitoire)
+					int oldpos = 0;  //Déclarer un compteur pour les vieilles positions				
+					for(int nwpos=0; nwpos < frontline; nwpos++) {  //Remplir, en laissant une position vide
+						if(nwpos==emptypos) {continue;} 
+						for(int xpos = 0; xpos<base.charx ; xpos++) {nwsouv[xpos][nwpos] = souvenir[xpos][oldpos];}
+						oldpos++;
+					}
+					frontline++;   //Noter qu'on ajoute une ligne
+					for(int col=0; col<base.charx ; col++) delete[] souvenir[col] ; delete[] souvenir;  //Éliminer le vieil array   
+					souvenir = nwsouv;  //Assigner le pointeur à l'array actuel
+					//for(int col=0; col<base.charx ; col++) delete[] nwsouv[col] ; delete[] nwsouv;  //Éliminer l'array transitoire
 				}
-				nbligne++;   //Noter qu'on ajoute une ligne
-				for(int col=0; col<base.charx ; col++) delete[] souvenir[col] ; delete[] souvenir;  //Éliminer le vieil array   
-				souvenir = nwsouv;  //Assigner le pointeur à l'array actuel
-				for(int col=0; col<base.charx ; col++) delete[] nwsouv[col] ; delete[] nwsouv;  //Éliminer l'array transitoire
 			}
 		};
 		memoire mem;
@@ -192,16 +202,16 @@ read(canal& can) {
 				for(int countx = can.posx + 1; countx < base.charx ; countx++) mem.souvenir[countx][can.posy] = ' ';     //Effacer le reste de la ligne avec des espaces    
 				mem + can.posy;                         //Cet opérateur introduit une nouvelle ligne à la suite de la position qui lui est fournie			
 				//Updater le correctif de décalage de la console par rapport à la mémoire
-					if(base.refoule) base.consy++; else if(mem.nbligne>base.chary) {base.refoule = true; base.consy++;} 					
+					if(base.refoule) base.consy++; else if(mem.frontline>base.chary) {base.refoule = true; base.consy++;} 					
 				//Sauter une ligne dans la console
 					if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
-						if(can.posy==mem.nbligne-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]
+						if(can.posy==mem.frontline-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]
 							if(can.posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
 						} else {                             //S'il y a d'autres lignes à repousser vers le bas
 							if(can.posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
 							//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
 								curspos(0,can.posy-base.consy + 2);  //Mettre le curseur au début de la reconstruction
-								for(int county = can.posy + 2 ; county < mem.nbligne ; county++) {    // + 2, parce que la mémoire a déjà été updatée
+								for(int county = can.posy + 2 ; county < mem.frontline ; county++) {    // + 2, parce que la mémoire a déjà été updatée
 									for(int countx = 0 ; countx < base.charx ; countx++) out(mem.souvenir[countx][county]);
 								}
 						}
@@ -233,7 +243,16 @@ read(canal& can) {
 			mem.souvenir[can.posx][can.posy] = can.txt[0];   //Inscrire dans la mémoire
 		}	
 		//Effacer le caractère du canal
-		can.txt-0;                          
+		can.txt-0;                     
+		
+		
+		/*       DDDDDDDDDEEEEEEEEEEEEEEEEEEEBBBBBBBBBBBUUUUUUUUUUUUUUUUGGGGGGGGGGGGGGGGGGIIIIIIIIIIIIINNNNNNNNNNNNNNNGGGGGGGGGGGG//////////////
+		//Écrire les positions en x et y!
+		curspos(1,can.posy-base.consy+4); cout << "posx: "<< can.posx << "; posy: " << can.posy;
+		sleep(1);
+		curspos(1,can.posy-base.consy+4); cout << "               ";*/		  
+		
+		   
 	}
 }
 
@@ -260,9 +279,9 @@ int main(void) {
 
 	//Créer les canaux utilisés
 	canal can1;
-	string txt0 = "Ceci est du texte! Je dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
+	string txt0 = "Texte à lire. Texte à lire. Texte à lire.";
 	can1.txt = txt0;
-	can1.txt.out();
+	//can1.txt.out();
 	int currentt = timems();
 
 	while(true){
@@ -276,7 +295,19 @@ int main(void) {
 								//un update de l'utilisation totale de mémoire.
 								
 								//Pour cela, faudrait d'abord que je comprenne exactement qu'est-ce qui a besoin de constructeur/destructeur dans mes vecteurs.
-						//BLargh, j'ai tenté de nettoyer la mémoire, mais ça crash encore plus.
+						//BLargh, j'ai tenté de nettoyer la mémoire (en mettant des delete partout), mais ça crash encore plus.
+	
+				//Quoique... ça plante habituellement (si on oublie le bug persistant de ne pas pouvoir lire les lettres et de mettre n'importe
+				//quel symbole à la place) quand on change de ligne... après la première lettre? Debugging!
+	
+						//Je ne sais pas si j'ai changé quoi que ce soit, mais ça plante avant être rendue à la deuxième ligne. Genre à la moitié de la 1ere.
+	
+	
+			//Oh! Peut-être, pour alléger encore le programme:
+					//Je pourrais mettre un flag accessible à tout le monde, pour décrire c'est quel canal qui a "parlé" en dernier?
+					
+					//Comme ça, si c'est ton propre canal, tu n'as pas à changer de position de curseur; puisque tu y es déjà...
+								//Ça ferait déjà ça de sauvé?
 	
 	}
 			
