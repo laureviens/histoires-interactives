@@ -20,48 +20,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //1) Définir les classes-contenantes dynamiques
-
-	//i) classe : arr ; sauvegarde un array avec son nombre d'éléments
-						//Les membres spéciaux ont été copiés de : http://www.cplusplus.com/doc/tutorial/classes2/
-	template <class Type>
-		class arr {
-			//Valeurs membres	
-			public:
-				Type* pt;  //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
-				int nb;  //Déclarer le nombre d'objets de l'array
-			//Constructeurs	
-				arr<Type>() : nb(0), pt(new Type) {}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
-				arr<Type>(Type nxt) : nb(1), pt(new Type [1]) {pt[0] = nxt;}  //Créer un constructeur pour créer l'objet avec une seule valeur
-				arr<Type>(Type nxt[], int nbpos) : nb(nbpos), pt(new Type[nbpos]) {for(int pos=0; pos < nbpos; pos++) pt[pos] = nxt[pos];}  //Créer un constructeur pour créer à partir d'un array
-			//Destructeur
-				~arr<Type>() {delete[] pt;}
-			//Copy constructor
-				arr<Type>(const arr<Type>& nxt) : nb(nxt.nb), pt(new Type {nxt.pt}) {}
-			//Copy assignment
-				arr<Type>& operator= (const arr<Type>& nxt) {
-					delete[] pt;     //Efface l'array vers lequel je pointe actuellement
-					nb = nxt.nb;     //Change le nombre d'éléments
-					pt = new Type [nb] = nxt.pt;     //Alloue un nouvel espace pour le nouvel objet, et copie
-					return *this;                        //???????? Pourquoi retourner quelque chose dans un = ?
-				}	
-			//Move constructor
-				arr<Type>(arr<Type>&& nxt) : nb(nxt.nb), pt(nxt.pt) {nxt.pt = nullptr;}  //Copie seulement le pointeur (pas son contenu), et efface le temporaire
-			//Move assignement
-				arr<Type>& operator= (arr<Type>&& nxt) {
-					delete[] pt;
-					nb = nxt.nb;
-					pt = nxt.pt;         //Copier seulement le pointeur, sans faire une copie du contenu
-					nxt.pt = nullptr;    //Rendre nul le pointeur temporaire
-					return *this;
-				}
-	   		//Opérateur d'accès : []
-			   arr<Type>& operator[] (int pos) {
-			   		return(pt[pos]);
-			   }			
-		};
 	
-	
-	//ii) classe : StringAsVect ; permet un simulâcre d'allocation dynamique de mémoire, avec la magie de voir plus grand + indexation
+	//i) classe : StringAsVect ; permet un simulâcre d'allocation dynamique de mémoire, avec la magie de voir plus grand + indexation
 	class StringAsVect {
 	//Comment ça marche:
 			//L'array est d'abord créé plus gros que nécessaire. On ne supprime pas vraiment les valeurs qui y passent,
@@ -103,20 +63,21 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}	
 		//Destructeur
 			~StringAsVect() {delete[] pt;}	
-		//Copy constructor
+		//Copy constructor  
 			StringAsVect(const StringAsVect& nxt) : nb(nxt.nb), debut(nxt.debut), fin(nxt.fin) {
-					try{pt = new char{*nxt.pt};}        //Essayer d'allouer l'espace
+					try{pt = new char [nb];}        //Essayer d'allouer l'espace
 					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)			
-				pt = new char{*nxt.pt};             	//Vraiment allouer l'espace			
+				pt = new char [nb];             	//Vraiment allouer l'espace		
+				for(int pos=debut; pos<fin; pos++) pt[pos] = nxt.pt[pos];        //Copier le contenu					
 			}
 		//Copy assignment
 			StringAsVect& operator= (const StringAsVect& nxt) {
-				delete[] pt;     //Efface l'array vers lequel je pointe actuellement
-				nb = nxt.nb;     //Change le nombre d'éléments
-				debut = nxt.debut; fin = nxt.fin;           //Change la position de début et de fin du vecteur accessible
-					try{pt = new char [nb] {*nxt.pt};}  //Essayer d'allouer l'espace 
+				nb = nxt.nb; debut = nxt.debut; fin = nxt.fin;				
+				delete[] pt;     //Effacer l'array vers lequel je pointe actuellement
+					try{pt = new char [nb];}  //Essayer d'allouer l'espace 
 					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class StringAsVect: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)				
-				pt = new char [nb] {*nxt.pt};     		//Vraiment allouer un nouvel espace pour le nouvel objet, et copie
+				pt = new char [nb];		     		//Vraiment allouer un nouvel espace pour le nouvel objet
+				for(int pos=debut; pos<fin; pos++) pt[pos] = nxt.pt[pos];        //Copier le contenu
 				return *this;                        //???????? Pourquoi retourner quelque chose dans un = ?
 			}	
 		//Move constructor
@@ -124,8 +85,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Move assignement
 			StringAsVect& operator= (StringAsVect&& nxt) {
 				delete[] pt;
-				nb = nxt.nb;
-				debut = nxt.debut; fin = nxt.fin;
+				nb = nxt.nb; debut = nxt.debut; fin = nxt.fin;
 				pt = nxt.pt;         //Copier seulement le pointeur, sans faire une copie du contenu
 				nxt.pt = nullptr;    //Rendre nul le pointeur temporaire
 				return *this;
@@ -209,7 +169,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 	};		
 
-	//iii) classe : memoire ; permet de sauvegarder la "mémoire" de la console, c'est-à-dire tous le texte s'y étant déjà inscrit
+	//ii) classe : memoire ; permet de sauvegarder la "mémoire" de la console, c'est-à-dire tous le texte s'y étant déjà inscrit
 		
 		class memoire{
 			//Membres
@@ -272,9 +232,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}
 			}
 		};
-		memoire mem {27};                   //INITIALISATION DE L'OBJET; VÉRIFIER AVEC LES BONNES DIMENSIONS POUR LA FENÊTRE!!!
-		
-							//ENCORE MIEUX: METTRE L'OBJET DE MÉMOIRE EN TANT QU'ARGUMENT DE READ, POUR QU'ON PUISSE LE DÉFINIR QUAND ON VEUT!
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //2) Définir les fonctions et objets de manipulation
@@ -407,19 +364,36 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Constructeurs
 		fen() {charx = 1; chary = 1; consy = 0; refoule = false;}      //Créer un constructeur par défaut, pour initialiser tous les paramètres
 					//À RETRAVAILLER POUR Y METTRE UNE FONCTION PERMETTANT DE DEVINER AUTOMATIQUEMENT LES DIMENSIONS DE LA FENÊTRE!
+								//Au pire, simplement en utilisant fonction genre GetCursPos(); et en notant c'est après combien de ++ qu'on revient à 0.
 		fen(int x, int y) {charx = x; chary = y; consy = 0; refoule = false;}      //Créer un constructeur permettant d'assigner manuellement les dimensions de la fenêtre	
 	};
-		//Créer l'objet base, qui contiendra les information sur la fenêtre de base
-		fen base(27,13);     //EN CE MOMENT, A LES DIMENSIONS DE 27 COLONNES ET 13 LIGNES (VOIR JEU GRAPHIQUE SIMPLE)
+	
 
+	//iii) classe : arr ; sauvegarde un array avec son nombre d'éléments
+						//Les membres spéciaux ont été copiés de : http://www.cplusplus.com/doc/tutorial/classes2/
+	template <class Type>
+		class arr {
+			//Valeurs membres	
+			public:
+				Type* pt;  //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
+				int nb;  //Déclarer le nombre d'objets de l'array
+			//Constructeurs	:
+				arr<Type>() : nb(0), pt(nullptr) {cout << "\nAttention: cet objet arr<> est vide (nullptr)";}  //Défaut 
+				arr<Type>(Type nxt) : nb(1), pt(nxt) {}  //Une seule valeur
+				arr<Type>(Type* nxt, int nbpos) : nb(nbpos), pt(nxt) {}  //Array pré-existant
+	   		//Opérateur d'accès : []
+			   Type operator[] (int pos) {
+			   		return(pt[pos]);
+			   }			
+		};	
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//4) Écrire la fonction read()
-read(canal& can) {
+//4) Écrire la fonction lire()
+lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
 	//Updater le "next time"
-	can.nxtt += can.delay;
+	canaux.pt[canpos].nxtt += canaux.pt[canpos].delay;
 	//Interpréter les "codes spéciaux" (§...§)
-	if(can.txt[0]=='§'){		
+	if(canaux.pt[canpos].txt[0]=='§'){		
 	
 			//DEBUGGGINGGG
 	
@@ -430,7 +404,7 @@ read(canal& can) {
 	
 	
 		//Déterminer la longueur du code spécial
-			int CodeSpecialLong = CodeSpecialLongueur(can.txt);	
+			int CodeSpecialLong = CodeSpecialLongueur(canaux.pt[canpos].txt);	
 	
 	/*		
 					//DEBUGGING
@@ -439,7 +413,7 @@ read(canal& can) {
 									
 			
 		//Lire le code spécial		
-			if(can.txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture
+			if(canaux.pt[canpos].txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture
 			
 		/*	
 					//DEBUGGING
@@ -447,18 +421,18 @@ read(canal& can) {
 		*/
 			
 			
-				double val = CodeSpecialExtractDouble(can.txt,CodeSpecialLong);       //Extraire le temps que durera la pause
-				can.nxtt += round(val * can.vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
+				double val = CodeSpecialExtractDouble(canaux.pt[canpos].txt,CodeSpecialLong);       //Extraire le temps que durera la pause
+				canaux.pt[canpos].nxtt += round(val * canaux.pt[canpos].vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
 
 		/*	
 				//DEBUGGGING
-					cout << "\nLe temps d'attente extrait est: " << val*can.vit;
+					cout << "\nLe temps d'attente extrait est: " << val*canaux.pt[canpos].vit;
 		*/
 
 
-			} else if(can.txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
-				double val = CodeSpecialExtractDouble(can.txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
-				can.vit = val;
+			} else if(canaux.pt[canpos].txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
+				double val = CodeSpecialExtractDouble(canaux.pt[canpos].txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
+				canaux.pt[canpos].vit = val;
 			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE
 			
 			/*
@@ -473,19 +447,19 @@ read(canal& can) {
 			
 					
 		//Effacer le code spécial du canal
-		can.txt.supprim(CodeSpecialLong);                 
+		canaux.pt[canpos].txt.supprim(CodeSpecialLong);                 
 		
 		/*
 				//DEBUGGINGGGGG
 					cout << "\nMaintenant, le reste du texte est:";
-					for(int a=can.txt.debut; a<can.txt.fin; a++) out(can.txt[a]);
+					for(int a=canaux.pt[canpos].txt.debut; a<canaux.pt[canpos].txt.fin; a++) out(canaux.pt[canpos].txt[a]);
 		*/
 		
 		      
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
-			if(can.txt[0]=='\n'|can.posx>=base.charx-1) jump = true;     //base.charx - 1 ; car c'est en integer, et can.posx commence à 0!
+			if(canaux.pt[canpos].txt[0]=='\n'|canaux.pt[canpos].posx>=base.charx-1) jump = true;     //base.charx - 1 ; car c'est en integer, et canaux.pt[canpos].posx commence à 0!
 			if(jump) {
 				
 				
@@ -499,28 +473,28 @@ read(canal& can) {
 				
 				
 				//Sauter une ligne dans la mémoire
-				for(int countx = can.posx + 1; countx < base.charx ; countx++) mem.souvenir[countx][can.posy] = ' ';     //Effacer le reste de la ligne avec des espaces    
-				mem.newline(can.posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie			
+				for(int countx = canaux.pt[canpos].posx + 1; countx < base.charx ; countx++) mem.souvenir[countx][canaux.pt[canpos].posy] = ' ';     //Effacer le reste de la ligne avec des espaces    
+				mem.newline(canaux.pt[canpos].posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie			
 				//Updater le correctif de décalage de la console par rapport à la mémoire
 					if(base.refoule) base.consy++; else if(mem.frontline>base.chary) {base.refoule = true; base.consy++;} 					
 				//Sauter une ligne dans la console
 					if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
-						if(can.posy==mem.frontline-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]
-							if(can.posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
+						if(canaux.pt[canpos].posy==mem.frontline-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]
+							if(canaux.pt[canpos].posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
 						} else {                             //S'il y a d'autres lignes à repousser vers le bas
-							if(can.posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
+							if(canaux.pt[canpos].posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
 							//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
-								curspos(0,can.posy-base.consy + 2);  //Mettre le curseur au début de la reconstruction
-								for(int county = can.posy + 2 ; county < mem.frontline ; county++) {    // + 2, parce que la mémoire a déjà été updatée
+								curspos(0,canaux.pt[canpos].posy-base.consy + 2);  //Mettre le curseur au début de la reconstruction
+								for(int county = canaux.pt[canpos].posy + 2 ; county < mem.frontline ; county++) {    // + 2, parce que la mémoire a déjà été updatée
 									for(int countx = 0 ; countx < base.charx ; countx++) out(mem.souvenir[countx][county]);
 								}
 						}
 					} else {                         //La console est saturée: on pousse le texte vers le haut!
 						//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
-							curspos(can.posy-base.consy,0); for(int countx = 0; countx < base.charx ; countx++) out(' '); 					
+							curspos(canaux.pt[canpos].posy-base.consy,0); for(int countx = 0; countx < base.charx ; countx++) out(' '); 					
 						//Tout ré-écrire, mais une ligne plus haut
 	    					curspos(0,0);   //Commencer en haut, puis descendre naturellement
-							for(int county = base.consy; county < can.posy; county++){             //base.consy : facteur de décalage de la console
+							for(int county = base.consy; county < canaux.pt[canpos].posy; county++){             //base.consy : facteur de décalage de la console
 										//VÉRIFIER L'INITIATION DE COUNTY: ÇA SEMBLE UN BEL ADON QUE base.consy, UN "count" EN INTEGER SIMPLE,
 										//S'EMBOÎTE PARFAITEMENT AVEC L'INDEXATION QUI COMMENCE À 0!
 								for(int countx = 0 ; countx < base.charx ; countx++) out(mem.souvenir[countx][county]);
@@ -528,61 +502,53 @@ read(canal& can) {
 					}
 					
 					
-/*                         	////////////Va falloir débuguer cette partir éventuellement!!!					
 					
 				//Updater les positions dans les autres canaux    //Parce que leur position dans la mémoire a bougé //la position dans la console est quant à elle gérée par base.consy
-				for(int countcan = 0 ; countcan < canx.nb ; countcan++) {        
-					if(canx[countcan].posy > can.posy) canx[countcan].posy++;         //la mémoire refoule toujours vers le bas!
+				for(int countcan = 0 ; countcan < canaux.nb ; countcan++) {
+					if(countcan==canpos) continue;        
+					if(canaux.pt[countcan].posy > canaux.pt[canpos].posy) canaux.pt[countcan].posy++;         //la mémoire refoule toujours vers le bas!
 				}            
-				//En passant, je l'ai effacé, mais canx est un argument de read() de type arr<canal>&   */
 				
 				
 				
 				//Updater les positions dans le canal actuel
-				if(can.txt[0]=='\n') {can.posx = -1;} else can.posx = 0;			       //en x    
+				if(canaux.pt[canpos].txt[0]=='\n') {canaux.pt[canpos].posx = -1;} else canaux.pt[canpos].posx = 0;			       //en x    
 									//Position "impossible", pour signifier qu'on a changé de ligne, mais écrire le prochain à la bonne place
 	////////										//FLAG POUR POSITION IMPOSSIBLE; PEUT-ÊTRE QUE ÇA VA EMMENER UN BUG ÉVENTUELLEMENT?
-				can.posy++;																   //en y 
-			} else {can.posx++;}       //Updater seulement posx s'il n'y a pas de mouvement vertical
+				canaux.pt[canpos].posy++;																   //en y 
+			} else {canaux.pt[canpos].posx++;}       //Updater seulement posx s'il n'y a pas de mouvement vertical
 		//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du charactère actuel (dans la mémoire)!		
-		if(can.txt[0]!='\n') {
-			curspos(can.posx,can.posy-base.consy) ; out(can.txt[0]);     //Inscrire dans la console
+		if(canaux.pt[canpos].txt[0]!='\n') {
+			curspos(canaux.pt[canpos].posx,canaux.pt[canpos].posy-base.consy) ; out(canaux.pt[canpos].txt[0]);     //Inscrire dans la console
 			
 			/*
 						/////DDEEBBUUGGINNGG
-						curspos(0,can.posx + 8); cout << can.posx;	
+						curspos(0,canaux.pt[canpos].posx + 8); cout << canaux.pt[canpos].posx;	
 			*/
 			
-			mem.souvenir[can.posx][can.posy] = can.txt[0];   //Inscrire dans la mémoire
+			mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy] = canaux.pt[canpos].txt[0];   //Inscrire dans la mémoire
 				
 				/*		
 						////////DDDDDDDEBUGING
-						curspos(1,can.posx + 8); cout << "Mem recorded on " << can.posx << cout << " : " << mem.souvenir[can.posx][can.posy];
+						curspos(1,canaux.pt[canpos].posx + 8); cout << "Mem recorded on " << canaux.pt[canpos].posx << cout << " : " << mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy];
 				*/
 						
 		}	
 		//Effacer le caractère du canal
-		can.txt.supprim(1);                     
+		canaux.pt[canpos].txt.supprim(1);                     
 		
 	/*
 		//       DDDDDDDDDEEEEEEEEEEEEEEEEEEEBBBBBBBBBBBUUUUUUUUUUUUUUUUGGGGGGGGGGGGGGGGGGIIIIIIIIIIIIINNNNNNNNNNNNNNNGGGGGGGGGGGG//////////////
 		//Écrire les positions en x et y!
-		curspos(1,can.posy-base.consy+4); cout << "posx: "<< can.posx << "; posy: " << can.posy << "; debut: " << can.txt.debut << "; fin: " << can.txt.fin;
+		curspos(1,canaux.pt[canpos].posy-base.consy+4); cout << "posx: "<< canaux.pt[canpos].posx << "; posy: " << canaux.pt[canpos].posy << "; debut: " << canaux.pt[canpos].txt.debut << "; fin: " << canaux.pt[canpos].txt.fin;
 		sleep(1);
-		curspos(1,can.posy-base.consy+4); cout << "                                    ";		  
+		curspos(1,canaux.pt[canpos].posy-base.consy+4); cout << "                                    ";		  
 	*/	
 		   
 	}
-	//Tester si le canal est toujours actif
-	if(can.txt.debut==can.txt.fin) can.actif = false;
-}
-
-	
-//Et maintenant... Tester?
-						//Avec les dimensions du jeu graphique simple!
-
-
-		/*			
+	//Vérifier s'il reste toujours du texte à passer dans le canal
+	if(canaux.pt[canpos].txt.debut==canaux.pt[canpos].txt.fin) canaux.pt[canpos].actif = false;
+}	
 					
 							
 int main(void) {
@@ -590,114 +556,14 @@ int main(void) {
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
 		//MoveWindow(window_handle, x, y, width, height, redraw_window);
 		MoveWindow(DimConsole, 500, 250, 200, 200, TRUE);                   //Les unités sont en pixels!
-                                                                         //200x200 pixels = 13 lignes; 27 colonnes
+       		                                                                //200x200 pixels = 13 lignes; 27 colonnes
 
-	out('H'); out('e'); out('l'); out('l'); out('o'); out('?');	out('\n');  //Fonctionne!
-
-	canal can1;
-	can1.txt.ajout("Je pèse des éléphants géants, malheureusement.");
-
-	string teststring = "Lalalilalere";
-	int testpos = 0;
-
-	StringAsVect teststringas;
-	teststringas.ajout("Lalalilalere");
+	//Créer l'objet base, qui contiendra les information sur la fenêtre de base
+	fen base(27,13);     //EN CE MOMENT, A LES DIMENSIONS DE 27 COLONNES ET 13 LIGNES (VOIR JEU GRAPHIQUE SIMPLE)
 	
-	StringAsVect teststringasaccent;
-	teststringasaccent.ajout("LéLôlùlà");
+	//Créer l'objet de mémoire, qui stockera tous les caractères utilisés
+	memoire mem {27};                   //INITIALISATION DE L'OBJET; VÉRIFIER AVEC LES BONNES DIMENSIONS POUR LA FENÊTRE!!!
 	
-
-	int currentt = timems();
-	int nxtt = currentt + 500;
-
-	cout << "  Initialisation terminée";
-
-
-	while(true){
-		currentt = timems();
-		//if(currentt>nxtt) {cout << "Test"; nxtt = currentt + 200;}	//Fonctionne		
-		if(currentt>nxtt) {read(can1); nxtt = currentt + 200;}			//Commence à s'afficher, mais avorte le processus après invariablement le 4e caractère
-														//Si on enlève la ligne qui alloue à la mémoire, ça marche bien.
-		
-		
-		
-				/////Ce qui suit devrait théoriquement +- marche, selon moi; mais je n'ai pas testé. 
-		
-		//if(currentt>nxtt) {out(can1.txt[0]); can1.txt-1; nxtt = currentt + 200;}			//Ne s'affiche pas
-		//if(currentt>nxtt) {mem.souvenir[can1.posx][can1.posy] = can1.txt[0]; nxtt = currentt + 200; can1.posx++;}     //Avorte le process
-		/*if(currentt>nxtt) {
-			mem.souvenir[testpos][0] = teststring[testpos];                         //Avorte le process, mais s'affiche (avant de crasher)
-			cout << mem.souvenir[testpos][0] ; nxtt = currentt + 200; testpos++;}     
-		}
-		//if(currentt>nxtt) {cout << teststringas[testpos]; nxtt = currentt + 200; testpos++;}    //S'affiche complètement.	                                         
-		//if(currentt>nxtt) {out(teststringas[testpos]); nxtt = currentt + 200; testpos++;}    //S'affiche complètement... Des fois. Sinon s'avorte.	                                         
-		//if(currentt>nxtt) {out(teststringasaccent[testpos]); nxtt = currentt + 200; testpos++;}    //S'est affiché à un moment donné? Sinon s'avorte.                        
-		//if(currentt>nxtt) {out(teststringas[0]); teststringas-1; nxtt = currentt + 200;}			//S'affiche n'importe comment
-
-	}
-}
-				//Conclusions:
-				
-				//C'est la fonction read() qui fait planter,
-						//et non le compteur.
-						
-				//Yé! Faut maintenant trouver ce qui ne fonctionne pas dans read()!
-					//Indice: La première lettre s'affiche correctement.		
-					//Indice: les caractères spéciaux n'ont même pas été abordés.
-					//Indice: ce n'est pas dans les jumps non plus. Y'a pas de jump qui se passe.
-		
-					//Ce qui nous laisse donc, à peut-être bugger:
-							//Effacer le caractère du canal
-							//Inscrire le caractère dans la console et dans la mémoire      		
-
-					//Coupable: inscrire le caractère dans la mémoire bug.
-					//Indice: le texte ne s'affiche toujours pas correctement même si on enlève cette partie fautive.
-					//Coupable: juste la partie d'affichage du canal, sans read(), ne fonctionne pas. genre[] et -.
-					
-					//Indice: Rine ne semble plus marcher. Je pense que le point que j'ai changé est que j'ai ajouté un StringAsAccent dans la mémoire dynamique.
-					
-					//Indice: Une itération m'a donné: terminate called after throwing an instance of 'std::bad_alloc' what():   std::bad_alloc
-					
-							/*In general you cannot and should not try to respond to this error. bad_alloc indicates that a resource cannot be allocated because not enough memory is available. In most scenarios your program cannot hope to cope with that, and terminating soon is the only meaningful behaviour.
-							
-							Worse, modern operating systems often over-allocate: malloc and new will always return a valid pointer, even if there is technically no (or not enough) free memory left – so std::bad_alloc will never be thrown, or is at least not a reliable sign of memory exhaustion. Instead, attempts to access the allocated memory will then result in an error, which is not catchable.
-							
-							The only thing you could do when catching std::bad_alloc is to perhaps log the error, and try to ensure a safe program termination by freeing outstanding resources (but this is done automatically in the normal course of stack unwinding after the error gets thrown if the program uses RAII appropriately).*/					
-			
-							//Donc... C'est un peu weird.
-									//Parce que techniquement, y'aurait pas vraiment d'autres instances de "new" qui seraient callées at this point,
-									//puisque je ne fait littéralement rien dans la plupart des tentatives.
-									//On pire, je supprime dans un StringAsVect, qui ne lance pas de new.
-									
-							//La conclusion la plus probable est sûrement que ma mémoire dynamique est déjà saturée.		 
-							//Ce qui est un peu triste, parce que j'ai pas tant de trucs en mémoire que ça.
-							
-					//Indice: J'ai tenté de mettre tout les objets de grosse initiation en commentaire, en oubliant la mémoire;
-					//        ce qui a donné std::bad_alloc. J'ai ensuite mis la mémoire en commentaire, et j'ai obtenu une belle run.
-					
-					//Indice: J'ai encore eu un std::bad_alloc, même si je n'ai maintenant que 3 StringAsFactor d'actifs.
-					//        Je ne comprends définitivement pas ce qui se passe.
-					
-					//Indice: J'ai fermé le logiciel d'écriture+compilation en c++, et l'ai rouvert. Ça marche maintenant.
-					
-					//Indice: Le texte qui ne s'affichait pas était dû simplement à une erreur dans StringAsVect operator- (debut-fin au lieu de fin-debut). Corrigée.
-					
-					//Indice: Je pensais que les erreurs étaient dues à un manque d'espace d'allocation.
-								//Mais après avoir ajouté des message d'erreur contre ces erreurs, rien n'apparaît.
-								//Ça plante sans rien dire.
-							
-						//C'était juste parce que je n'avais pas la bonne taille pour la mémoire, finalement. Il semble.
-					
-					//Là, tout semble marcher.
-					
-					
-							
-int main(void) {
-
-	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
-		//MoveWindow(window_handle, x, y, width, height, redraw_window);
-		MoveWindow(DimConsole, 500, 250, 200, 200, TRUE);                   //Les unités sont en pixels!
-                                                                         //200x200 pixels = 13 lignes; 27 colonnes
 
 	//Créer les canaux utilisés
 	canal can1;
@@ -712,28 +578,35 @@ int main(void) {
 	
 	//Ajouter du texte aux canaux
 	string txt0 = "Ceci est du texte! Je dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
-	string txt1 = "Le canal 1 est sooooo boring. Ark. §p1000§\n Je suis le canal 2.";
+	string txt1 = "§p1000§Le canal 1 est sooooo boring. Ark.§p1000§\n§p1000§Je suis le canal 2.";
 	can1.txt.ajout(txt0); can2.txt.ajout(txt1);
 	
 	//Rendre manuellement les canaux actifs
 	can1.actif = true; can2.actif = true;	
 	
-	//Faire une boucle pour que les canaux s'expriment!
-	while(true){
-		int currentt = timems();
-			if(can1.actif&can1.nxtt<currentt) read(can1);
-			if(can2.actif&can2.nxtt<currentt) read(can2);
-		}
-}					
-
-			//Conclusion: Ça marche... jusqu'à geler éventuellement? 
-					//Ça gèle quand ça tombe sur le code spécial...
+	//Ajouter les canaux dans l'objet arr<canal>
+	canal canx [2] = {can1,can2};
+	arr<canal> canaux (canx,2);          
 	
-					//C'était dû à des erreurs dans les fonctions de conversions. Dont des erreurs de compteurs d'itération.
-						//Mais y'avait aussi des fuck avec les types utilisés;
-							//Pour passer les strings correctement, fallait les passer comme constantes;
-								//Mais ça empêchait d'utiliser l'opérateur[] overridé; mais comme str.pt[], ça marche.
+	//Faire une boucle pour que les canaux s'expriment!
+	bool gogogo = true;
+	while(gogogo){
+		int currentt = timems();
+			if(canaux.pt[0].actif&canaux.pt[0].nxtt<currentt) lire(canaux,0,base,mem);
+			if(canaux.pt[1].actif&canaux.pt[1].nxtt<currentt) lire(canaux,1,base,mem);
+			if(!canaux.pt[0].actif&!canaux.pt[1].actif) gogogo = false;
+		}		
+		
+	//Lire la mémoire, pour voir elle a l'air de quoi	
+	Sleep(5000);
+	curspos(0,0);
+	for(int posy=0; posy<base.chary; posy++){
+		for(int posx=0; posx<base.charx; posx++) cout << mem.souvenir[posx][posy];
+	}	
+				//Bon, clairement que la mémoire ne va pas.
+
+}		
 
 
-		//Right. Faudrait juste ajouter un truc pour que la fonction read() s'arrête un jour. Genre s'inactive. J'avais oublié ça.
-						//Done!
+
+
