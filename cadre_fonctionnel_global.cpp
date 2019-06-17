@@ -182,12 +182,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Constructeur par défaut
 			memoire() {
 				nbcol = 1;
-				frontline = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
+				frontline = 0;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
 				nbligne = TailleBase;            
 					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
 					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
 				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
-				for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}    //Créer les lignes pour chaque colonne
+				//Créer les lignes pour chaque colonne, et les remplir d'espace
+				for(int col=0; col<nbcol; col++) {souvenir[col] = new char [nbligne]; for(int ligne=0; ligne<nbligne; ligne++) souvenir[col][ligne] = ' ';}
 			}
 			//Constructeur pour avoir le bon nombre de colonnes
 			memoire(int ncol) {
@@ -197,7 +198,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
 					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
 				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
-				for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}    //Créer les lignes pour chaque colonne
+				//Créer les lignes pour chaque colonne, et les remplir d'espace
+				for(int col=0; col<nbcol; col++) {souvenir[col] = new char [nbligne]; for(int ligne=0; ligne<nbligne; ligne++) souvenir[col][ligne] = ' ';}
 			}			//Destructeur
 			~memoire() {
 				for(int col=0; col<nbcol ; col++) delete[] souvenir[col] ; delete[] souvenir;   //Bien déconstruire tout proprement
@@ -210,10 +212,25 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			void newline (int pos) {
 				if(frontline+1<nbligne) {
 					int emptypos = pos + 1;   //Calculer la position qui sera vide
-					for(int col = 0; col < nbcol; col++) souvenir[col][emptypos];   //Remplir la position vide
+					for(int col = 0; col < nbcol; col++) souvenir[col][emptypos] = ' ';   //Remplir la position vide d'espace
 					//Déplacer de 1 tout ce qui vient ensuite, en commençant par la fin
-					for(int lin = frontline; lin > emptypos+1; lin--) for(int col = 0; col < nbcol; col++) souvenir[col][lin+1]=souvenir[col][lin]; 
+					for(int lin = frontline; lin > emptypos; lin--) for(int col = 0; col < nbcol; col++) souvenir[col][lin+1]=souvenir[col][lin]; 
 					frontline++;   //Noter qu'on ajoute une ligne
+					
+					
+				/*	
+					//DEBUGINGG: afficher la mémoire, pour voir c'que ça donne.
+						//curspos(0,0);
+						for(int posy=0; posy<13; posy++){
+							cout << posy;
+							for(int posx=0; posx<27; posx++) cout << souvenir[posx][posy];
+							}
+							abort();
+						Sleep(4000);
+				*/	
+					
+					
+					
 				} else {
 					int emptypos = pos + 1;   //Calculer la position qui sera vide
 						try{char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}}  //Tenter d'allouer l'espace
@@ -221,7 +238,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
 					int oldpos = 0;  //Déclarer un compteur pour les vieilles positions				
 					for(int nwpos=0; nwpos < frontline; nwpos++) {  //Remplir, en laissant une position vide
-						if(nwpos==emptypos) {continue;} 
+						if(nwpos==emptypos) {for(int xpos = 0; xpos<nbcol ; xpos++) nwsouv[xpos][nwpos] = ' '; continue;}  //Cette ligne remplit d'espace, puis saute les autres instructions jusqu'à la fin de la boucle 
 						for(int xpos = 0; xpos<nbcol ; xpos++) {nwsouv[xpos][nwpos] = souvenir[xpos][oldpos];}
 						oldpos++;
 					}
@@ -394,101 +411,51 @@ lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
 	canaux.pt[canpos].nxtt += canaux.pt[canpos].delay;
 	//Interpréter les "codes spéciaux" (§...§)
 	if(canaux.pt[canpos].txt[0]=='§'){		
-	
-			//DEBUGGGINGGG
-	
-	/*
-				cout << "\n\n\n\nWouhouuu!! Code spécial!!!";
-	*/
-	
-	
-	
 		//Déterminer la longueur du code spécial
-			int CodeSpecialLong = CodeSpecialLongueur(canaux.pt[canpos].txt);	
-	
-	/*		
-					//DEBUGGING
-						cout << "\nLa longueur du code spécial est connue!!";
-	*/
-									
-			
+			int CodeSpecialLong = CodeSpecialLongueur(canaux.pt[canpos].txt);			
 		//Lire le code spécial		
-			if(canaux.pt[canpos].txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture
-			
-		/*	
-					//DEBUGGING
-						cout << "\nLe code spécial a ete reconnu!";
-		*/
-			
-			
+			if(canaux.pt[canpos].txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture		
 				double val = CodeSpecialExtractDouble(canaux.pt[canpos].txt,CodeSpecialLong);       //Extraire le temps que durera la pause
 				canaux.pt[canpos].nxtt += round(val * canaux.pt[canpos].vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
-
-		/*	
-				//DEBUGGGING
-					cout << "\nLe temps d'attente extrait est: " << val*canaux.pt[canpos].vit;
-		*/
-
-
 			} else if(canaux.pt[canpos].txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
 				double val = CodeSpecialExtractDouble(canaux.pt[canpos].txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
 				canaux.pt[canpos].vit = val;
-			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE
-			
-			/*
-					//DEBUGGING
-						cout << "\nLe code spécial a ete computed";
-			*/
-			
-			/*
-					//DEBUGGING
-						cout << "\nLa longueur du code spécial était de: " << CodeSpecialLong;
-			*/
-			
-					
+			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
 		//Effacer le code spécial du canal
 		canaux.pt[canpos].txt.supprim(CodeSpecialLong);                 
-		
-		/*
-				//DEBUGGINGGGGG
-					cout << "\nMaintenant, le reste du texte est:";
-					for(int a=canaux.pt[canpos].txt.debut; a<canaux.pt[canpos].txt.fin; a++) out(canaux.pt[canpos].txt[a]);
-		*/
-		
-		      
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
 			if(canaux.pt[canpos].txt[0]=='\n'|canaux.pt[canpos].posx>=base.charx-1) jump = true;     //base.charx - 1 ; car c'est en integer, et canaux.pt[canpos].posx commence à 0!
-			if(jump) {
-				
-				
-			
-				//DÉBUGGGINNGGG
-			/*	
-				cout << "\nJUMP! \n    JUMP! \n           JUMP!";  //détecter les jumps
-			*/	
-				
-				
-				
-				
+			if(jump) {	
 				//Sauter une ligne dans la mémoire
 				for(int countx = canaux.pt[canpos].posx + 1; countx < base.charx ; countx++) mem.souvenir[countx][canaux.pt[canpos].posy] = ' ';     //Effacer le reste de la ligne avec des espaces    
-				mem.newline(canaux.pt[canpos].posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie			
+				mem.newline(canaux.pt[canpos].posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie	
 				//Updater le correctif de décalage de la console par rapport à la mémoire
 					if(base.refoule) base.consy++; else if(mem.frontline>base.chary) {base.refoule = true; base.consy++;} 					
 				//Sauter une ligne dans la console
 					if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
-						if(canaux.pt[canpos].posy==mem.frontline-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]
+						if(canaux.pt[canpos].posy==mem.frontline-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]		
 							if(canaux.pt[canpos].posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
 						} else {                             //S'il y a d'autres lignes à repousser vers le bas
 							if(canaux.pt[canpos].posx<base.charx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
+							
+							
+							
+								//C'est le bout qui blesse!
+							
 							//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
 								curspos(0,canaux.pt[canpos].posy-base.consy + 2);  //Mettre le curseur au début de la reconstruction
-								for(int county = canaux.pt[canpos].posy + 2 ; county < mem.frontline ; county++) {    // + 2, parce que la mémoire a déjà été updatée
+								for(int county = canaux.pt[canpos].posy + 2 ; county <= mem.frontline ; county++) {    // + 2, parce que la mémoire a déjà été updatée
 									for(int countx = 0 ; countx < base.charx ; countx++) out(mem.souvenir[countx][county]);
 								}
 						}
+				
+						
+						
+						
+						
+						
 					} else {                         //La console est saturée: on pousse le texte vers le haut!
 						//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
 							curspos(canaux.pt[canpos].posy-base.consy,0); for(int countx = 0; countx < base.charx ; countx++) out(' '); 					
@@ -499,52 +466,24 @@ lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
 										//S'EMBOÎTE PARFAITEMENT AVEC L'INDEXATION QUI COMMENCE À 0!
 								for(int countx = 0 ; countx < base.charx ; countx++) out(mem.souvenir[countx][county]);
 							}				                 
-					}
-					
-					
-					
+					}	
 				//Updater les positions dans les autres canaux    //Parce que leur position dans la mémoire a bougé //la position dans la console est quant à elle gérée par base.consy
 				for(int countcan = 0 ; countcan < canaux.nb ; countcan++) {
 					if(countcan==canpos) continue;        
 					if(canaux.pt[countcan].posy > canaux.pt[canpos].posy) canaux.pt[countcan].posy++;         //la mémoire refoule toujours vers le bas!
-				}            
-				
-				
-				
+				}            	
 				//Updater les positions dans le canal actuel
 				if(canaux.pt[canpos].txt[0]=='\n') {canaux.pt[canpos].posx = -1;} else canaux.pt[canpos].posx = 0;			       //en x    
 									//Position "impossible", pour signifier qu'on a changé de ligne, mais écrire le prochain à la bonne place
-	////////										//FLAG POUR POSITION IMPOSSIBLE; PEUT-ÊTRE QUE ÇA VA EMMENER UN BUG ÉVENTUELLEMENT?
 				canaux.pt[canpos].posy++;																   //en y 
 			} else {canaux.pt[canpos].posx++;}       //Updater seulement posx s'il n'y a pas de mouvement vertical
 		//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du charactère actuel (dans la mémoire)!		
 		if(canaux.pt[canpos].txt[0]!='\n') {
 			curspos(canaux.pt[canpos].posx,canaux.pt[canpos].posy-base.consy) ; out(canaux.pt[canpos].txt[0]);     //Inscrire dans la console
-			
-			/*
-						/////DDEEBBUUGGINNGG
-						curspos(0,canaux.pt[canpos].posx + 8); cout << canaux.pt[canpos].posx;	
-			*/
-			
-			mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy] = canaux.pt[canpos].txt[0];   //Inscrire dans la mémoire
-				
-				/*		
-						////////DDDDDDDEBUGING
-						curspos(1,canaux.pt[canpos].posx + 8); cout << "Mem recorded on " << canaux.pt[canpos].posx << cout << " : " << mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy];
-				*/
-						
+			mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy] = canaux.pt[canpos].txt[0];   //Inscrire dans la mémoire			
 		}	
 		//Effacer le caractère du canal
-		canaux.pt[canpos].txt.supprim(1);                     
-		
-	/*
-		//       DDDDDDDDDEEEEEEEEEEEEEEEEEEEBBBBBBBBBBBUUUUUUUUUUUUUUUUGGGGGGGGGGGGGGGGGGIIIIIIIIIIIIINNNNNNNNNNNNNNNGGGGGGGGGGGG//////////////
-		//Écrire les positions en x et y!
-		curspos(1,canaux.pt[canpos].posy-base.consy+4); cout << "posx: "<< canaux.pt[canpos].posx << "; posy: " << canaux.pt[canpos].posy << "; debut: " << canaux.pt[canpos].txt.debut << "; fin: " << canaux.pt[canpos].txt.fin;
-		sleep(1);
-		curspos(1,canaux.pt[canpos].posy-base.consy+4); cout << "                                    ";		  
-	*/	
-		   
+		canaux.pt[canpos].txt.supprim(1);                     	   
 	}
 	//Vérifier s'il reste toujours du texte à passer dans le canal
 	if(canaux.pt[canpos].txt.debut==canaux.pt[canpos].txt.fin) canaux.pt[canpos].actif = false;
@@ -574,7 +513,8 @@ int main(void) {
 	can2.delay = 230;
 	
 	//Test: changer les positions manuellement
-	can2.posy = 6;
+	can2.posy = 3;
+	mem.frontline = 3;
 	
 	//Ajouter du texte aux canaux
 	string txt0 = "Ceci est du texte! Je dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
@@ -604,6 +544,13 @@ int main(void) {
 		for(int posx=0; posx<base.charx; posx++) cout << mem.souvenir[posx][posy];
 	}	
 				//Bon, clairement que la mémoire ne va pas.
+							//Bon, là, j'ai réussi à arranger la mémoire.
+									//Suffisait, dans le nextline, de se rendre à emptypos au lieu de emptypos + 1 (je n'ai pas pensé aux maths impliqués encore).
+				//Maintenant, il reste à arranger l'affichage dans la console. C'est lui qui tire de la patte.		
+
+						//Done. Fallait changer ça: for(int county = canaux.pt[canpos].posy + 3 ; county < mem.frontline ; county++) {    // + 2, parce que la mémoire a déjà été updatée
+										//Pour ça:  for(int county = canaux.pt[canpos].posy + 2 ; county <= mem.frontline ; county++) {    // + 2, parce que la mémoire a déjà été updatée
+
 
 }		
 
