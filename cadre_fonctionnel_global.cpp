@@ -28,6 +28,14 @@
 				qui est ma foi un peu patantée. Je ne sais pas pourquoi elle marche, mais c'est la seule qui marche. À revérifier plus tard.
 */
 
+/*
+	2019-06-22:
+				La fonction pour afficher l'input semble avoir de la difficulté à gérer les accents circonflexes. Le programme plante quand il veut en afficher.
+				Également, les 4 premiers caractères tapés ne s'affichent pas, étrangement.
+				Également, les caractères ne sont plus reconnus à partir d'un input d'une certaine longueur?
+				Également, les fonctions spéciales comme Backspace ou les touches de sélection ne fonctionnent pas comme elles devraient.
+*/
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
@@ -40,6 +48,7 @@
 #include <windows.h>           //Nécessaire pour toute modification de la console sur Windows (utilie "Windows API")
 #include <windef.h>            //Nécessaire pour savoir la position du curseur sur Windows
 #include <winuser.h>		   //Nécessaire pour savoir la position du curseur sur Windows
+#include <conio.h>             //Nécessaire pour enregistrer les inputs du clavier
 using namespace std;           //Pour faciliter l'utilisation de cout, cin, string, etc. (sans spécifier ces fonctions proviennent de quel enviro)
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -187,9 +196,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
       	  			nwpt = nullptr;                             //Rendre nul le pointeur temporaire
 				}
 		   }
-		//Opérateur de modification : supprim          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
-			void supprim (int pos) {
-				if(pos > fin-debut) debut = fin; else debut+=pos; 
+		//Opérateur de modification : suppression          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
+			void suppression (int nb) {
+				if(nb > fin-debut) debut = fin; else debut+=nb; 
 			}
 	};		
 
@@ -299,6 +308,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		else if(lettre=='é') std::wcout << L"\u00E9";
 		else if(lettre=='È') std::wcout << L"\u00C8";
 		else if(lettre=='è') std::wcout << L"\u00E8";
+		else if(lettre=='Ê') std::wcout << L"\u00CA";
+		else if(lettre=='ê') std::wcout << L"\u00EA";
 		else if(lettre=='Î') std::wcout << L"\u00CE";
 		else if(lettre=='î') std::wcout << L"\u00EE";
 		else if(lettre=='Ï') std::wcout << L"\u00CF";
@@ -311,8 +322,28 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		else if(lettre=='û') std::wcout << L"\u00FB";	
 		else {std::wcout << lettre;}
 	}
+	void out(string phrase){
+		for(int pos=0; pos<phrase.length(); pos++){
+			out(phrase[pos]);
+		}
+	}
 
-	//vi) Fonction : CodeSpecialLong ; retourne la longueur d'un code spécial ('§' compris)
+	//vi) Fonction : chgcol ; change la couleur du texte à entrer
+	void chgcol(string color) {
+		WORD code;                                            //Voir la bibliothèque pour la légende
+		if(color=="vert sombre") code = 0x02;         
+			else if(color=="rouge sombre") code = 0x04;
+			else if(color=="brun") code = 0x06;
+			else if(color=="gris") code = 0x07;
+			else if(color=="gris sombre") code = 0x08;
+			else if(color=="vert") code = 0x0A;
+			else if(color=="cyan") code = 0x0B;
+			else if(color=="rouge") code =0x0C;
+			else if(color=="blanc") code =0x0F;
+		SetConsoleTextAttribute(TxtConsole, code);
+	}
+
+	//vii) Fonction : CodeSpecialLong ; retourne la longueur d'un code spécial ('§' compris)
 	int CodeSpecialLongueur(const StringAsVect& str){
 		int longueur = 1;               //Initier l'objet à retourner
 		bool fini = false;              
@@ -320,7 +351,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		return(longueur);		
 	}
 
-	//vii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
+	//viii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
 	double CodeSpecialExtractDouble(const StringAsVect& str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
 		int longmax = longueur - 1 + str.debut;      //Le dernier caractère étant le '§'		
@@ -352,7 +383,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		canal() {nxtt = timems() ; delay = 400 ; posx = -1; posy = 0; actif = false; vit = 1;}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 	};
 
-
 	//ii) Classe : fen ; permet de sauvegarder les paramètres relatifs aux caractéristiques de la fenêtre de sortie (console)
 	class fen {
 		//Membres
@@ -375,29 +405,117 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		}                  //JE PROFITE DE CETTE FONCTION POUR ÉGALEMENT CHANGER LES PARAMÈTRES DE BASE! ATTENTION!
 		fen(int x, int y) {limtxtx = x; limtxty = y; consy = 0; refoule = false;}      //Constructeur permettant d'aligner manuellement les dimensions de la fenêtre avec la réalité	
 	};
-	
-
-	//iii) classe : arr ; sauvegarde un array avec son nombre d'éléments
-						//Les membres spéciaux ont été copiés de : http://www.cplusplus.com/doc/tutorial/classes2/
+		
+	//iii) classe : staticvect ; sauvegarde un array "semi-dynamique", où la mémoire utilisée est fixe, mais les fonctionnalités sont les mêmes que StringAsVect.
 	template <class Type>
-		class arr {
+		class staticvect {
 			//Valeurs membres	
 			public:
-				Type* pt;  //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
-				int nb;  //Déclarer le nombre d'objets de l'array
+				Type* pt;   //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
+				int taille; //Nombre d'objets de l'array
+				int debut;  //Position actuelle de début
+				int fin;    //Position actuelle de fin
 			//Constructeurs	:
-				arr<Type>() : nb(0), pt(nullptr) {cout << "\nAttention: cet objet arr<> est vide (nullptr)";}  //Défaut 
-				arr<Type>(Type nxt) : nb(1), pt(nxt) {}  //Une seule valeur
-				arr<Type>(Type* nxt, int nbpos) : nb(nbpos), pt(nxt) {}  //Array pré-existant
+				staticvect<Type>() : taille(0), debut(0), fin(0), pt(nullptr) {}  //Défaut 
+				staticvect<Type>(Type nxt) : taille(1), debut(0), fin(1), pt(&nxt) {}  //Une seule valeur
+				staticvect<Type>(Type* ptarr, int taillearr) : taille(taillearr), debut(0), fin(0), pt(ptarr) {}    //Copie le pointeur d'un array vide pré-existant
+				staticvect<Type>(Type* ptarr, int taillearr, int finarr) : taille(taillearr), debut(0), fin(finarr), pt(ptarr) {}   //Copie le pointeur d'un array rempli
 	   		//Opérateur d'accès : []
 			   Type operator[] (int pos) {
-			   		return(pt[pos]);
-			   }			
-		};	
+			   		return(pt[debut + pos]);
+			   }
+			//Fonction de modification : nouvelarray()
+				void nouvelarray(Type* ptarr, int taillearr) {taille = taillearr; debut = 0; fin = 0; pt = ptarr;} 
+			//Fonction de modification : ajout()
+				bool ajout(Type nxt) {if(fin+1 <= taille) {pt[fin] = nxt; fin++; return(true);} else return(false);}       //Fonction de retour pour communiquer la réussite ou non!				
+				bool ajout(Type nxt, int pos) {
+					if(fin+1 <= taille) {
+						for(int ptpos = pos; ptpos<fin; ptpos++) pt[ptpos+1] = pt[ptpos];
+						pt[pos] = nxt; fin++; 
+						return(true);
+					} else return(false);
+				}
+				bool ajout(Type* nxt, int longueur) {
+					if(fin+longueur <= taille) {
+						int nouvfin = fin + longueur; int posnxt = 0;
+						for(int pos=fin; fin<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
+						fin=nouvfin;
+						return(true);
+					} else return(false);   //Attention: RIEN n'est ajouté dans ce cas
+				}
+			//Fonction de modification : remplacement()
+				int remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
+				int remplacement(Type* nxt, int longueur) {
+					if(longueur <= taille) {
+						debut = 0; fin = longueur;
+						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];	
+						return(true);			
+					} else return(false);
+				}
+				int remplacement(staticvect<Type>& nxt) {
+					if(nxt.fin-nxt.debut <= taille) {
+						debut = 0; fin = nxt.fin;
+						int pos = 0; for(int posnxt=nxt.debut; posnxt<nxt.fin; posnxt++) pt[pos] = nxt[posnxt];
+						return(true);
+					} else return(false);
+				}
+			//Fonction de modification : vide()
+				void vide(void) {debut = 0; fin = 0;}
+			//Fonction de modification : suppression          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
+				void suppression (int nb) {
+					if(nb > fin-debut) debut = fin; else debut+=nb; 
+				}
+			//Fonction de modification : supprposition       //Supprime l'entrée à la position indiquée
+				void supprposition (int pos) {
+					if(pos >= debut & pos < fin) {
+						for(int ptpos = pos; ptpos < fin-1; ptpos++) {pt[ptpos] = pt[ptpos+1];}
+						fin--;
+					}
+				}			
+			};	
+		
+	//v) classe : input ; sauvegarde les informations relatives aux inputs
+	class input {
+		//Valeurs membres
+		public:
+			static const int taille = 200;
+			staticvect<char> commande;          	//Phrase que contient le buffer
+			staticvect<char> prevcomm;          	//Dernière commande entrée
+			int inputpos;                   //Position d'indexation du prochain caractère    == staticvect.fin? Non! Car ça peut bouger!
+			int inputlong;                  //Nombre de caractères total de la commande actuelle (0 : inputpos = 0)   //== staticvect.fin - staticvect.debut
+			bool accepted;                  //Flag concernant la dernière commande; utile pour l'affichage visuel
+			bool busy;						//Flag concernant la dernière commande; utile pour l'affichage visuel
+		//Constructeur par défaut
+			input() : inputpos(0), inputlong(0), accepted(false), busy(false) {
+				char arrcommande [taille]; char arrprevcom [taille];
+				commande.nouvelarray(arrcommande, taille);
+				prevcomm.nouvelarray(arrprevcom, taille);
+			}
+		//...
+	};							
+						
+	//vi) classe : inputdisplay ; permet l'affichage résiduel des commandes (acceptées ou refusées)
+	class inputdisplay {
+		//Valeurs membres
+		public:
+			static const int taille = 200;
+			static const int tailleclign = 50;
+			staticvect<char> commande;
+			staticvect<int> clignote;              	   //Conserve les instructions pour le clignotement : positif = affiche, négatif = pause.	
+			string couleur;                            //Conserve la couleur du clignotement	
+		//Constructeur par défaut
+		inputdisplay() : couleur("gris sombre") {
+			char arrcommande [taille]; int arrclignote [tailleclign];
+			commande.nouvelarray(arrcommande, taille);
+			clignote.nouvelarray(arrclignote, tailleclign);
+		}	
+		//...
+	};
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //4) Écrire la fonction lire()
-lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
+void lire(staticvect<canal>& canaux, int canpos, fen& base, memoire& mem) {
 	//Updater le "next time"
 	canaux.pt[canpos].nxtt += canaux.pt[canpos].delay;
 	//Interpréter les "codes spéciaux" (§...§)
@@ -413,7 +531,7 @@ lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
 				canaux.pt[canpos].vit = val;
 			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
 		//Effacer le code spécial du canal
-		canaux.pt[canpos].txt.supprim(CodeSpecialLong);                 
+		canaux.pt[canpos].txt.suppression(CodeSpecialLong);                 
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
@@ -425,9 +543,9 @@ lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
 				//Sauter une ligne dans la console
 					if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
 						if(canaux.pt[canpos].posy==mem.frontline-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]		
-							if(canaux.pt[canpos].posx<base.limtxtx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
+							//if(canaux.pt[canpos].posx<base.limtxtx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
 						} else {                             //S'il y a d'autres lignes à repousser vers le bas
-							if(canaux.pt[canpos].posx<base.limtxtx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
+							//if(canaux.pt[canpos].posx<base.limtxtx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0] //CES LIGNES SEMBLENT INUTILES + CAUSENT PROBLÈMES? ÉVITER \N À TOUT PRIX!
 							//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
 								curspos(0,canaux.pt[canpos].posy+1);  //Mettre le curseur au début de la reconstruction
 								for(int county = canaux.pt[canpos].posy + 1 ; county <= mem.frontline ; county++) {   
@@ -444,7 +562,7 @@ lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
 							}				                 
 					}	
 				//Updater les positions dans les autres canaux    //Parce que leur position dans la mémoire a bougé //la position dans la console est quant à elle gérée par base.consy
-				for(int countcan = 0 ; countcan < canaux.nb ; countcan++) {
+				for(int countcan = 0 ; countcan < canaux.fin ; countcan++) {
 					if(countcan==canpos) continue;                                    //la mémoire refoule toujours vers le bas!
 					if(canaux.pt[countcan].posy > canaux.pt[canpos].posy) canaux.pt[countcan].posy++; else if(canaux.pt[countcan].posy == canaux.pt[canpos].posy) canaux.pt[countcan].posy+=2;
 				}       // == : Si deux canaux se situe sur la même ligne, le canal qui change de ligne va couper l'autre en deux, et le renvoyer après sa propre ligne.    	        
@@ -459,23 +577,116 @@ lire(arr<canal>& canaux, int canpos, fen& base, memoire& mem) {
 			mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy] = canaux.pt[canpos].txt[0];   //Inscrire dans la mémoire			
 		}	
 		//Effacer le caractère du canal
-		canaux.pt[canpos].txt.supprim(1);
-		//Cacher le curseur
-		curson(false);                	   
+		canaux.pt[canpos].txt.suppression(1);            	   
 	}
 	//Vérifier s'il reste toujours du texte à passer dans le canal
 	if(canaux.pt[canpos].txt.debut==canaux.pt[canpos].txt.fin) canaux.pt[canpos].actif = false;
 }	
 					
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+//5) Écrire la fonction ecrire()
+void ecrire(input& inp, inputdisplay inpdisplay, const fen& base) {
+	if(_kbhit()){
+	//i) Capter la lettre tapée
+	bool enter = false;
+	char key = _getch();                  		//Enregistrer quelle touche a été pressée
+			if (key == 0 || key == -32 || key == 224) {      //La valeur est spéciale: elle nécessite de la ré-examiner
+				key = _getch();                              //Examiner une deuxième valeur pour identifier
+				if(key == 75) {     								 				 //flèche gauche : reculer dans la commande tapée 
+					if(inp.inputpos!=inp.inputlong) {
+						curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]);	
+					}          //Remettre en gris la position précédente
+					inp.inputpos--;  
+				}
+				else if (key == 77) {											 	 //flèche droite : avancer dans la commande tapée				
+					if(inp.inputpos!=inp.inputlong) {
+						curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]);	
+						inp.inputpos++;		
+					}			//Remettre en gris la position précédente
+				} 
+				else if (key == 72)  ;  											 //Flèche du haut   ... Rien ne se passe?
+				else if (key == 80)  ;  											 //Flèche du bas    ... Rien ne se passe?
+				else if (key == 83) {                                                //Delete : supprimer un caractère de la commande actuelle
+					if(inp.inputpos!=inp.inputlong) {
+						inp.inputlong--;
+						inp.commande.supprposition(inp.inputpos);    
+						curspos(inp.inputpos,base.limtxty);
+						for(int pos=inp.inputpos; pos<inp.inputlong; pos++) out(inp.commande[pos]);    
+						out(' ');
+					}
+				}
+			} else 	{                                        //La valeur est "normale"
+				//Touches-fonctions
+				if(key == 27) {														 //Escape : terminer le programme
+					curspos(0,base.limtxty); out("Vous avez entré ESC, le programme se ferme donc."); abort(); 
+				} else if(key == 13) {												 //Enter : envoyer la commande
+					enter = true;
+				} else if(key == 8) {                                                //Backspace : supprimer le caractère précédent
+					if(inp.inputpos!=0) {
+						inp.inputpos--; inp.inputlong--;
+						inp.commande.supprposition(inp.inputpos);   
+						curspos(inp.inputpos,base.limtxty);
+						for(int pos=inp.inputpos; pos<inp.inputlong; pos++) out(inp.commande[pos]);   
+						out(' ');    					
+					}
+				} else {															 //Caractère normal : l'ajouter à la commande
+					if(inp.inputlong<base.limtxtx-1){
+						inp.commande.ajout(key,inp.inputpos);
+						inp.inputpos++; inp.inputlong++;
+						curspos(inp.inputpos-1,base.limtxty);	                         //P-T AJUSTER LA COULEUR SERA NÉCESSAIRE ICI? Si différents canaux ont différentes couleurs?
+						for(int pos=inp.inputpos-1; pos<inp.inputlong; pos++) out(inp.commande[pos]);	
+					}
+						
+								//BTW: FAUDRAIT AUSSI TOUT UN PAN DE CODE POUR GÉRER LES COMMANDES TROP LONGUES, POUR FAIRE RECULER LE TEXTE
+						
 							
+				}
+			}	
+		//Remettre la lettre sélectionnée en surbrillance
+		if(inp.inputpos!=inp.inputlong) {chgcol("gris"); curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]); chgcol("gris");}
+			
+		//Évaluer la commande		
+		if(enter) {								//BTW: Faire changer la vitesse/frénésie du clignotage avec la vitesse globale. Tu veux ça plus vite? Ça va être plus agressant aussi!
+
+							//FAIRE UNE FONCTION À PART POUR ÉVALUER LA CORRESPONDANCE DE LA COMMANDE AVEC LES POSSIBILITÉS;
+														//ICI, SIMPLEMENT S'OCCUPER DE L'AFFICHAGE (EFFETS GRAPHIQUES DIFFÉRENTS SI C'EST ACCEPTÉ OU NON...)!
+			inp.prevcomm.remplacement(inp.commande);
+			inpdisplay.commande.remplacement(inp.commande);							
+			if(inp.accepted) {
+				if(inp.busy) {			//Conserver le texte en place, en plus pâle, pendant quelques secondes. Peut être effacé progressivement par une nouvelle commande
+					inpdisplay.couleur = "gris sombre";
+					inpdisplay.clignote.remplacement(3000);
+				} else {				//Faire clignoter le texte, en plus pâle, pendant quelques secondes.
+					inpdisplay.couleur = "gris sombre";
+					int clignarr [5] {500,-500,500,-500,500};
+					inpdisplay.clignote.remplacement(clignarr, 5);
+			
+				}                				
+			} else{						//Faire clignoter le texte, en rouge foncé, pendant quelques secondes.
+				inpdisplay.couleur = "rouge sombre";
+				int clignarr [7] {500,-500,500,-500,500,-500,500};				
+				inpdisplay.clignote.remplacement(clignarr,7);	
+			}
+			curspos(0,base.limtxty); for(int pos=inp.inputpos; pos < base.limfenx-1; pos++) out(' ');    //Nettoyer la ligne avant de la faire flasher
+			inp.inputpos = 0; inp.inputlong = 0; inp.commande.vide();                               //Nettoyer l'objet input
+		}	
+	}
+}               //BTW: Dédier un canal à l'effaçage + clignotage! Genre un canal spécial?
+						//Mieux: juste faire une fonction spéciale, gérant un objet canal normal - ou spécial -, pour checker s'il faut changer cette portion de l'écran.
+
+				
+				
 int main(void) {
 
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
 	//x, y, width, height,
-	fen base(700,30,400,400);                                           //Crée également l'objet dans lequel ces paramètres sont définis
+	fen base(800,30,200,200);                                           //Crée également l'objet dans lequel ces paramètres sont définis
 	
 	//Créer l'objet de mémoire, qui stockera tous les caractères utilisés
 	memoire mem {base.limtxtx};
+
+	//Créer les objets d'input
+	input entree; inputdisplay entreedisplay;
 
 	//Créer les canaux utilisés
 	canal can1;
@@ -485,13 +696,6 @@ int main(void) {
 	can1.delay = 140;
 	can2.delay = 230;
 	
-	//Test: changer les positions manuellement
-	//can2.posy = 3;
-	//mem.frontline = 3;
-	//can1.posy = 11;
-	//can2.posy = 10;
-	//mem.frontline = 13;
-	
 	//Ajouter du texte aux canaux
 	string txt0 = "Ceci est du texte!\nJe dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
 	string txt1 = "§p1000§\nLe canal 1 \n           est sooooo boring. Ark.§p1000§\n§p1000§Je suis le canal 2.";
@@ -500,9 +704,9 @@ int main(void) {
 	//Rendre manuellement les canaux actifs
 	can1.actif = true; can2.actif = true;	
 	
-	//Ajouter les canaux dans l'objet arr<canal>
+	//Ajouter les canaux dans l'objet staticvect<canal>
 	canal canx [2] = {can1,can2};
-	arr<canal> canaux (canx,2);          
+	staticvect<canal> canaux (canx,2,2);          
 
 	//Faire une boucle pour que les canaux s'expriment!
 	bool gogogo = true;
@@ -510,20 +714,11 @@ int main(void) {
 		int currentt = timems();
 			if(canaux.pt[0].actif&canaux.pt[0].nxtt<currentt) lire(canaux,0,base,mem);
 			if(canaux.pt[1].actif&canaux.pt[1].nxtt<currentt) lire(canaux,1,base,mem);
+			ecrire(entree,entreedisplay,base);
 			if(!canaux.pt[0].actif&!canaux.pt[1].actif) gogogo = false;
 		}		
 		
 	curspos(0,13);
-
-	
-/*		
-	//Lire la mémoire, pour voir elle a l'air de quoi	
-	Sleep(5000);
-	curspos(0,0);
-	for(int posy=0; posy<mem.frontline; posy++){
-		for(int posx=0; posx<base.limtxtx; posx++) cout << mem.souvenir[posx][posy];
-	}	
-*/
 
 
 }								
