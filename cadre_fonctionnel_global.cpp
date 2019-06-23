@@ -30,25 +30,49 @@
 
 /*
 	2019-06-22:
-				La fonction pour afficher l'input semble avoir de la difficulté à gérer les accents circonflexes. Le programme plante quand il veut en afficher.
-				Également, les 4 premiers caractères tapés ne s'affichent pas, étrangement.
-				Également, les caractères ne sont plus reconnus à partir d'un input d'une certaine longueur?
-				Également, les fonctions spéciales comme Backspace ou les touches de sélection ne fonctionnent pas comme elles devraient.
+				La fonction pour afficher l'input semble avoir de la difficulté à gérer les accents.
+				Les bouts de texte écrits dans le script s'affichent correctement,
+				mais le unicode utilisé pour getch() ne semble pas correspondre aux bons symboles.
+				Bon.
+				Même quand j'associe manuellement le code numérique aux bon char, ça garde la même erreur.
+				Comme si les char provenant de l'user input était différents de ceux du script?
+				
+				Bon, c'est officiel, la liste de if() else() dans out() ne reconnaît pas les char provenant du clavier.
+				Je ne sais pas quoi y faire. Est-ce que ça va chier aussi la reconnaissance dans "find()"???
+				
+				C'est vraiment étrange.
+				
+				
+				
+				En plus:
+						Je n'arrive pas à bien remplacement() les staticvect contenus dans input et inputecho,
+						à partir d'autres staticvect.
+						
+						Hors de ces classes, pourtant, ça marche.
+						Hors de la fonction d'écriture, même, ça semble marcher.
+						Est-ce que ça a à voir avec le type d'argument?
+				
 */
 
+/*
+	2019-06-22:
+				En passant: Quand on active un canal, ou qu'on le reset, va falloir resetter son nxtt aussi. Bien y penser.
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
 #include <iostream>   //Pour les entrées/sorties
 #include <string>     //Pour utiliser les objets strings
-#include <cmath>      //Pour utiliser la fonction round()
+#include <cmath>      //Pour utiliser la fonction round() et abs()
 #include <chrono>     //Pour avoir un meilleur contrôle du temps (en millisecondes)
 #include <fcntl.h>    //Librairie comprenant la magie permettant d'afficher les unicodes dans la console 
-#define _WIN32_WINNT 0x0500    //Nécessaire pour la taille de la fenêtre: informe qu'on est sur Windows 2000 ou plus récent
+//#define _WIN32_WINNT 0x0500    //Nécessaire pour la taille de la fenêtre: informe qu'on est sur Windows 2000 ou plus récent
 #include <windows.h>           //Nécessaire pour toute modification de la console sur Windows (utilie "Windows API")
 #include <windef.h>            //Nécessaire pour savoir la position du curseur sur Windows
 #include <winuser.h>		   //Nécessaire pour savoir la position du curseur sur Windows
 #include <conio.h>             //Nécessaire pour enregistrer les inputs du clavier
+#include <io.h>				   //Nécessaire pour changer l'encodage-out pour l'unicode
+#include <fcntl.h>			   //Nécessaire pour décrypter les accents en unicode
 using namespace std;           //Pour faciliter l'utilisation de cout, cin, string, etc. (sans spécifier ces fonctions proviennent de quel enviro)
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -327,6 +351,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			out(phrase[pos]);
 		}
 	}
+	void out(int chiffre) {std::wcout << chiffre;}
 
 	//vi) Fonction : chgcol ; change la couleur du texte à entrer
 	void chgcol(string color) {
@@ -380,7 +405,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool actif;			//Déclarer le compteur d'activité
 			double vit;         //Déclarer la vitesse actuelle de défilement et de pauses (toujours par rapport à la base, 1)
 		//Constructeur
-		canal() {nxtt = timems() ; delay = 400 ; posx = -1; posy = 0; actif = false; vit = 1;}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
+		canal() : delay(400), posx(-1), posy(0), actif(false), vit(1) {nxtt = timems();}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 	};
 
 	//ii) Classe : fen ; permet de sauvegarder les paramètres relatifs aux caractéristiques de la fenêtre de sortie (console)
@@ -393,13 +418,16 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int limtxtx, limtxty;     //Dimensions de la portion où le texte s'affiche en terme de nombre de caractères pouvant y être contenus
 			int consy;             //Facteur de décalement de la console où apparaît le texte avec la mémoire, où il est stocké
 			bool refoule;          //Flag pour voir si le facteur de décalement entre en compte
+			string couleur;           //Couleur de base du texte
 		//Constructeurs
 		     //Constructeur pour initialiser tous les paramètres automatiquement (à mettre dans le main())
-		fen(int posx, int posy, int sizex, int sizey) : posfenx(posx), posfeny(posy), sizefenx(sizex), sizefeny(sizey), consy(0), refoule(false) {
+		fen(int posx, int posy, int sizex, int sizey) : posfenx(posx), posfeny(posy), sizefenx(sizex), sizefeny(sizey), consy(0), refoule(false), couleur("gris") {
 				//MoveWindow(window_handle, x, y, width, height, redraw_window);       //Les unités sont en pixels!
 			MoveWindow(DimConsole, posx, posy, sizex, sizey, TRUE);                    //Créer la fenêtre de la bonne taille          //WINDOWS ONLY
 			GetConsoleScreenBufferInfo(TxtConsole, &ScreenBufferInfo);                 //Accéder à la taille de la console            //WINDOWS ONLY
-			curson(false);                                                     		   //Faire disparaître le curseur                 //WINDOWS ONLY  
+			curson(false);                                                     		   //Faire disparaître le curseur                 //WINDOWS ONLY
+			chgcol(couleur);														   //Mettre le texte de la couleur par défaut
+    		_setmode(_fileno(stdout), _O_U16TEXT);									   //Permettre l'affichage de l'UNICODE           //WINDOWS ONLY  
 			limfenx = ScreenBufferInfo.srWindow.Right + 1; limfeny = ScreenBufferInfo.srWindow.Bottom + 1;     //Le srWindow est le seul membre qui donne les bonnes informations
 			limtxtx = limfenx; limtxty = limfeny - 1;
 		}                  //JE PROFITE DE CETTE FONCTION POUR ÉGALEMENT CHANGER LES PARAMÈTRES DE BASE! ATTENTION!
@@ -430,7 +458,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				bool ajout(Type nxt) {if(fin+1 <= taille) {pt[fin] = nxt; fin++; return(true);} else return(false);}       //Fonction de retour pour communiquer la réussite ou non!				
 				bool ajout(Type nxt, int pos) {
 					if(fin+1 <= taille) {
-						for(int ptpos = pos; ptpos<fin; ptpos++) pt[ptpos+1] = pt[ptpos];
+						for(int ptpos = fin; ptpos>pos; ptpos--) pt[ptpos] = pt[ptpos-1];
 						pt[pos] = nxt; fin++; 
 						return(true);
 					} else return(false);
@@ -438,10 +466,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				bool ajout(Type* nxt, int longueur) {
 					if(fin+longueur <= taille) {
 						int nouvfin = fin + longueur; int posnxt = 0;
-						for(int pos=fin; fin<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
+						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
 						fin=nouvfin;
 						return(true);
-					} else return(false);   //Attention: RIEN n'est ajouté dans ce cas
+					} else return(false);
 				}
 			//Fonction de modification : remplacement()
 				int remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
@@ -455,7 +483,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				int remplacement(staticvect<Type>& nxt) {
 					if(nxt.fin-nxt.debut <= taille) {
 						debut = 0; fin = nxt.fin;
-						int pos = 0; for(int posnxt=nxt.debut; posnxt<nxt.fin; posnxt++) pt[pos] = nxt[posnxt];
+						int taillenxt = nxt.fin-nxt.debut;
+						int pos = 0; for(int posnxt=0; posnxt<taillenxt; posnxt++) pt[pos++] = nxt[posnxt];		
 						return(true);
 					} else return(false);
 				}
@@ -475,44 +504,71 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			};	
 		
 	//v) classe : input ; sauvegarde les informations relatives aux inputs
+								//Attention: Cette classe contient des membres staticvect.
+								//À cause de son orthographe particulier, cette classe nécessite de voler son pointeur à un array permanent.
+								//Il est donc nécessaire de pairer chaque objet staticvect avec un array.
+								//L'array occupera la place dans la mémoire, et le staticvect facilitera les modifications sur la mémoire.
+								//Cela est nécessaire pour éviter de mettre un template <int taille> aux staticvect, allourdissant leur utilisation dans des fonctions.
 	class input {
 		//Valeurs membres
 		public:
 			static const int taille = 200;
+			char arrcommande [taille];
 			staticvect<char> commande;          	//Phrase que contient le buffer
-			staticvect<char> prevcomm;          	//Dernière commande entrée
 			int inputpos;                   //Position d'indexation du prochain caractère    == staticvect.fin? Non! Car ça peut bouger!
 			int inputlong;                  //Nombre de caractères total de la commande actuelle (0 : inputpos = 0)   //== staticvect.fin - staticvect.debut
 			bool accepted;                  //Flag concernant la dernière commande; utile pour l'affichage visuel
 			bool busy;						//Flag concernant la dernière commande; utile pour l'affichage visuel
 		//Constructeur par défaut
 			input() : inputpos(0), inputlong(0), accepted(false), busy(false) {
-				char arrcommande [taille]; char arrprevcom [taille];
 				commande.nouvelarray(arrcommande, taille);
-				prevcomm.nouvelarray(arrprevcom, taille);
 			}
 		//...
 	};							
 						
-	//vi) classe : inputdisplay ; permet l'affichage résiduel des commandes (acceptées ou refusées)
-	class inputdisplay {
+	//vi) classe : inputecho ; permet l'affichage résiduel des commandes (acceptées ou refusées)
+								//Attention: Cette classe contient des membres staticvect.
+								//À cause de son orthographe particulier, cette classe nécessite de voler son pointeur à un array permanent.
+								//Il est donc nécessaire de pairer chaque objet staticvect avec un array.
+								//L'array occupera la place dans la mémoire, et le staticvect facilitera les modifications sur la mémoire.
+								//Cela est nécessaire pour éviter de mettre un template <int taille> aux staticvect, allourdissant leur utilisation dans des fonctions.	
+	class inputecho {
 		//Valeurs membres
 		public:
 			static const int taille = 200;
 			static const int tailleclign = 50;
+			char arrcommande [taille];
+			int arrclignote [tailleclign];
 			staticvect<char> commande;
 			staticvect<int> clignote;              	   //Conserve les instructions pour le clignotement : positif = affiche, négatif = pause.	
-			string couleur;                            //Conserve la couleur du clignotement	
+			string couleur;                            //Conserve la couleur du clignotement
+			bool actif;							       //Compteur d'activité
+			int nxtt;         						   //Moment où la prochaine entrée sera traitée         				
 		//Constructeur par défaut
-		inputdisplay() : couleur("gris sombre") {
-			char arrcommande [taille]; int arrclignote [tailleclign];
+		inputecho() : couleur("gris sombre"), actif(false) {
 			commande.nouvelarray(arrcommande, taille);
 			clignote.nouvelarray(arrclignote, tailleclign);
+			nxtt = timems();
 		}	
 		//...
 	};
 
-
+	//vii) fonction : userinputecho ; canal spécial validant graphiquement l'acceptation ou le refus des commandes envoyées
+	void userinputecho(input& inp, inputecho& inpecho, const fen& base) {	
+		chgcol(inpecho.couleur);
+		//Clignoter
+		if(inpecho.clignote[0]>0){
+			curspos(inp.inputlong,base.limtxty); for(int pos=inp.inputlong; pos < inpecho.commande.fin; pos++) out(inpecho.commande[pos]);
+		} else {
+			curspos(inp.inputlong,base.limtxty); for(int pos=inp.inputlong; pos < inpecho.commande.fin; pos++) out(' ');			
+		}
+		chgcol(base.couleur);                       //Revenir à la couleur de base	
+		inpecho.nxtt += abs(inpecho.clignote[0]);        //Updater le "next time"
+		inpecho.clignote.suppression(1);            //Passer à la prochaine instruction
+		if(inpecho.clignote.debut==inpecho.clignote.fin) inpecho.actif = false;			//Vérifier s'il reste toujours du stock à passer dans le canal	
+		}	
+	
+	
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //4) Écrire la fonction lire()
 void lire(staticvect<canal>& canaux, int canpos, fen& base, memoire& mem) {
@@ -576,16 +632,14 @@ void lire(staticvect<canal>& canaux, int canpos, fen& base, memoire& mem) {
 			curspos(canaux.pt[canpos].posx,canaux.pt[canpos].posy-base.consy) ; out(canaux.pt[canpos].txt[0]);     //Inscrire dans la console
 			mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy] = canaux.pt[canpos].txt[0];   //Inscrire dans la mémoire			
 		}	
-		//Effacer le caractère du canal
-		canaux.pt[canpos].txt.suppression(1);            	   
+		canaux.pt[canpos].txt.suppression(1);       //Effacer le caractère du canal     	   
 	}
-	//Vérifier s'il reste toujours du texte à passer dans le canal
-	if(canaux.pt[canpos].txt.debut==canaux.pt[canpos].txt.fin) canaux.pt[canpos].actif = false;
+	if(canaux.pt[canpos].txt.debut==canaux.pt[canpos].txt.fin) canaux.pt[canpos].actif = false;			//Vérifier s'il reste toujours du texte à passer dans le canal
 }	
 					
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//5) Écrire la fonction ecrire()
-void ecrire(input& inp, inputdisplay inpdisplay, const fen& base) {
+//5) Écrire la fonction userinput()
+void userinput(input& inp, inputecho& inpecho, const fen& base) {
 	if(_kbhit()){
 	//i) Capter la lettre tapée
 	bool enter = false;
@@ -593,10 +647,12 @@ void ecrire(input& inp, inputdisplay inpdisplay, const fen& base) {
 			if (key == 0 || key == -32 || key == 224) {      //La valeur est spéciale: elle nécessite de la ré-examiner
 				key = _getch();                              //Examiner une deuxième valeur pour identifier
 				if(key == 75) {     								 				 //flèche gauche : reculer dans la commande tapée 
-					if(inp.inputpos!=inp.inputlong) {
-						curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]);	
-					}          //Remettre en gris la position précédente
-					inp.inputpos--;  
+					if(inp.inputpos!=0) {
+						if(inp.inputpos!=inp.inputlong) {
+							curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]);	
+						}          //Remettre en gris la position précédente
+						inp.inputpos--;  
+					}
 				}
 				else if (key == 77) {											 	 //flèche droite : avancer dans la commande tapée				
 					if(inp.inputpos!=inp.inputlong) {
@@ -629,64 +685,87 @@ void ecrire(input& inp, inputdisplay inpdisplay, const fen& base) {
 						for(int pos=inp.inputpos; pos<inp.inputlong; pos++) out(inp.commande[pos]);   
 						out(' ');    					
 					}
-				} else {															 //Caractère normal : l'ajouter à la commande
+					///////////////ICI, JE GÈRE LES ACCENTS MANUELLEMENT, COMME ILS SEMBLENT POSER PROBLÈME!
+					//NE MARCHE MÊME PAS, CAR MÊME LE CODE NUMÉRIQUE NE SEMBLE PAS ÊTRE RECONNU!!!
+					
+				} else if(key==183) {key = 'À'; cout << "test";} else if(key==133) {key = 'à'; cout << "test";} else if(key==128) {key = 'Ç'; cout << "test";} else if(key==135) {key = 'ç'; cout << "test";
+				} else if(key==144) {key = 'É'; cout << "test";} else if(key==130) {key = 'é'; cout << "test";} else if(key==212) {key = 'È'; cout << "test";} else if(key==138) {key = 'è'; cout << "test";
+				} else if(key==210) {key = 'Ê'; cout << "test";} else if(key==136) {key = 'ê'; cout << "test";} else if(key==215) {key = 'Î'; cout << "test";} else if(key==140) {key = 'î'; cout << "test";
+				} else if(key==216) {key = 'Ï'; cout << "test";} else if(key==139) {key = 'ï'; cout << "test";} else if(key==226) {key = 'Ô'; cout << "test";} else if(key==147) {key = 'ô'; cout << "test";
+				} else if(key==235) {key = 'Ù'; cout << "test";} else if(key==151) {key = 'ù'; cout << "test";} else if(key==234) {key = 'Û'; cout << "test";} else if(key==150) {key = 'û'; cout << "test";
+				} else {															 //Caractère normal : l'ajouter à la commande	
 					if(inp.inputlong<base.limtxtx-1){
 						inp.commande.ajout(key,inp.inputpos);
 						inp.inputpos++; inp.inputlong++;
-						curspos(inp.inputpos-1,base.limtxty);	                         //P-T AJUSTER LA COULEUR SERA NÉCESSAIRE ICI? Si différents canaux ont différentes couleurs?
-						for(int pos=inp.inputpos-1; pos<inp.inputlong; pos++) out(inp.commande[pos]);	
+						curspos(inp.inputpos-1,base.limtxty);	                    
+						for(int pos=inp.inputpos-1; pos<inp.inputlong; pos++) out(inp.commande[pos]);
+						if(inp.inputlong==inpecho.commande.fin) inpecho.actif = false;                   //Désactiver le canal d'écho si la commande actuelle le dépasse
 					}
 						
 								//BTW: FAUDRAIT AUSSI TOUT UN PAN DE CODE POUR GÉRER LES COMMANDES TROP LONGUES, POUR FAIRE RECULER LE TEXTE
-						
+										//Pour l'instant, je restreint l'espace à la largeur de la console, simplement.
 							
 				}
 			}	
 		//Remettre la lettre sélectionnée en surbrillance
-		if(inp.inputpos!=inp.inputlong) {chgcol("gris"); curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]); chgcol("gris");}
+		if(inp.inputpos!=inp.inputlong) {chgcol("blanc"); curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]); chgcol(base.couleur);}
 			
 		//Évaluer la commande		
 		if(enter) {								//BTW: Faire changer la vitesse/frénésie du clignotage avec la vitesse globale. Tu veux ça plus vite? Ça va être plus agressant aussi!
 
 							//FAIRE UNE FONCTION À PART POUR ÉVALUER LA CORRESPONDANCE DE LA COMMANDE AVEC LES POSSIBILITÉS;
-														//ICI, SIMPLEMENT S'OCCUPER DE L'AFFICHAGE (EFFETS GRAPHIQUES DIFFÉRENTS SI C'EST ACCEPTÉ OU NON...)!
-			inp.prevcomm.remplacement(inp.commande);
-			inpdisplay.commande.remplacement(inp.commande);							
+														//ICI, SIMPLEMENT S'OCCUPER DE L'AFFICHAGE (EFFETS GRAPHIQUES DIFFÉRENTS SI C'EST ACCEPTÉ OU NON...)!														
+			inpecho.commande.remplacement(inp.commande);						
+			inpecho.actif = true; inpecho.nxtt = timems();          							 //Mettre à l'heure le "nexttime"											
 			if(inp.accepted) {
 				if(inp.busy) {			//Conserver le texte en place, en plus pâle, pendant quelques secondes. Peut être effacé progressivement par une nouvelle commande
-					inpdisplay.couleur = "gris sombre";
-					inpdisplay.clignote.remplacement(3000);
+					inpecho.couleur = "gris sombre";
+					int clignarr [2] {3000,-1};
+					inpecho.clignote.remplacement(clignarr, 2);
 				} else {				//Faire clignoter le texte, en plus pâle, pendant quelques secondes.
-					inpdisplay.couleur = "gris sombre";
-					int clignarr [5] {500,-500,500,-500,500};
-					inpdisplay.clignote.remplacement(clignarr, 5);
-			
+					inpecho.couleur = "gris sombre";
+					int clignarr [6] {500,-500,500,-500,500,-1};
+					inpecho.clignote.remplacement(clignarr, 6);
 				}                				
 			} else{						//Faire clignoter le texte, en rouge foncé, pendant quelques secondes.
-				inpdisplay.couleur = "rouge sombre";
-				int clignarr [7] {500,-500,500,-500,500,-500,500};				
-				inpdisplay.clignote.remplacement(clignarr,7);	
+				
+				inpecho.couleur = "rouge sombre";
+				int clignarr [8] {500,-500,500,-500,500,-500,500,-1};				
+				inpecho.clignote.remplacement(clignarr,8);	
 			}
-			curspos(0,base.limtxty); for(int pos=inp.inputpos; pos < base.limfenx-1; pos++) out(' ');    //Nettoyer la ligne avant de la faire flasher
-			inp.inputpos = 0; inp.inputlong = 0; inp.commande.vide();                               //Nettoyer l'objet input
+			curspos(0,base.limtxty); for(int pos=0; pos < base.limfenx-1; pos++) out(' ');    //Nettoyer la ligne avant de la faire flasher
+			inp.inputpos = 0; inp.inputlong = 0; inp.commande.vide();                               //Nettoyer l'objet input			
 		}	
 	}
 }               //BTW: Dédier un canal à l'effaçage + clignotage! Genre un canal spécial?
 						//Mieux: juste faire une fonction spéciale, gérant un objet canal normal - ou spécial -, pour checker s'il faut changer cette portion de l'écran.
 
-				
-				
+								
 int main(void) {
 
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
 	//x, y, width, height,
-	fen base(800,30,200,200);                                           //Crée également l'objet dans lequel ces paramètres sont définis
+	fen base(600,30,500,500);                                           //Crée également l'objet dans lequel ces paramètres sont définis
 	
 	//Créer l'objet de mémoire, qui stockera tous les caractères utilisés
 	memoire mem {base.limtxtx};
 
 	//Créer les objets d'input
-	input entree; inputdisplay entreedisplay;
+	input entree; inputecho entreeecho;
+
+	//Manuellement créer un écho factice
+	//entreeecho.actif = true; entreeecho.commande.ajout('c'); entreeecho.clignote.ajout(3000);        //Ça ne marche pas plus???
+
+/*
+	curspos(0,0);
+	out(timems()); Sleep(1000); out(entreeecho.actif);  Sleep(1000); out(entreeecho.commande[0]); Sleep(1000); 
+	out("Test?"); Sleep(1000);
+	if(entreeecho.nxtt<timems()) out("TESTTTTTTTT");
+	Sleep(1000);
+	int currentt = timems();
+				if(entreeecho.actif&entreeecho.nxtt<currentt) {out("wouhhhou! Gros turnup! AVEC DSE ACCEMTS^WI A'>A:À..ÉÉÉÉEÖÔÔ!!!");}//userinputecho(entree,entreeecho,base);}
+	Sleep(1000);
+*/
 
 	//Créer les canaux utilisés
 	canal can1;
@@ -697,7 +776,7 @@ int main(void) {
 	can2.delay = 230;
 	
 	//Ajouter du texte aux canaux
-	string txt0 = "Ceci est du texte!\nJe dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
+	string txt0 = "Celà est du texte!\nJe dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
 	string txt1 = "§p1000§\nLe canal 1 \n           est sooooo boring. Ark.§p1000§\n§p1000§Je suis le canal 2.";
 	can1.txt.ajout(txt0); can2.txt.ajout(txt1);
 	
@@ -710,12 +789,16 @@ int main(void) {
 
 	//Faire une boucle pour que les canaux s'expriment!
 	bool gogogo = true;
+	int currentt;
 	while(gogogo){
-		int currentt = timems();
+			currentt = timems();
 			if(canaux.pt[0].actif&canaux.pt[0].nxtt<currentt) lire(canaux,0,base,mem);
 			if(canaux.pt[1].actif&canaux.pt[1].nxtt<currentt) lire(canaux,1,base,mem);
-			ecrire(entree,entreedisplay,base);
-			if(!canaux.pt[0].actif&!canaux.pt[1].actif) gogogo = false;
+			userinput(entree,entreeecho,base);
+			
+			if(entreeecho.actif&entreeecho.nxtt<currentt) {userinputecho(entree,entreeecho,base);}
+			
+			//if(!canaux.pt[0].actif&!canaux.pt[1].actif) gogogo = false;
 		}		
 		
 	curspos(0,13);
