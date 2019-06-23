@@ -76,7 +76,7 @@
 using namespace std;           //Pour faciliter l'utilisation de cout, cin, string, etc. (sans spécifier ces fonctions proviennent de quel enviro)
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//1) Définir les classes-contenantes dynamiques
+//1) Classes-contenantes générales
 	
 	//i) classe : StringAsVect ; permet un simulâcre d'allocation dynamique de mémoire, avec la magie de voir plus grand + indexation
 	class StringAsVect {
@@ -226,74 +226,77 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 	};		
 
-	//ii) classe : memoire ; permet de sauvegarder la "mémoire" de la console, c'est-à-dire tous le texte s'y étant déjà inscrit
-		
-		class memoire{
-			//Membres
-			public: 
-				static const int TailleBase = 500;       //Nombre de ligne de base des objets 
-				int nbcol;                  //Nombre de colonnes (fixe)
-				int nbligne;                //Nombre de lignes totales de stockage (pour éviter de ré-allouer la mémoire tout le temps)
-				int frontline;              //Ligne à laquelle est rendue l'écriture
-				char** souvenir;            //L'objet contient, en façades, des pointeurs pointant à d'autres pointeurs
-			//Constructeur par défaut
-			memoire() {
-				nbcol = 1;
-				frontline = 0;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
-				nbligne = TailleBase;            
-					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
-					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
-				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
-				//Créer les lignes pour chaque colonne, et les remplir d'espace
-				for(int col=0; col<nbcol; col++) {souvenir[col] = new char [nbligne]; for(int ligne=0; ligne<nbligne; ligne++) souvenir[col][ligne] = ' ';}
-			}
-			//Constructeur pour avoir le bon nombre de colonnes
-			memoire(int ncol) {
-				nbcol = ncol;
-				frontline = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
-				nbligne = TailleBase;            
-					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
-					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
-				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
-				//Créer les lignes pour chaque colonne, et les remplir d'espace
-				for(int col=0; col<nbcol; col++) {souvenir[col] = new char [nbligne]; for(int ligne=0; ligne<nbligne; ligne++) souvenir[col][ligne] = ' ';}
-			}			//Destructeur
-			~memoire() {
-				for(int col=0; col<nbcol ; col++) delete[] souvenir[col] ; delete[] souvenir;   //Bien déconstruire tout proprement
-			}
-			//Fonction d'accès : retourner certaines positions
-			char acces (int posx, int posy) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
-				return(souvenir[posx][posy]);
-			}
-			//Fonction de modification : newline ; ajouter une ligne à la suite de la position spécifiée (Opérateur +) 
-			void newline (int pos) {
-				if(frontline+1<nbligne) {
-					int emptypos = pos + 1;   //Calculer la position qui sera vide
-					//Déplacer de 1 tout ce qui vient ensuite, en commençant par la fin
-					for(int lin = frontline; lin > pos; lin--) for(int col = 0; col < nbcol; col++) souvenir[col][lin+1]=souvenir[col][lin]; 
-					for(int col = 0; col < nbcol; col++) souvenir[col][emptypos] = ' ';   //Remplir la position vide d'espace
-					frontline++;   //Noter qu'on ajoute une ligne
-				} else {
-					int emptypos = pos + 1;   //Calculer la position qui sera vide
-						try{char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}}  //Tenter d'allouer l'espace
-					  	catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)
-					char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
-					int oldpos = 0;  //Déclarer un compteur pour les vieilles positions				
-					for(int nwpos=0; nwpos < frontline; nwpos++) {  //Remplir, en laissant une position vide
-						if(nwpos==emptypos) {for(int xpos = 0; xpos<nbcol ; xpos++) nwsouv[xpos][nwpos] = ' '; continue;}  //Cette ligne remplit d'espace, puis saute les autres instructions jusqu'à la fin de la boucle 
-						for(int xpos = 0; xpos<nbcol ; xpos++) {nwsouv[xpos][nwpos] = souvenir[xpos][oldpos];}
-						oldpos++;
-					}
-					frontline++;   //Noter qu'on ajoute une ligne
-					for(int col=0; col<nbcol ; col++) delete[] souvenir[col] ; delete[] souvenir;  //Supprimer le contenu du viel array
-					souvenir = nwsouv;  //Copier seulement le pointeur, sans faire une copie du contenue
-					for(int col=0; col<nbcol ; col++) nwsouv[col] = nullptr; nwsouv = nullptr;    //Rendre nuls les pointeurs temporaires
+	//ii) classe : StaticVect ; sauvegarde un array "semi-dynamique", où la mémoire utilisée est fixe, mais les fonctionnalités sont les mêmes que StringAsVect.
+	template <class Type, int Taille>
+		class StaticVect {
+			//Valeurs membres	
+			public:
+				Type pt [Taille];   //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
+				int taille = Taille; //Nombre d'objets de l'array
+				int debut;  //Position actuelle de début
+				int fin;    //Position actuelle de fin
+			//Constructeurs	:
+				StaticVect<Type,Taille>() : debut(0), fin(0) {}  //Défaut 
+				StaticVect<Type,Taille>(Type nxt) : debut(0), fin(1) {pt[0] = nxt;}  //Une seule valeur
+				StaticVect<Type,Taille>(Type* ptarr, int longueur) : debut(0), fin(longueur) {for(int pos=0;pos<longueur;pos++) pt[pos] = ptarr[pos];}   //Array
+	   		//Opérateur d'accès : []
+			   Type operator[] (int pos) {
+			   		return(pt[debut + pos]);
+			   }
+			//Fonction de modification : nouvelarray()
+				void nouvelarray(Type* ptarr, int taillearr) {taille = taillearr; debut = 0; fin = 0; pt = ptarr;} 
+			//Fonction de modification : ajout()
+				bool ajout(Type nxt) {if(fin+1 <= taille) {pt[fin] = nxt; fin++; return(true);} else return(false);}       //Fonction de retour pour communiquer la réussite ou non!				
+				bool ajout(Type nxt, int pos) {
+					if(fin+1 <= taille) {
+						for(int ptpos = fin; ptpos>pos; ptpos--) pt[ptpos] = pt[ptpos-1];
+						pt[pos] = nxt; fin++; 
+						return(true);
+					} else return(false);
 				}
-			}
-		};
+				bool ajout(Type* nxt, int longueur) {
+					if(fin+longueur <= taille) {
+						int nouvfin = fin + longueur; int posnxt = 0;
+						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
+						fin=nouvfin;
+						return(true);
+					} else return(false);
+				}
+			//Fonction de modification : remplacement()
+				int remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
+				int remplacement(Type* nxt, int longueur) {
+					if(longueur <= taille) {
+						debut = 0; fin = longueur;
+						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];	
+						return(true);			
+					} else return(false);
+				}
+				int remplacement(StaticVect<Type,Taille>& nxt) {
+					if(nxt.fin-nxt.debut <= taille) {
+						debut = 0; fin = nxt.fin;
+						int longueurnxt = nxt.fin-nxt.debut;
+						int pos = 0; for(int posnxt=0; posnxt<longueurnxt; posnxt++) pt[pos++] = nxt[posnxt];		
+						return(true);
+					} else return(false);
+				}
+			//Fonction de modification : vide()
+				void vide(void) {debut = 0; fin = 0;}
+			//Fonction de modification : suppression          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
+				void suppression (int nb) {
+					if(nb > fin-debut) debut = fin; else debut+=nb; 
+				}
+			//Fonction de modification : supprposition       //Supprime l'entrée à la position indiquée
+				void supprposition (int pos) {
+					if(pos >= debut & pos < fin) {
+						for(int ptpos = pos; ptpos < fin-1; ptpos++) {pt[ptpos] = pt[ptpos+1];}
+						fin--;
+					}
+				}			
+			};	
 
+			
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//2) Définir les fonctions et objets de manipulation
+//2) Fonctions et objets pour interagir avec la console
 
 	//i) Fonction : timems ; avoir le temps actuel en millisecondes (depuis l'epoch, soit 1er janvier 1970)
 	int timems (void) {
@@ -368,32 +371,77 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		SetConsoleTextAttribute(TxtConsole, code);
 	}
 
-	//vii) Fonction : CodeSpecialLong ; retourne la longueur d'un code spécial ('§' compris)
-	int CodeSpecialLongueur(const StringAsVect& str){
-		int longueur = 1;               //Initier l'objet à retourner
-		bool fini = false;              
-		for(int pos = str.debut + 1; !fini&pos<str.fin ; pos++) {longueur++; if(str.pt[pos]=='§') fini = true;} 		
-		return(longueur);		
-	}
-
-	//viii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
-	double CodeSpecialExtractDouble(const StringAsVect& str, int longueur){
-		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int longmax = longueur - 1 + str.debut;      //Le dernier caractère étant le '§'		
-		for(int pos=2+str.debut; pos<longmax; pos++) nbonly += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
-		return(stod(nbonly));           //La fonction stod convertit les strings en doubles (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
-	}		
-	int CodeSpecialExtractInt(StringAsVect& str, int longueur){
-		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int longmax = longueur - 1;      //Le dernier caractère étant le '§'
-		int nbonlypos = 0; for(int pos=2; pos<longmax; pos++) nbonly[nbonlypos++] += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
-		return(stoi(nbonly));           //La fonction stoi convertit les strings en int (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
-	}		
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//3) Définir les classes-contenantes statiques
+//3) Classes-contenantes spécialisées (canaux et autres)
+
+	//i) classe : memoire ; permet de sauvegarder la "mémoire" de la console, c'est-à-dire tous le texte s'y étant déjà inscrit
+		
+		class memoire{
+			//Membres
+			public: 
+				static const int TailleBase = 500;       //Nombre de ligne de base des objets 
+				int nbcol;                  //Nombre de colonnes (fixe)
+				int nbligne;                //Nombre de lignes totales de stockage (pour éviter de ré-allouer la mémoire tout le temps)
+				int frontline;              //Ligne à laquelle est rendue l'écriture
+				char** souvenir;            //L'objet contient, en façades, des pointeurs pointant à d'autres pointeurs
+			//Constructeur par défaut
+			memoire() {
+				nbcol = 1;
+				frontline = 0;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
+				nbligne = TailleBase;            
+					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
+				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
+				//Créer les lignes pour chaque colonne, et les remplir d'espace
+				for(int col=0; col<nbcol; col++) {souvenir[col] = new char [nbligne]; for(int ligne=0; ligne<nbligne; ligne++) souvenir[col][ligne] = ' ';}
+			}
+			//Constructeur pour avoir le bon nombre de colonnes
+			memoire(int ncol) {
+				nbcol = ncol;
+				frontline = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
+				nbligne = TailleBase;            
+					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
+					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
+				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
+				//Créer les lignes pour chaque colonne, et les remplir d'espace
+				for(int col=0; col<nbcol; col++) {souvenir[col] = new char [nbligne]; for(int ligne=0; ligne<nbligne; ligne++) souvenir[col][ligne] = ' ';}
+			}			//Destructeur
+			~memoire() {
+				for(int col=0; col<nbcol ; col++) delete[] souvenir[col] ; delete[] souvenir;   //Bien déconstruire tout proprement
+			}
+			//Fonction d'accès : retourner certaines positions
+			char acces (int posx, int posy) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
+				return(souvenir[posx][posy]);
+			}
+			//Fonction de modification : newline ; ajouter une ligne à la suite de la position spécifiée (Opérateur +) 
+			void newline (int pos) {
+				if(frontline+1<nbligne) {
+					int emptypos = pos + 1;   //Calculer la position qui sera vide
+					//Déplacer de 1 tout ce qui vient ensuite, en commençant par la fin
+					for(int lin = frontline; lin > pos; lin--) for(int col = 0; col < nbcol; col++) souvenir[col][lin+1]=souvenir[col][lin]; 
+					for(int col = 0; col < nbcol; col++) souvenir[col][emptypos] = ' ';   //Remplir la position vide d'espace
+					frontline++;   //Noter qu'on ajoute une ligne
+				} else {
+					int emptypos = pos + 1;   //Calculer la position qui sera vide
+						try{char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}}  //Tenter d'allouer l'espace
+					  	catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)
+					char** nwsouv = new char* [nbcol] ; for(int col = 0; col<nbcol ; col++) {nwsouv [col] = new char [nbligne+TailleBase];}  //Initialiser le nouveau bloc de mémoire à l'aide d'un pointeur temporaire
+					int oldpos = 0;  //Déclarer un compteur pour les vieilles positions				
+					for(int nwpos=0; nwpos < frontline; nwpos++) {  //Remplir, en laissant une position vide
+						if(nwpos==emptypos) {for(int xpos = 0; xpos<nbcol ; xpos++) nwsouv[xpos][nwpos] = ' '; continue;}  //Cette ligne remplit d'espace, puis saute les autres instructions jusqu'à la fin de la boucle 
+						for(int xpos = 0; xpos<nbcol ; xpos++) {nwsouv[xpos][nwpos] = souvenir[xpos][oldpos];}
+						oldpos++;
+					}
+					frontline++;   //Noter qu'on ajoute une ligne
+					for(int col=0; col<nbcol ; col++) delete[] souvenir[col] ; delete[] souvenir;  //Supprimer le contenu du viel array
+					souvenir = nwsouv;  //Copier seulement le pointeur, sans faire une copie du contenue
+					for(int col=0; col<nbcol ; col++) nwsouv[col] = nullptr; nwsouv = nullptr;    //Rendre nuls les pointeurs temporaires
+				}
+			}
+		};
+
 	
-	//i) Classe : canal ; permet de sauvegarder la position de lecture du canal, le texte restant à lire, la vitesse, etc.
+	//ii) Classe : canal ; permet de sauvegarder la position de lecture du canal, le texte restant à lire, la vitesse, etc.
 	class canal {
 		//Membres
 		public:
@@ -408,7 +456,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		canal() : delay(400), posx(-1), posy(0), actif(false), vit(1) {nxtt = timems();}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 	};
 
-	//ii) Classe : fen ; permet de sauvegarder les paramètres relatifs aux caractéristiques de la fenêtre de sortie (console)
+	//iii) Classe : fen ; permet de sauvegarder les paramètres relatifs aux caractéristiques de la fenêtre de sortie (console)
 	class fen {
 		//Membres
 		public:
@@ -434,127 +482,94 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		fen(int x, int y) {limtxtx = x; limtxty = y; consy = 0; refoule = false;}      //Constructeur permettant d'aligner manuellement les dimensions de la fenêtre avec la réalité	
 	};
 		
-	//iii) classe : staticvect ; sauvegarde un array "semi-dynamique", où la mémoire utilisée est fixe, mais les fonctionnalités sont les mêmes que StringAsVect.
-	template <class Type>
-		class staticvect {
-			//Valeurs membres	
-			public:
-				Type* pt;   //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
-				int taille; //Nombre d'objets de l'array
-				int debut;  //Position actuelle de début
-				int fin;    //Position actuelle de fin
-			//Constructeurs	:
-				staticvect<Type>() : taille(0), debut(0), fin(0), pt(nullptr) {}  //Défaut 
-				staticvect<Type>(Type nxt) : taille(1), debut(0), fin(1), pt(&nxt) {}  //Une seule valeur
-				staticvect<Type>(Type* ptarr, int taillearr) : taille(taillearr), debut(0), fin(0), pt(ptarr) {}    //Copie le pointeur d'un array vide pré-existant
-				staticvect<Type>(Type* ptarr, int taillearr, int finarr) : taille(taillearr), debut(0), fin(finarr), pt(ptarr) {}   //Copie le pointeur d'un array rempli
-	   		//Opérateur d'accès : []
-			   Type operator[] (int pos) {
-			   		return(pt[debut + pos]);
-			   }
-			//Fonction de modification : nouvelarray()
-				void nouvelarray(Type* ptarr, int taillearr) {taille = taillearr; debut = 0; fin = 0; pt = ptarr;} 
-			//Fonction de modification : ajout()
-				bool ajout(Type nxt) {if(fin+1 <= taille) {pt[fin] = nxt; fin++; return(true);} else return(false);}       //Fonction de retour pour communiquer la réussite ou non!				
-				bool ajout(Type nxt, int pos) {
-					if(fin+1 <= taille) {
-						for(int ptpos = fin; ptpos>pos; ptpos--) pt[ptpos] = pt[ptpos-1];
-						pt[pos] = nxt; fin++; 
-						return(true);
-					} else return(false);
-				}
-				bool ajout(Type* nxt, int longueur) {
-					if(fin+longueur <= taille) {
-						int nouvfin = fin + longueur; int posnxt = 0;
-						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
-						fin=nouvfin;
-						return(true);
-					} else return(false);
-				}
-			//Fonction de modification : remplacement()
-				int remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
-				int remplacement(Type* nxt, int longueur) {
-					if(longueur <= taille) {
-						debut = 0; fin = longueur;
-						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];	
-						return(true);			
-					} else return(false);
-				}
-				int remplacement(staticvect<Type>& nxt) {
-					if(nxt.fin-nxt.debut <= taille) {
-						debut = 0; fin = nxt.fin;
-						int taillenxt = nxt.fin-nxt.debut;
-						int pos = 0; for(int posnxt=0; posnxt<taillenxt; posnxt++) pt[pos++] = nxt[posnxt];		
-						return(true);
-					} else return(false);
-				}
-			//Fonction de modification : vide()
-				void vide(void) {debut = 0; fin = 0;}
-			//Fonction de modification : suppression          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
-				void suppression (int nb) {
-					if(nb > fin-debut) debut = fin; else debut+=nb; 
-				}
-			//Fonction de modification : supprposition       //Supprime l'entrée à la position indiquée
-				void supprposition (int pos) {
-					if(pos >= debut & pos < fin) {
-						for(int ptpos = pos; ptpos < fin-1; ptpos++) {pt[ptpos] = pt[ptpos+1];}
-						fin--;
-					}
-				}			
-			};	
+
 		
-	//v) classe : input ; sauvegarde les informations relatives aux inputs
-								//Attention: Cette classe contient des membres staticvect.
+	//iv) classe : input ; sauvegarde les informations relatives aux inputs
+								//Attention: Cette classe contient des membres StaticVect.
 								//À cause de son orthographe particulier, cette classe nécessite de voler son pointeur à un array permanent.
-								//Il est donc nécessaire de pairer chaque objet staticvect avec un array.
-								//L'array occupera la place dans la mémoire, et le staticvect facilitera les modifications sur la mémoire.
-								//Cela est nécessaire pour éviter de mettre un template <int taille> aux staticvect, allourdissant leur utilisation dans des fonctions.
+								//Il est donc nécessaire de pairer chaque objet StaticVect avec un array.
+								//L'array occupera la place dans la mémoire, et le StaticVect facilitera les modifications sur la mémoire.
+								//Cela est nécessaire pour éviter de mettre un template <int taille> aux StaticVect, allourdissant leur utilisation dans des fonctions.
 	class input {
 		//Valeurs membres
 		public:
-			static const int taille = 200;
-			char arrcommande [taille];
-			staticvect<char> commande;          	//Phrase que contient le buffer
-			int inputpos;                   //Position d'indexation du prochain caractère    == staticvect.fin? Non! Car ça peut bouger!
-			int inputlong;                  //Nombre de caractères total de la commande actuelle (0 : inputpos = 0)   //== staticvect.fin - staticvect.debut
+			StaticVect<char,200> commande;          	//Phrase que contient le buffer
+			int inputpos;                   //Position d'indexation du prochain caractère    == StaticVect.fin? Non! Car ça peut bouger!
+			int inputlong;                  //Nombre de caractères total de la commande actuelle (0 : inputpos = 0)   //== StaticVect.fin - StaticVect.debut
 			bool accepted;                  //Flag concernant la dernière commande; utile pour l'affichage visuel
 			bool busy;						//Flag concernant la dernière commande; utile pour l'affichage visuel
 		//Constructeur par défaut
-			input() : inputpos(0), inputlong(0), accepted(false), busy(false) {
-				commande.nouvelarray(arrcommande, taille);
-			}
-		//...
+			input() : inputpos(0), inputlong(0), accepted(false), busy(false) {}
 	};							
 						
-	//vi) classe : inputecho ; permet l'affichage résiduel des commandes (acceptées ou refusées)
-								//Attention: Cette classe contient des membres staticvect.
+	//v) classe : inputecho ; permet l'affichage résiduel des commandes (acceptées ou refusées)
+								//Attention: Cette classe contient des membres StaticVect.
 								//À cause de son orthographe particulier, cette classe nécessite de voler son pointeur à un array permanent.
-								//Il est donc nécessaire de pairer chaque objet staticvect avec un array.
-								//L'array occupera la place dans la mémoire, et le staticvect facilitera les modifications sur la mémoire.
-								//Cela est nécessaire pour éviter de mettre un template <int taille> aux staticvect, allourdissant leur utilisation dans des fonctions.	
+								//Il est donc nécessaire de pairer chaque objet StaticVect avec un array.
+								//L'array occupera la place dans la mémoire, et le StaticVect facilitera les modifications sur la mémoire.
+								//Cela est nécessaire pour éviter de mettre un template <int taille> aux StaticVect, allourdissant leur utilisation dans des fonctions.	
 	class inputecho {
 		//Valeurs membres
 		public:
-			static const int taille = 200;
-			static const int tailleclign = 50;
-			char arrcommande [taille];
-			int arrclignote [tailleclign];
-			staticvect<char> commande;
-			staticvect<int> clignote;              	   //Conserve les instructions pour le clignotement : positif = affiche, négatif = pause.	
+			StaticVect<char,200> commande;
+			StaticVect<int,50> clignote;              	   //Conserve les instructions pour le clignotement : positif = affiche, négatif = pause.	
 			string couleur;                            //Conserve la couleur du clignotement
 			bool actif;							       //Compteur d'activité
 			int nxtt;         						   //Moment où la prochaine entrée sera traitée         				
 		//Constructeur par défaut
-		inputecho() : couleur("gris sombre"), actif(false) {
-			commande.nouvelarray(arrcommande, taille);
-			clignote.nouvelarray(arrclignote, tailleclign);
-			nxtt = timems();
-		}	
-		//...
+		inputecho() : couleur("gris sombre"), actif(false) {nxtt = timems();}	
 	};
+	
+	//vi) classe : expression : permet de structurer diverses évaluation d'objets
+	
+/*	
+	//vii) classe : chainon : permet le stockage du texte et des conditions d'apparition
+	class chainon {
+		//Membres
+		public:
+			bool pret;
+			bool fini;
+			StaticVect<expression,30> cond;
+			StaticVect<staticvect<int,10>,10> enchainement;   //int réfère aux positions des mailles              //?????? COMMENT LE TRAITER???? STRUCTURE SPÉCIALE????
+			StaticVect<expression,10> enchaineprob;        //Avec le même ordre d'indexation que enchaînement
+			StaticVect<string,10> maille;
+			StaticVect<string,10> commandes                             //PROBABLEMENT FAIRE UNE STRUCTURE PERSONALISÉE AVEC & ET | ET !=
+			StaticVect<string,10> codespeciauxdebut;
+			StaticVect<string,10> codespeciauxfin;
+			StaticVect<int,10> override;
+			StaticVect<string,10> overridename;
+			int canal;
+			string canalname;
+	};
+*/
 
-	//vii) fonction : userinputecho ; canal spécial validant graphiquement l'acceptation ou le refus des commandes envoyées
-	void userinputecho(input& inp, inputecho& inpecho, const fen& base) {	
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+//4) Fonction spécialisées de petite taille
+
+	//i) Fonction : CodeSpecialLong ; retourne la longueur d'un code spécial ('§' compris)
+	int CodeSpecialLongueur(const StringAsVect& str){
+		int longueur = 1;               //Initier l'objet à retourner
+		bool fini = false;              
+		for(int pos = str.debut + 1; !fini&pos<str.fin ; pos++) {longueur++; if(str.pt[pos]=='§') fini = true;} 		
+		return(longueur);		
+	}
+
+	//ii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
+	double CodeSpecialExtractDouble(const StringAsVect& str, int longueur){
+		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
+		int longmax = longueur - 1 + str.debut;      //Le dernier caractère étant le '§'		
+		for(int pos=2+str.debut; pos<longmax; pos++) nbonly += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
+		return(stod(nbonly));           //La fonction stod convertit les strings en doubles (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
+	}		
+	int CodeSpecialExtractInt(StringAsVect& str, int longueur){
+		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
+		int longmax = longueur - 1;      //Le dernier caractère étant le '§'
+		int nbonlypos = 0; for(int pos=2; pos<longmax; pos++) nbonly[nbonlypos++] += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
+		return(stoi(nbonly));           //La fonction stoi convertit les strings en int (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
+	}		
+
+	//iii) fonction : UserInputEcho ; canal spécial validant graphiquement l'acceptation ou le refus des commandes envoyées
+	void UserInputEcho(input& inp, inputecho& inpecho, const fen& base) {	
 		chgcol(inpecho.couleur);
 		//Clignoter
 		if(inpecho.clignote[0]>0){
@@ -570,8 +585,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	
 	
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//4) Écrire la fonction lire()
-void lire(staticvect<canal>& canaux, int canpos, fen& base, memoire& mem) {
+//5) Fonction LireCanal()
+template<int Taille>
+void LireCanal(StaticVect<canal,Taille>& canaux, int canpos, fen& base, memoire& mem) {
 	//Updater le "next time"
 	canaux.pt[canpos].nxtt += canaux.pt[canpos].delay;
 	//Interpréter les "codes spéciaux" (§...§)
@@ -598,10 +614,7 @@ void lire(staticvect<canal>& canaux, int canpos, fen& base, memoire& mem) {
 					if(base.refoule) base.consy++; else if(mem.frontline>base.limtxty) {base.refoule = true; base.consy++;} 						
 				//Sauter une ligne dans la console
 					if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
-						if(canaux.pt[canpos].posy==mem.frontline-1) {               //Si le canal gère la dernière ligne de la console, c'est plus simple    //-1 : à cause de [0]		
-							//if(canaux.pt[canpos].posx<base.limtxtx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0]
-						} else {                             //S'il y a d'autres lignes à repousser vers le bas
-							//if(canaux.pt[canpos].posx<base.limtxtx-1) out('\n');     //Forcer le saut de page; sinon, il se fait par lui-même!   //-1 : à cause de [0] //CES LIGNES SEMBLENT INUTILES + CAUSENT PROBLÈMES? ÉVITER \N À TOUT PRIX!
+						if(canaux.pt[canpos].posy!=mem.frontline-1) {                             //S'il y a d'autres lignes à repousser vers le bas
 							//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
 								curspos(0,canaux.pt[canpos].posy+1);  //Mettre le curseur au début de la reconstruction
 								for(int county = canaux.pt[canpos].posy + 1 ; county <= mem.frontline ; county++) {   
@@ -638,8 +651,8 @@ void lire(staticvect<canal>& canaux, int canpos, fen& base, memoire& mem) {
 }	
 					
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//5) Écrire la fonction userinput()
-void userinput(input& inp, inputecho& inpecho, const fen& base) {
+//6) Fonction UserInput()
+void UserInput(input& inp, inputecho& inpecho, const fen& base) {
 	if(_kbhit()){
 	//i) Capter la lettre tapée
 	bool enter = false;
@@ -737,10 +750,12 @@ void userinput(input& inp, inputecho& inpecho, const fen& base) {
 			inp.inputpos = 0; inp.inputlong = 0; inp.commande.vide();                               //Nettoyer l'objet input			
 		}	
 	}
-}               //BTW: Dédier un canal à l'effaçage + clignotage! Genre un canal spécial?
-						//Mieux: juste faire une fonction spéciale, gérant un objet canal normal - ou spécial -, pour checker s'il faut changer cette portion de l'écran.
+}               
 
-								
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+//7) Aire de tests
+							
 int main(void) {
 
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
@@ -752,20 +767,6 @@ int main(void) {
 
 	//Créer les objets d'input
 	input entree; inputecho entreeecho;
-
-	//Manuellement créer un écho factice
-	//entreeecho.actif = true; entreeecho.commande.ajout('c'); entreeecho.clignote.ajout(3000);        //Ça ne marche pas plus???
-
-/*
-	curspos(0,0);
-	out(timems()); Sleep(1000); out(entreeecho.actif);  Sleep(1000); out(entreeecho.commande[0]); Sleep(1000); 
-	out("Test?"); Sleep(1000);
-	if(entreeecho.nxtt<timems()) out("TESTTTTTTTT");
-	Sleep(1000);
-	int currentt = timems();
-				if(entreeecho.actif&entreeecho.nxtt<currentt) {out("wouhhhou! Gros turnup! AVEC DSE ACCEMTS^WI A'>A:À..ÉÉÉÉEÖÔÔ!!!");}//userinputecho(entree,entreeecho,base);}
-	Sleep(1000);
-*/
 
 	//Créer les canaux utilisés
 	canal can1;
@@ -783,20 +784,20 @@ int main(void) {
 	//Rendre manuellement les canaux actifs
 	can1.actif = true; can2.actif = true;	
 	
-	//Ajouter les canaux dans l'objet staticvect<canal>
+	//Ajouter les canaux dans l'objet StaticVect<canal>
 	canal canx [2] = {can1,can2};
-	staticvect<canal> canaux (canx,2,2);          
+	StaticVect<canal,2> canaux (canx,2);          
 
 	//Faire une boucle pour que les canaux s'expriment!
 	bool gogogo = true;
 	int currentt;
 	while(gogogo){
 			currentt = timems();
-			if(canaux.pt[0].actif&canaux.pt[0].nxtt<currentt) lire(canaux,0,base,mem);
-			if(canaux.pt[1].actif&canaux.pt[1].nxtt<currentt) lire(canaux,1,base,mem);
-			userinput(entree,entreeecho,base);
+			if(canaux.pt[0].actif&canaux.pt[0].nxtt<currentt) LireCanal(canaux,0,base,mem);
+			if(canaux.pt[1].actif&canaux.pt[1].nxtt<currentt) LireCanal(canaux,1,base,mem);
+			UserInput(entree,entreeecho,base);
 			
-			if(entreeecho.actif&entreeecho.nxtt<currentt) {userinputecho(entree,entreeecho,base);}
+			if(entreeecho.actif&entreeecho.nxtt<currentt) {UserInputEcho(entree,entreeecho,base);}
 			
 			//if(!canaux.pt[0].actif&!canaux.pt[1].actif) gogogo = false;
 		}		
