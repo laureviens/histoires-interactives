@@ -139,7 +139,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				return *this;
 			}
    		//Opérateur d'accès : []
-		   char operator[] (int pos) {return(pt[debut + pos]);}
+		   char& operator[] (int pos) {return(pt[debut + pos]);}
 		//Fonction de modification : ajout          //Ajoute les valeurs en right-hand à la SUITE des valeurs déjà contenues
 		   void ajout (char nxt) {
 		   		if(fin + 1 < nb) {      //Pas besoin de ré-allouer la mémoire
@@ -160,12 +160,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
       	  			nwpt = nullptr;                             //Rendre nul le pointeur temporaire
 				}
 		   }
-		   void ajout (const string& nxt) {
+		   void ajout (string nxt) {
 		   		if(fin + nxt.length() < nb) {      //Pas besoin de ré-allouer la mémoire
 		   			int nbnxt = nxt.length();
 		   			int nwend = fin + nbnxt; 
 					int pos = fin; for(int posnxt=0; posnxt<nbnxt; posnxt++) pt[pos++] = nxt[posnxt];   
-					 fin+=nwend; longueur+=nbnxt;
+					 fin+=nwend;
 				} else {                //Besoin de ré-allouer
 					int nbnxt = nxt.length();    
 					nb = longueur + TailleBase;             	//Déterminer le nombre d'éléments du prochain bloc de mémoire
@@ -183,12 +183,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
       	  			nwpt = nullptr;                             //Rendre nul le pointeur temporaire
 				}
 		   }		   
-		   void ajout (const StringAsVect& nxt) {
+		   void ajout (StringAsVect nxt) {
 		   		if(fin + nxt.nb < nb) {      //Pas besoin de ré-allouer la mémoire
 		   			int nbnxt = nxt.nb;
 		   			int nwend = fin + nbnxt; 
-					int pos = fin; for(int posnxt=0; posnxt<nbnxt; posnxt++) pt[pos++] = nxt.pt[posnxt+nxt.debut];   
-					 fin+=nwend; longueur+=nbnxt;
+					int pos = fin; for(int posnxt=0; posnxt<nbnxt; posnxt++) pt[pos++] = nxt[posnxt];   
+					 fin+=nwend;
 				} else {                //Besoin de ré-allouer
 					int nbnxt = nxt.nb;    
 					nb = longueur + TailleBase;             	//Déterminer le nombre d'éléments du prochain bloc de mémoire
@@ -198,7 +198,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					int posNeuf = 0; for(int posVieux=debut; posVieux<fin; posVieux++) {   //Remplir le nouveau bloc de mémoire des vieux éléments
       	  				nwpt[posNeuf++] = pt[posVieux];
 					}
-					for(int posnxt=0; posnxt<nbnxt; posnxt++) pt[posNeuf++] = nxt.pt[posnxt+nxt.debut]; //Ajouter les nouveaux éléments
+					for(int posnxt=0; posnxt<nbnxt; posnxt++) pt[posNeuf++] = nxt[posnxt]; //Ajouter les nouveaux éléments
 					debut = 0; fin = longueur + nbnxt;          //Ré-initialiser les compteurs de position
 					longueur += nbnxt;
 					delete[] pt;       							//Supprimer les éléments contenus dans le viel array	
@@ -229,7 +229,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				StaticVect<Type,Taille>(Type* ptarr, int nb) : debut(0), fin(nb), longueur(nb) {for(int pos=0;pos<nb;pos++) pt[pos] = ptarr[pos];}   //Array
 				StaticVect<Type,Taille>(const StaticVect<Type,Taille>& nxt) : debut(0), fin(nxt.longueur), longueur(nxt.longueur) {for(int pos=0;pos<nxt.longueur;pos++) pt[pos] = nxt.pt[nxt.debut + pos];}    //POURRAIT ÊTRE MIEUX ÉCRIT???
 			//Copy assignement :
-				StaticVect<Type,Taille>& operator = (const StaticVect<Type,Taille>& nxt) {
+				StaticVect<Type,Taille> operator = (const StaticVect<Type,Taille>& nxt) {
 					debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
 					for(int pos=0;pos<nxt.longueur;pos++) pt[pos] = nxt.pt[nxt.debut + pos];
 					return(*this);			
@@ -242,6 +242,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				StaticVect<Type,Taille> intervalle(int posdebut, int posfin) {
 					if(posfin <= longueur) {
 						StaticVect<Type,Taille> returnvect;
+						//StaticVect<Type,Taille> returnvect (*this);
 						returnvect.debut = 0; returnvect.longueur = posfin - posdebut; returnvect.fin = returnvect.longueur;
 						int returnpos = 0; for(int pos = posdebut; pos<posfin; pos++) {returnvect.pt[returnpos++] = pt[pos+debut];}
 						return(returnvect);				
@@ -566,8 +567,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		void modif(int posrayon, int poslivre, int value) {rayon[posrayon][poslivre] = value;}
 	};
 
-	//vii) classe : inteval ; contient l'expression à évaluer (la plus simple) ; constructeur transforme les noms de "livre" en position d'indexation
-	class inteval {
+	//vii) classe : booleval ; contient l'expression à évaluer (la plus simple) ; constructeur transforme les noms de "livre" en position d'indexation
+	class booleval {
 		//Valeurs membres
 		public:
 			int rayonpos;   		//Position d'indexation de la "famille" de l'argument comparé à gauche					
@@ -576,7 +577,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int constbool; int constint;      //TRUE si les valeurs sont booléennes ou int, à la place d'évaluées.
 		//Constructeur
 		template<int Taille>
-		inteval(StaticVect<char,Taille> exp, bibliotheque& biblio) : constbool(false), constint(false) {
+		booleval(StaticVect<char,Taille> exp, bibliotheque& biblio) : constbool(false), constint(false) {
+			
+			
+			
+
+			
+						
+			
+			
 			string rayon, livre;    //Initier un string, dans lequel seront insérés seulement les noms des rayons/livres
 			int strpos, pos; strpos = 0; pos = 0; while(exp[pos]!='¶'&pos<exp.longueur) rayon += exp[pos++];
 			//Évaluer si le string contient des noms ou une valeur
@@ -589,24 +598,34 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				strpos = 0; pos++; while(pos<exp.longueur) livre += exp[pos++];
 				livrepos = ColNameFind(livre,biblio.nomlivre[rayonpos]);
 			}
+			
+						
+					//DEGBUUGGG
+					out("\n\nbooleval exp  : "); out(exp);
+					out("\nValeur que ça donne : "); out(this->eval(biblio));
+					//DEGBUUGG
+					
+			
+			
+			
 		}
 		//Fonction d'accès : eval()	
 		int eval(bibliotheque& biblio) {if(constbool) return(boolval); else if(constint) return(intval); else return(biblio.acces(rayonpos,livrepos));}	
 	};	
 
-	//viii) classe : intoper ; contient les opérations d'expressions booléennes évaluables
-	class intoper {
+	//viii) classe : booloper ; contient les opérations d'expressions booléennes évaluables
+	class booloper {
 		//Valeurs membres
 		public:
 			char operateur;      	//Opérateur
-			intoper* LHcompos;
-			intoper* RHcompos;
-			inteval* LHsimple;
-			inteval* RHsimple;
+			booloper* LHcompos;
+			booloper* RHcompos;
+			booleval* LHsimple;
+			booleval* RHsimple;
 			bool Lcompos; bool Rcompos;				//TRUE si les valeurs sont composites
 		//Constructeur
 		template<int Taille>
-		intoper(StaticVect<char,Taille> exp, bibliotheque& biblio) : Lcompos(false), Rcompos(false) {
+		booloper(StaticVect<char,Taille> exp, bibliotheque& biblio) : Lcompos(false), Rcompos(false) {
 			StaticVect<char,Taille> LH;									
 			StaticVect<char,Taille> RH;			
 			int posPAR; bool trouvPAR = false; int nbPAR = 0;
@@ -643,12 +662,41 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					operateur = ' '; LH = exp;   //Aucune opération, seulement une évaluation				
 				}		
 			}			
+			
+			
+			
+						
+			//DEBUGGGG
+			out("\n\nOpérateur : \""); out(operateur); out("\"");
+			out("\nBooloper exp : "); out(exp);
+			out("\nBooloper LH : "); out(LH);
+			out("\nBooloper RH : "); out(RH);
+			//DEBUGGG
+			
+			
+					
+			
+			
+			
+			
 			//Assigner les valeurs aux membres
-			if(Lcompos) {LHcompos = new intoper (LH,biblio); LHsimple = nullptr;} else {LHsimple = new inteval(LH,biblio); LHcompos = nullptr;}
-			if(operateur!=' ') {if(Rcompos) {RHcompos = new intoper (RH,biblio); RHsimple = nullptr;} else {RHsimple = new inteval(RH,biblio); RHcompos = nullptr;}}
+			if(Lcompos) {LHcompos = new booloper (LH,biblio); LHsimple = nullptr;} else {LHsimple = new booleval(LH,biblio); LHcompos = nullptr;}
+			if(operateur!=' ') {if(Rcompos) {RHcompos = new booloper (RH,biblio); RHsimple = nullptr;} else {RHsimple = new booleval(RH,biblio); RHcompos = nullptr;}}
 		}			
 		//Fonction d'accès : eval()				
-		int eval(bibliotheque& biblio) {
+		bool eval(bibliotheque& biblio) {
+			
+			
+			
+			
+			//DEBUGGG
+			//out("\nBoolopereval LH = "); if(!Lcompos) out(LHsimple->eval(biblio)); else out(LHcompos->eval(biblio));
+			//out("\nBoolopereval RH = "); if(!Rcompos) out(RHsimple->eval(biblio)); else out(RHcompos->eval(biblio));
+			//DEBUGG
+			
+						
+			
+			
 			if(Lcompos){
 				if(Rcompos) {
 					if(operateur=='+') {return(LHcompos->eval(biblio)+RHcompos->eval(biblio)); 
@@ -687,8 +735,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Valeurs membres
 		public:
 			char comparateur;      //Opérateur de comparaison
-			intoper* LH;
-			intoper* RH;
+			booloper* LH;
+			booloper* RH;
 			bool constbool;			   //TRUE si l'argument à gauche doit être comparé à un booléen implicite
 			bool boolval;		
 		//Constructeur ;
@@ -721,14 +769,40 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			} else {constbool = true; boolval = true; comparateur = '=';	poscomparateur = exp.longueur;} //Cas spécial : "comparaison implicite de la valeur à true"
 			//Message d'erreur
 			if(erreur) {out("\n\nL'opérateur n'est pas complet dans: "); for(int exppos = exp.debut; exppos<exp.fin; exppos++) {out(exp[exppos]);} abort();}
-			//Créer les objets intoper
-			LH = new intoper(exp.intervalle(0,poscomparateur),biblio);
+			
+						
+			
+			
+						
+			//DEBUGGGG
+			out("\n\nComparateur : \""); out(comparateur); out("\"");
+			out("\nconstbool : "); out(constbool);
+			out("\nboolval : "); out(boolval);
+			out("\nBoolcompar exp : "); out(exp);
+			//DEBUGGG
+			
+			
+			
+			
+		
+			
+			//Créer les objets booloper
+			LH = new booloper(exp.intervalle(0,poscomparateur),biblio);
 			if(!constbool){
-				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH = new intoper(exp.intervalle(poscomparateur+2,exp.longueur),biblio); else RH = new intoper(exp.intervalle(poscomparateur+1,exp.longueur),biblio);	
+				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH = new booloper(exp.intervalle(poscomparateur+2,exp.longueur),biblio); else RH = new booloper(exp.intervalle(poscomparateur+1,exp.longueur),biblio);	
 			}			
 		}
 		//Fonction d'accès : eval
 		bool eval(bibliotheque& biblio) {
+			
+			
+			//DEBUGGG
+			out("\n\nBoolcompareval LH = "); out(LH->eval(biblio));
+			if(!constbool) {out("\nBoolcompareval RH = "); out(RH->eval(biblio));}
+			//DEBUGG
+			
+			
+			
 			if(comparateur=='=') {
 				if(constbool) return(LH->eval(biblio)==boolval); else return(LH->eval(biblio)==RH->eval(biblio));			// ==
 			} else if(comparateur=='!') {LH->eval(biblio)!=RH->eval(biblio);												// !=
@@ -798,12 +872,32 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					compositeur = ' '; StaticVect<char,Taille> LH = exp;   //Aucune comparaison, seulement une évaluation				
 				}		
 			}			
+			
+			//DEBUGGG	
+			out("\nCompositeur : \""); out(compositeur); out("\"");
+			out("\nboolcompos exp : "); out(exp);
+			out("\nboolcompos LH : "); out(LH);
+			out("\nboolcompos RH : "); out(RH);
+			//DEBUGGG			
+			
+			
 			//Assigner les valeurs aux membres
 			if(Lcompos) {LHcompos = new boolcompos (LH,biblio); LHsimple = nullptr;} else {LHsimple = new boolcompar(LH,biblio); LHcompos = nullptr;}
 			if(compositeur!='!'&&compositeur!=' ') {if(Rcompos) {RHcompos = new boolcompos (RH,biblio); RHsimple = nullptr;} else {RHsimple = new boolcompar(RH,biblio); RHcompos = nullptr;}}		
 		}
 		//Fonction d'accès : eval
 		bool eval(bibliotheque& biblio) {
+			
+			
+			
+			
+			//DEBUGGG
+			//out("\n\nCompositeur : "); out(compositeur);
+			//if(Lcompos) {out("\nBoolcomposeval LH = "); out(LHcompos->eval(biblio));} else {out("\nBoolcomposeval LH = "); out(LHsimple->eval(biblio));}
+			//if(compositeur=='&'||compositeur=='|') {if(Rcompos){out("\nBoolcomposeval RH = "); out(RHcompos->eval(biblio));} else {out("\nBoolcomposeval RH = "); out(RHsimple->eval(biblio));}}
+			//DEBUGG
+			
+			
 			if(Lcompos){
 				if(Rcompos) {
 					if(compositeur=='&') {return(LHcompos->eval(biblio)&&RHcompos->eval(biblio)); 
@@ -849,7 +943,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool fini;
 			StaticVect<boolcompos,30> cond;
 			StaticVect<staticvect<int,10>,10> enchainement;   //int réfère aux positions des mailles         
-			StaticVect<intoper,10> enchaineprob;        	  //Avec le même ordre d'indexation que enchaînement
+			StaticVect<booloper,10> enchaineprob;        	  //Avec le même ordre d'indexation que enchaînement
 								//Pour l'instant, peuvent très bien être fixes
 			StaticVect<string,10> maille;
 			StaticVect<???,10> commandes                             //PROBABLEMENT FAIRE UNE STRUCTURE PERSONALISÉE AVEC & ET | ET !=   ?????
@@ -1074,58 +1168,74 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base) {
 }               
          
          
-
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //7) Aire de tests
+				
+	//Function dummy, pour voir si j'accède comme du monde			
+	void dummy(int x, int y,bibliotheque& biblio) {
+		out(biblio.acces(x,y));
+	}				
 							
 int main(void) {
 
-	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
-	//x, y, width, height,
-	fen base(600,30,500,500);                                           //Crée également l'objet dans lequel ces paramètres sont définis
-	
-	//Créer l'objet de mémoire, qui stockera tous les caractères utilisés
-	memoire mem {base.limtxtx};
-
-	//Créer les objets d'input
-	input entree; inputecho entreeecho;
-
-	//Créer les canaux utilisés
-	canal can1;
-	canal can2;
-	
-	//Test: changer les délais manuellement
-	can1.delay = 140;
-	can2.delay = 230;
-	
-	//Ajouter du texte aux canaux
-	string txt0 = "Celà est du texte!\nJe dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
-	string txt1 = "§p1000§\nLe canal 1 \n           est sooooo boring. Ark.§p1000§\n§p1000§Je suis le canal 2.";
-	can1.txt.ajout(txt0); can2.txt.ajout(txt1);
-	
-	//Rendre manuellement les canaux actifs
-	can1.actif = true; can2.actif = true;	
-	
-	//Ajouter les canaux dans l'objet StaticVect<canal>
-	canal canx [2] = {can1,can2};
-	StaticVect<canal,2> canaux (canx,2);          
-
-	//Faire une boucle pour que les canaux s'expriment!
-	bool gogogo = true;
-	int currentt;
-	while(gogogo){
-			currentt = timems();
-			if(canaux.pt[0].actif&canaux.pt[0].nxtt<currentt) LireCanal(canaux,0,base,mem);
-			if(canaux.pt[1].actif&canaux.pt[1].nxtt<currentt) LireCanal(canaux,1,base,mem);
-			UserInput(entree,entreeecho,base);
-			
-			if(entreeecho.actif&entreeecho.nxtt<currentt) {UserInputEcho(entree,entreeecho,base);}
-			
-			//if(!canaux.pt[0].actif&!canaux.pt[1].actif) gogogo = false;
-		}		
+	//Créer la bibliothèque
+	bibliotheque biblio;
+	biblio.modif(0,0,false);
+	out(biblio.acces(0,0));
+	out("\n");
 		
-	curspos(0,13);
+	
+	//Créer des conditions ne référant qu'à des positions de la bibliothèque
+	StaticVect<char,30> testStaticVect("!0¶0",4);
+	boolcompos test(testStaticVect,biblio);
 
+	//Évaluer
+	if(test.eval(biblio)) out("\n\nTRUE"); else out("\n\nOh non!");
+	
+	//Créer des conditions plus funky
+	out("\n\nUn nouveau, maintenant, ");
+	StaticVect<char,30> testStaticVect2("3-3==0¶0*1&true",16);
+	boolcompos test2(testStaticVect2,biblio);	
+	
+	//Évaluer
+	if(test2.eval(biblio)) out("\n\nTRUE"); else out("\n\nOh non!");
+	
+/*
+	//Créer la bibliothèque
+	bibliotheque biblio;
+	biblio.modifint(0,0,9);
+	
+	//Créer des conditions ne référant qu'à des positions de la bibliothèque
+	StaticVect<char,30> testStaticVect("0§0<9999&0§0>19",8);
+	mevalb test(testStaticVect);
+
+	//Évaluer
+	test.eval(biblio);
+	
+	out("\nLHvalue en dehors de la fonction : "); out(biblio.accesint(0,0));
+	out("\nLHvalue que j'avais placé manuellement : 9.'");
+	out("\nEt en y allant sans la fonction accès? : "); out(biblio.rayonint[0][0]);
+	
+		//if(test.eval(biblio)) out("true"); else out("\nWHT?");
+	//if(biblio.accesint(0,0)) out("\ntrue: ");
+	
+	
+				//ATTENTION!!!  LES BOLLÉENS SONT DIFFÉRENTIÉS DES int JUSTE PARCE QU'ILS COMMENCENT PAR <f,F,t,T>! C'EST PAS SUPER FIABLE, COMME CLASSIFICATION!
+							//(mÊME SI ÇA VA MARCHER SI JE FAIS ATTENTION)
+							
+							
+				//PROBLÈME! LES VALEURS STOCKÉES DANS BIBLIO SONT PAS BONNES LORSQUE ACCÉDÉES À PARTIR DE LA FONCTION ÉVAL()!
+								//TROUVER POURQUOI, ET RÉGLER ÇA!!!!
+	out("\nEt avec un dummy?"); dummy(0,0,biblio);							
+	out("\nEst-ce que le dummy est constant?"); dummy(0,0,biblio);		//Nope.
+						
+		//Conclusion: Probablement qu'on accède pas au bon pointeur?
+	out("\nEt est-ce que l'environnement global est constant? : "); out(biblio.accesint(0,0));
+	
+			//Right. Les arguments ne sont pas passés par référence. Ça doit être ça.							
+
+						//Yap. Le dummy est constant (et a raison) seulement quand l'argument est passé par référence.
+								//NE PAS OUBLIER DE PASSER LES ARGUMENTS PAR RÉFÉRENCES POUR BIEN AVOIR ACCÈS AUX POINTEURS
+*/
 
 }								
