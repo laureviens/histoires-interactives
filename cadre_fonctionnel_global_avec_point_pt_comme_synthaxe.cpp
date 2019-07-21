@@ -44,6 +44,10 @@
 				
 */
 
+/*
+	2019-06-22:
+				En passant: Quand on active un canal, ou qu'on le reset, va falloir resetter son nxtt (timer) aussi. Bien y penser.
+*/
 
 /*
 	2019-07-05:
@@ -52,18 +56,15 @@
 				Je pense que ça n'alourdirait pas trop l'exécution de créer un objet temporaire pour chaque chainon (rendrait le tout plus clair).
 				J'ai par contre peur que ça fuck avec les pointeurs, que les objets soient modifiés (sont tous par & référence), etc.
 					Je conserve donc cette idée quand j'aurai minimalement une version testée, qui fonctionne.
+					
+				Aussi, j'utilise beaucoup la synthaxe .pt[], pour accéder aux objets StaticVect.
+				Je ne pense pas que ce soit une très bonne idée (même si cela semble être la seule possible en ce moment??????),
+				car il y aura un décalement avec les objets réellement voulus si debut != 0.
+				Je devrais créer une classe parallèle à StaticVect, mais qui ne comporte pas de suppression, à la place.
+				Juste pour être safe.	
+
 */
 
-/*
-	2019-07-13:
-				Ce qu'il me reste à faire:
-					-Tester, avec des vraies mailles (manuelles), si le UserInputInterpret agit comme il le devrait.
-						-Pour ça, faudrait changer les fonction de remplissage de boolcompar et etc., pour mettre un fct au lieu d'un constructeur
-					-Créer un équivalent de la fonction pour les mailles automatiques
-					-Créer des fonctions-raccourcies afin de facilement remplir les mailles (commandes, conditions, etc).
-						(Pour la commande, peut-être travailler avec strings + parser : aime|adore|apprécie,fleurs|pétales;fleurs|pétales,favorit|préféré
-					-Régler le cas des accents.
-*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
@@ -240,8 +241,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(nb > fin-debut) debut = fin; else debut+=nb; 
 				longueur--;
 			}
-		//Fonction de modification : vide()
-			void vide(void) {debut = 0; fin = 0; longueur = 0;}	
 	};		
 
 	//ii) classe : StaticVect ; sauvegarde un array "semi-dynamique", où la mémoire utilisée est fixe, mais les fonctionnalités sont les mêmes que StringAsVect.
@@ -441,25 +440,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 		}
 	}
-	
-	//ix Fonction : stop ; arrête manuellement l'exécution d'un programme. À utiliser seulement dans un menu!
-	void stop(int val) {
-		int targett = timems() + val;
-		while(TRUE) {if(timems()>targett) return;}
-	}
-
-	//x Fonction : egrener ; fait apparaître le texte manuellement, comme s'il était dans un canal. À utiliser seulement dans un menu!
-	void egrener(string str, int delay) {
-		for(int pos=0; pos<str.length(); pos++) {out(str[pos]); stop(delay);}
-	}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //3) Classes-contenantes spécialisées (canaux et autres)
-
-	//DEBUGGG                  //But no longer debug??
-	const int taillecanal = 2;
-	const int taillegroupes = 5;
-	
 
 	//i) classe : memoire ; permet de sauvegarder la "mémoire" de la console, c'est-à-dire tous le texte s'y étant déjà inscrit
 		
@@ -532,7 +515,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	class canal {
 		//Membres
 		public:
-			static const int taillecanal = 2;
 			int nxtt;           //Déclarer le moment où la prochaine entrée sera traitée         
 			int pausedt;	    //Différence entreposée entre nxtt et currentt, dans le cas où l'exécution est arrêtée (ex: faire apparaître un menu)				
 			int delay;          //Déclarer le délai de base entre chaque entrée
@@ -623,9 +605,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int constbool; int constint;      //TRUE si les valeurs sont booléennes ou int, à la place d'évaluées.
 		//Constructeur
 		inteval () {}; //Constructeur par défaut : vide. 
-		//Fonction de modification : set() ; permet de construire l'objet avec une expression
 		template<int Taille>
-		void set(StaticVect<char,Taille> exp, bibliotheque& biblio) : constbool(false), constint(false) {
+		inteval(StaticVect<char,Taille> exp, bibliotheque& biblio) : constbool(false), constint(false) {
 			string rayon, livre;    //Initier un string, dans lequel seront insérés seulement les noms des rayons/livres
 			int strpos, pos; strpos = 0; pos = 0; while(exp[pos]!='¶'&pos<exp.longueur) rayon += exp[pos++];
 			//Évaluer si le string contient des noms ou une valeur
@@ -655,9 +636,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool Lcompos; bool Rcompos;				//TRUE si les valeurs sont composites
 		//Constructeur
 		intoper () {}; //Constructeur par défaut : vide. 
-		//Fonction de modification : set() ; permet de construire l'objet avec une expression
 		template<int Taille>
-		void set(StaticVect<char,Taille> exp, bibliotheque& biblio) : Lcompos(false), Rcompos(false) {
+		intoper(StaticVect<char,Taille> exp, bibliotheque& biblio) : Lcompos(false), Rcompos(false) {
 			StaticVect<char,Taille> LH;									
 			StaticVect<char,Taille> RH;			
 			int posPAR; bool trouvPAR = false; int nbPAR = 0;
@@ -695,8 +675,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}		
 			}			
 			//Assigner les valeurs aux membres
-			if(Lcompos) {LHcompos = new intoper; LHcompos.set(LH,biblio); LHsimple = nullptr;} else {LHsimple = new inteval; LHsimple.set(LH,biblio); LHcompos = nullptr;}
-			if(operateur!=' ') {if(Rcompos) {RHcompos = new intoper; RHcompos.set(RH,biblio); RHsimple = nullptr;} else {RHsimple = new inteval; RHsimple.set(RH,biblio); RHcompos = nullptr;}}
+			if(Lcompos) {LHcompos = new intoper (LH,biblio); LHsimple = nullptr;} else {LHsimple = new inteval(LH,biblio); LHcompos = nullptr;}
+			if(operateur!=' ') {if(Rcompos) {RHcompos = new intoper (RH,biblio); RHsimple = nullptr;} else {RHsimple = new inteval(RH,biblio); RHcompos = nullptr;}}
 		}			
 		//Fonction d'accès : eval()				
 		int eval(bibliotheque& biblio) {
@@ -745,8 +725,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Constructeur ;
 		boolcompar () {}; //Constructeur par défaut : vide. 
 		template<int Taille>
-		//Fonction de modification : set() ; permet de construire l'objet avec une expression
-		void set(StaticVect<char,Taille>& exp, bibliotheque& biblio) : constbool(false), boolval(0) {
+		boolcompar(StaticVect<char,Taille>& exp, bibliotheque& biblio) : constbool(false), boolval(0) {
 			if(exp.longueur==0) {comparateur = ' ';}        //Cas spécial: retourne TRUE automatiquement
 			//Recueillir l'opérateur			
 			int posEX; bool trouvEX = false;    //point d'EXclamation
@@ -775,10 +754,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Message d'erreur
 			if(erreur) {out("\n\nL'opérateur n'est pas complet dans: "); for(int exppos = exp.debut; exppos<exp.fin; exppos++) {out(exp[exppos]);} abort();}
 			//Créer les objets intoper
-			LH = new intoper; LH.set(exp.intervalle(0,poscomparateur),biblio)
+			LH = new intoper(exp.intervalle(0,poscomparateur),biblio);
 			if(!constbool){
-				RH = new interoper;
-				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH.set(exp.intervalle(poscomparateur+2,exp.longueur),biblio); else RH.set(exp.intervalle(poscomparateur+1,exp.longueur),biblio);	
+				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH = new intoper(exp.intervalle(poscomparateur+2,exp.longueur),biblio); else RH = new intoper(exp.intervalle(poscomparateur+1,exp.longueur),biblio);	
 			}			
 		}
 		//Fonction d'accès : eval
@@ -805,9 +783,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool Lcompos; bool Rcompos;	
 		//Constructeur
 		boolcompos () {}; //Constructeur par défaut : vide. 
-		//Fonction de modification : set() ; permet de construire l'objet avec une expression		
 		template<int Taille>		
-		void set(StaticVect<char,Taille>& exp, bibliotheque& biblio) : Lcompos(false), Rcompos(false)	{    //false : valeurs par défaut qui pourront changer à l'intérieur du constructeur
+		boolcompos (StaticVect<char,Taille>& exp, bibliotheque& biblio) : Lcompos(false), Rcompos(false)	{    //false : valeurs par défaut qui pourront changer à l'intérieur du constructeur
 			StaticVect<char,Taille> LH;
 			StaticVect<char,Taille> RH;
 			int posPAR; bool trouvPAR = false; int nbPAR = 0;
@@ -855,8 +832,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}		
 			}			
 			//Assigner les valeurs aux membres
-			if(Lcompos) {LHcompos = new boolcompos; LHcompos.set(LH,biblio); LHsimple = nullptr;} else {LHsimple = new boolcompar; LHsimple.set(LH,biblio); LHcompos = nullptr;}
-			if(compositeur!='!'&&compositeur!=' ') {if(Rcompos) {RHcompos = new boolcompos; RHcompos.set(RH,biblio); RHsimple = nullptr;} else {RHsimple = new boolcompar; RHsimple.set(RH,biblio); RHcompos = nullptr;}}		
+			if(Lcompos) {LHcompos = new boolcompos (LH,biblio); LHsimple = nullptr;} else {LHsimple = new boolcompar(LH,biblio); LHcompos = nullptr;}
+			if(compositeur!='!'&&compositeur!=' ') {if(Rcompos) {RHcompos = new boolcompos (RH,biblio); RHsimple = nullptr;} else {RHsimple = new boolcompar(RH,biblio); RHcompos = nullptr;}}		
 		}
 		//Fonction d'accès : eval
 		bool eval(bibliotheque& biblio) {
@@ -974,7 +951,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		for(int pos=2+str.debut; pos<longmax; pos++) nbonly += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
 		return(stod(nbonly));           //La fonction stod convertit les strings en doubles (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
 	}		
-	int CodeSpecialExtractInt(const StringAsVect& str, int longueur){
+	int CodeSpecialExtractInt(StringAsVect& str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
 		int longmax = longueur - 1;      //Le dernier caractère étant le '§'
 		int nbonlypos = 0; for(int pos=2; pos<longmax; pos++) nbonly[nbonlypos++] += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
@@ -997,105 +974,109 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		}	
 	
 	//iv) Fonction : pause ; arrête les compteurs des canaux
-	void pause(StaticVect<canal,taillecanal>& canaux) {
+	template <int Taille> 
+	void pause(StaticVect<canal,Taille>& canaux) {
 		int currentt = timems();
-		for(int poscan=0; poscan<canaux.longueur; poscan++) canaux[poscan].pausedt = canaux[poscan].nxtt - currentt;			
+		for(int poscan=0; poscan<canaux.longueur; poscan++) canaux.pt[poscan].pausedt = canaux.pt[poscan].nxtt - currentt;			
 	}
-	void unpause(StaticVect<canal,taillecanal>& canaux) {
+	template <int Taille>
+	void unpause(StaticVect<canal,Taille>& canaux) {
 		int currentt = timems();
-		for(int poscan=0; poscan<canaux.longueur; poscan++) canaux[poscan].nxtt = currentt + canaux[poscan].pausedt + canaux[poscan].delay * 5;					
+		for(int poscan=0; poscan<canaux.longueur; poscan++) canaux.pt[poscan].nxtt = currentt + canaux.pt[poscan].pausedt + canaux.pt[poscan].delay * 5;					
 	}
 	
 	//vi) Fonction : integration ; ajoute un chainon à un canal
-	void integration(int chapitrepos, int chainonpos, StaticVect<canal,taillecanal>& canaux, fil& histoire, bibliotheque& biblio) {
+	template <int Taille>
+	void integration(int chapitrepos, int chainonpos, StaticVect<canal,Taille>& canaux, fil& histoire, bibliotheque& biblio) {
 		//Overloader les canaux
 		int currentt = timems();		
-		for(int posover=0; posover<histoire.chainemanu[chapitrepos][chainonpos].override.longueur; posover++) {    //Pour chaque canaux à overloader
-			canaux[histoire.chainemanu[chapitrepos][chainonpos].override[posover]].nxtt = currentt + canaux[histoire.chainemanu[chapitrepos][chainonpos].override[posover]].delay * 5;
-			canaux[histoire.chainemanu[chapitrepos][chainonpos].override[posover]].txt.vide();
+		for(int posover=0; posover<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].override.longueur; posover++) {    //Pour chaque canaux à overloader
+			canaux.pt[histoire.chainemanu.pt[chapitrepos].pt[chainonpos].override.pt[posover]].nxtt = currentt + canaux.pt[histoire.chainemanu.pt[chapitrepos].pt[chainonpos].override.pt[posover]].delay * 5;
+			canaux.pt[histoire.chainemanu.pt[chapitrepos].pt[chainonpos].override.pt[posover]].txt.vide();
 		}
 		//Choisir l'enchaînement à insérer dans le canal
 		int sumprob = 0; StaticVect<int,10> vectprob;
-		for(int posprob=0; posprob<histoire.chainemanu[chapitrepos][chainonpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
-			sumprob += histoire.chainemanu[chapitrepos][chainonpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
+		for(int posprob=0; posprob<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
+			sumprob += histoire.chainemanu.pt[chapitrepos].pt[chainonpos].enchaineprob.pt[posprob].eval(biblio); vectprob.pt[posprob] = sumprob; 
 		}
 		int randval = rand() % sumprob;  //Obtenir une valeur aléatoire entre [0,sumprob[
 		int choix; 
-		for(int posprob=0; posprob<histoire.chainemanu[chapitrepos][chainonpos].enchaineprob.longueur; posprob++) {
+		for(int posprob=0; posprob<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].enchaineprob.longueur; posprob++) {
 			if(randval<vectprob[posprob]) {choix = posprob; break;}
 		}	
 		//Ajouter le texte au canal
-		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.ajout(histoire.chainemanu[chapitrepos][chainonpos].codespeciauxdebut); 
-		for(int posench=0; posench<histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix].longueur; posench++) {
-			canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.ajout(histoire.chainemanu[chapitrepos][chainonpos].maille[histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix][posench]]);
+		canaux.pt[histoire.chainemanu.pt[chapitrepos].pt[chainonpos].canal].txt.ajout(histoire.chainemanu.pt[chapitrepos].pt[chainonpos].codespeciauxdebut); 
+		for(int posench=0; posench<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].enchainement.pt[choix].longueur; posench++) {
+			canaux.pt[histoire.chainemanu.pt[chapitrepos].pt[chainonpos].canal].txt.ajout(histoire.chainemanu.pt[chapitrepos].pt[chainonpos].maille.pt[histoire.chainemanu.pt[chapitrepos].pt[chainonpos].enchainement.pt[choix].pt[posench]]);
 		}		
-		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.ajout(histoire.chainemanu[chapitrepos][chainonpos].codespeciauxfin);		
+		canaux.pt[histoire.chainemanu.pt[chapitrepos].pt[chainonpos].canal].txt.ajout(histoire.chainemanu.pt[chapitrepos].pt[chainonpos].codespeciauxfin);		
 	}
 	
 	
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //5) Fonction LireCanal()
-void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, memoire& mem) {
+template<int Taille>
+void LireCanal(StaticVect<canal,Taille>& canaux, int canpos, fen& base, memoire& mem) {
 	//Updater le "next time"
-	canaux[canpos].nxtt += canaux[canpos].delay;
+	canaux.pt[canpos].nxtt += canaux.pt[canpos].delay;
 	//Interpréter les "codes spéciaux" (§...§)
-	if(canaux[canpos].txt[0]=='§'){		
+	if(canaux.pt[canpos].txt[0]=='§'){		
 		//Déterminer la longueur du code spécial
-			int CodeSpecialLong = CodeSpecialLongueur(canaux[canpos].txt);			
+			int CodeSpecialLong = CodeSpecialLongueur(canaux.pt[canpos].txt);			
 		//Lire le code spécial		
-			if(canaux[canpos].txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture		
-				double val = CodeSpecialExtractDouble(canaux[canpos].txt,CodeSpecialLong);       //Extraire le temps que durera la pause
-				canaux[canpos].nxtt += round(val * canaux[canpos].vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
-			} else if(canaux[canpos].txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
-				double val = CodeSpecialExtractDouble(canaux[canpos].txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
-				canaux[canpos].vit = val;
+			if(canaux.pt[canpos].txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture		
+				double val = CodeSpecialExtractDouble(canaux.pt[canpos].txt,CodeSpecialLong);       //Extraire le temps que durera la pause
+				canaux.pt[canpos].nxtt += round(val * canaux.pt[canpos].vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
+			} else if(canaux.pt[canpos].txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
+				double val = CodeSpecialExtractDouble(canaux.pt[canpos].txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
+				canaux.pt[canpos].vit = val;
 			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
 		//Effacer le code spécial du canal
-		canaux[canpos].txt.suppression(CodeSpecialLong);                 
+		canaux.pt[canpos].txt.suppression(CodeSpecialLong);                 
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
-			if(canaux[canpos].txt[0]=='\n'|canaux[canpos].posx>=base.limtxtx-1) jump = true;     //base.limtxtx - 1 ; car c'est en integer, et canaux[canpos].posx commence à 0!
+			if(canaux.pt[canpos].txt[0]=='\n'|canaux.pt[canpos].posx>=base.limtxtx-1) jump = true;     //base.limtxtx - 1 ; car c'est en integer, et canaux.pt[canpos].posx commence à 0!
 			if(jump) {	
-				mem.newline(canaux[canpos].posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie	
+				mem.newline(canaux.pt[canpos].posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie	
 				//Updater le correctif de décalage de la console par rapport à la mémoire
 					if(base.refoule) base.consy++; else if(mem.frontline>base.limtxty) {base.refoule = true; base.consy++;} 						
 				//Sauter une ligne dans la console
 					if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
-						if(canaux[canpos].posy!=mem.frontline-1) {                             //S'il y a d'autres lignes à repousser vers le bas
+						if(canaux.pt[canpos].posy!=mem.frontline-1) {                             //S'il y a d'autres lignes à repousser vers le bas
 							//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
-								curspos(0,canaux[canpos].posy+1);  //Mettre le curseur au début de la reconstruction
-								for(int county = canaux[canpos].posy + 1 ; county <= mem.frontline ; county++) {   
+								curspos(0,canaux.pt[canpos].posy+1);  //Mettre le curseur au début de la reconstruction
+								for(int county = canaux.pt[canpos].posy + 1 ; county <= mem.frontline ; county++) {   
 									for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
 								}
 						}
 					} else {                         //La console est saturée: on pousse le texte vers le haut!
 						//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
-							curspos(0,canaux[canpos].posy-base.consy+1); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
+							curspos(0,canaux.pt[canpos].posy-base.consy+1); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
 						//Tout ré-écrire, mais une ligne plus haut
 	    					curspos(0,0);   //Commencer en haut, puis descendre naturellement
-							for(int county = base.consy; county <= canaux[canpos].posy; county++){             //base.consy : facteur de décalage de la console
+							for(int county = base.consy; county <= canaux.pt[canpos].posy; county++){             //base.consy : facteur de décalage de la console
 								for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
 							}				                 
 					}	
 				//Updater les positions dans les autres canaux    //Parce que leur position dans la mémoire a bougé //la position dans la console est quant à elle gérée par base.consy
 				for(int countcan = 0 ; countcan < canaux.fin ; countcan++) {
 					if(countcan==canpos) continue;                                    //la mémoire refoule toujours vers le bas!
-					if(canaux[countcan].posy > canaux[canpos].posy) canaux[countcan].posy++; else if(canaux[countcan].posy == canaux[canpos].posy) canaux[countcan].posy+=2;
+					if(canaux.pt[countcan].posy > canaux.pt[canpos].posy) canaux.pt[countcan].posy++; else if(canaux.pt[countcan].posy == canaux.pt[canpos].posy) canaux.pt[countcan].posy+=2;
 				}       // == : Si deux canaux se situe sur la même ligne, le canal qui change de ligne va couper l'autre en deux, et le renvoyer après sa propre ligne.    	        
 				//Updater les positions dans le canal actuel
-				if(canaux[canpos].txt[0]=='\n') {canaux[canpos].posx = -1;} else canaux[canpos].posx = 0;			       //en x    
+				if(canaux.pt[canpos].txt[0]=='\n') {canaux.pt[canpos].posx = -1;} else canaux.pt[canpos].posx = 0;			       //en x    
 									//Position "impossible", pour signifier qu'on a changé de ligne, mais écrire le prochain à la bonne place
-				canaux[canpos].posy++;	  																					   //en y 		
-			} else {canaux[canpos].posx++;}       //Updater seulement posx s'il n'y a pas de mouvement vertical
+				canaux.pt[canpos].posy++;	  																					   //en y 		
+			} else {canaux.pt[canpos].posx++;}       //Updater seulement posx s'il n'y a pas de mouvement vertical
 		//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du charactère actuel (dans la mémoire)!		
-		if(canaux[canpos].txt[0]!='\n') {
-			curspos(canaux[canpos].posx,canaux[canpos].posy-base.consy) ; out(canaux[canpos].txt[0]);     //Inscrire dans la console
-			mem.souvenir[canaux[canpos].posx][canaux[canpos].posy] = canaux[canpos].txt[0];   //Inscrire dans la mémoire			
+		if(canaux.pt[canpos].txt[0]!='\n') {
+			curspos(canaux.pt[canpos].posx,canaux.pt[canpos].posy-base.consy) ; out(canaux.pt[canpos].txt[0]);     //Inscrire dans la console
+			mem.souvenir[canaux.pt[canpos].posx][canaux.pt[canpos].posy] = canaux.pt[canpos].txt[0];   //Inscrire dans la mémoire			
 		}	
-		canaux[canpos].txt.suppression(1);       //Effacer le caractère du canal     	   
+		canaux.pt[canpos].txt.suppression(1);       //Effacer le caractère du canal     	   
 	}
-	if(canaux[canpos].txt.debut==canaux[canpos].txt.fin) canaux[canpos].actif = false;			//Vérifier s'il reste toujours du texte à passer dans le canal
+	if(canaux.pt[canpos].txt.debut==canaux.pt[canpos].txt.fin) canaux.pt[canpos].actif = false;			//Vérifier s'il reste toujours du texte à passer dans le canal
 }	
 					
           
@@ -1103,7 +1084,7 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //6) Fonction : UserInputInterpret ; vérifie si la commande entrée correspond à une des actions actuellement autorisée
 	template<int Taille>
-	void UserInputInterpret(StaticVect<char,Taille>& command, StaticVect<canal,taillecanal> canaux, bibliotheque& biblio, fil& histoire, const fen& base, input& inp, memoire& mem) {
+	void UserInputInterpret(const StaticVect<char,Taille>& command, bibliotheque& biblio, fil& histoire, const fen& base, input& inp, memoire& mem) {
 		//
 		
 		
@@ -1157,56 +1138,56 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 		//Créer des compteurs
 		StaticVect<int,histoire.taille> bonchapitre;	  //Créer des StaticVect pour noter la position des chainons qui correspondent à la commande
 		StaticVect<int,histoire.taillechapitre> bonchainon;
-		StaticVect<bool,taillegroupes> groupebon; 	   	 //Créer un StaticVect pour noter si chaque groupe de mot est bon
+		StaticVect<bool,commande.taillegroupes> groupebon; 	   	 //Créer un StaticVect pour noter si chaque groupe de mot est bon
 		int diffpos; bool exactbon; int commpos; bool exactmauvais; 	//Créer les compteurs pour les expressions exactes
 		int groupepos; int synpos; int motpos; int precedpos; bool inclusbon; bool exclusbon;	//Créer les compteurs pour les mots à inclure/exclure	
 		//Pour chaque chapitre
 		for(int chapitrepos=0; chapitrepos<histoire.taille; chapitrepos++) { if(histoire.cadenas[chapitrepos].eval(biblio)) {			
 			//Pour chaque chainon dans l'histoire
-			for(int chainonpos=0; chainonpos<histoire.chainemanu[chapitrepos].longueur; chainonpos++) {if(histoire.chainemanu[chapitrepos][chainonpos].condition.eval(biblio)) {
-				if(histoire.chainemanu[chapitrepos][chainonpos].commandes.ifexact) {	//Si une commande exacte est nécessaire
+			for(int chainonpos=0; chainonpos<histoire.chainemanu.pt[chapitrepos].longueur; chainonpos++) {if(histoire.chainemanu.pt[chapitrepos].pt[chainonpos].condition.eval(biblio)) {
+				if(histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.ifexact) {	//Si une commande exacte est nécessaire
 					diffpos = 0; exactbon = false;
-					while(diffpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.exact.longueur&&!exactbon) {
+					while(diffpos<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.exact.longueur&&!exactbon) {
 						commpos = 0; exactmauvais = false;
-						while(!exactmauvais&&commpos<command.longueur) {if(command[commpos]!=histoire.chainemanu[chapitrepos][chainonpos].commandes.exact[diffpos][commpos]) exactmauvais = true; else commpos++;}	
+						while(!exactmauvais&&commpos<command.longueur) {if(command[commpos]!=histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.exact.pt[diffpos].pt[commpos]) exactmauvais = true; else commpos++;}	
 						if(exactmauvais==false) exactbon = true; else diffpos++;
 					}
-					if(exactbon)	{integration(chapitrepos,chainonpos,canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal					
+					if(exactbon)	{integration(chapitrepos,chainonpos,canaux); return();}            //Intégrer tout de suite le bon chaînon dans le canal					
 				} else {								//Si plusieurs mots clés doivent être présents
 					inclusbon = false; diffpos = 0;
 					//Pour chaque façon différente de dire la commande
-					while(diffpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus.longueur&&!inclusbon) {
+					while(diffpos<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.longueur&&!inclusbon) {
 						//Vérifier si les mots à être inclus sont présents
 							groupepos = 0;  precedpos = 0;   														//Remettre tous les groupes de mots comme incorrects jusqu'à preuve du contraire
-							groupebon.remplacement(false); for(int clearpos=1; clearpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos].longueur; clearpos++) groupebon.ajout(false); 
+							groupebon.remplacement(false); for(int clearpos=1; clearpos<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.pt[diffpos].longueur; clearpos++) groupebon.ajout(false); 
 							//Pour chaque groupe de mots
-							while(groupepos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos].longueur) {    
+							while(groupepos<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.pt[diffpos].longueur) {    
 								synpos=0;
 								//Pour chaque synonyme
-								while(synpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][groupepos].longueur&&!groupebon[groupepos]) {		
+								while(synpos<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.pt[diffpos].pt[groupepos].longueur&&!groupebon[groupepos]) {		
 									commpos = precedpos;
 									motpos = 0;
 									//Pour chaque lettre
 									while(commpos<command.longueur&&!groupebon[groupepos]) {																					
-										if(command[commpos++]==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][groupepos][synpos][motpos++]) {
-											if(motpos==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][groupepos][synpos].length()) {groupebon[groupepos] = true; precedpos = commpos;}
+										if(command[commpos++]==histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.pt[diffpos].pt[groupepos].pt[synpos][motpos++]) {
+											if(motpos==histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.pt[diffpos].pt[groupepos].pt[synpos].longueur) {groupebon[groupepos] = true; precedpos = commpos;}
 										} else motpos = 0;
 									}
 								}					
 							}	
 							//Maintenant, on a l'information sur quel groupe de mots, dans l'intervalle [0,longueur_de_cette_differente_façon], a un membre qui est présent dans la commande.
-							groupepos=0 ; while(groupebon[groupepos++]) if(groupepos==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos].longueur) inclusbon = true;
+							groupepos=0 ; while(groupebon[groupepos++]) if(groupepos==histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.pt[diffpos].longueur) inclusbon = true;
 						//Vérifier si les mots à être exclus sont absents
 						if(inclusbon) {
 							synpos=0; exclusbon = true;
 							//Pour chaque synonyme
-							while(synpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.exclus[diffpos].longueur&&exclusbon) {
+							while(synpos<histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.exclus.pt[diffpos].longueur&&exclusbon) {
 								commpos = 0;
 								motpos = 0;
 								//Pour chaque lettre
 								while(commpos<command.longueur&&exclusbon) {		//Si le mot est retrouvé, la commande ne correspond pas au chaînon																			
-									if(command[commpos++]==histoire.chainemanu[chapitrepos][chainonpos].commandes.exclus[diffpos][synpos][motpos++]) {
-										if(motpos==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][synpos].longueur) exclusbon = false;	
+									if(command[commpos++]==histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.exclus.pt[diffpos].pt[synpos].pt[motpos++]) {
+										if(motpos==histoire.chainemanu.pt[chapitrepos].pt[chainonpos].commandes.inclus.pt[diffpos].pt[synpos].longueur) exclusbon = false;	
 									} else motpos = 0;
 								}
 							}
@@ -1218,10 +1199,10 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 		}}
 		//Maintenant, on a l'information sur quels chaînons correspondent (sans expression exacte) à la commande
 		if(bonchainon.longueur==0) {
-			inp.accepted = false; return;
+			inp.accepted = false; return();
 		} else if(bonchainon.longueur==1) {
-			inp.accepted = true; if(histoire.chainemanu[bonchapitre[0]][bonchainon[0]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input					
-			integration(bonchapitre[0],bonchainon[0],canaux,histoire,biblio); return;            //Intégrer le bon chaînon dans le canal
+			inp.accepted = true; if(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input					
+			integration(bonchapitre[0],bonchainon[0],canaux); return();            //Intégrer le bon chaînon dans le canal
 		} else {
 			//Déterminer si la commande correspond à une expression exacte
 			int bonpos = 0; exactbon = false; 
@@ -1231,74 +1212,67 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 					if(exactmauvais==false) {
 						exactbon = true; 	
 						inp.accepted = true; if(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].getbusy) inp.busy = true;							
-						integration(bonchapitre[bonpos],bonchainon[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal	
+						integration(bonchapitre[bonpos],bonchainon[bonpos],canaux); return();}            //Intégrer tout de suite le bon chaînon dans le canal	
 			}	
 			//Si l'ambiguité demeure: mettre le jeu sur pause, et faire apparaître les options	
-			pause(canaux);
+			
+			
+			
+				//FONCTION POUR METTRE LE JEU SUR PAUSE
+							//IL LA MANQUE TOUJOURS!!!
+									
+			
+			
+			
 			chgcol("gris sombre"); curspos(0,0);		//Recopier tout le texte affiché dans la console, mais en gris foncé (background)
 			for(int county = base.consy ; county <= mem.frontline ; county++) {   
 				for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
 			}			
-			chgcol("blanc"); curspos(5,3); int cursorposy = 3;
-			egrener("Vouliez-vous dire (recopiez la ligne qui correspond à votre choix) :",160);
+			chgcol("blanc"); curspos(5,3); cursorposy = 3;
+			out("Vouliez-vous dire (recopiez la ligne qui correspond à votre choix) :");
 			for(int bonpos=0; bonpos<bonchainon.longueur; bonpos++) {
-				if(bonpos==bonchainon.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); egrener("ou",120);}}
-				cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy);; egrener(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0],120);}
-				if(bonpos==bonchainon.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); egrener("              ?",120);}}				
-			}
+				if(bonpos==bonchainon.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); out("ou");}}
+				cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy);; out(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0]);}
+				if(bonpos==bonchainon.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); out("              ?");}}				
+			}		//IL SERAIT BIEN ÉGALEMENT D'ÉGRENNER LE TEXTE, COMME DANS UN CANAL
 			string reformulation;
 			cin >> reformulation;
 				//Vérifier de nouveau
-				bonpos = 0; exactbon = false; 
+				int bonpos = 0; exactbon = false; 
 				while(bonpos<bonchainon.longueur&&!exactbon) {
 					exactmauvais = false; commpos = 0;
-						while(!exactmauvais&&commpos<reformulation.length()) {if(reformulation[commpos]!=histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0][commpos]) exactmauvais = true; else commpos++;}	
+						while(!exactmauvais&&commpos<reformulation.lenght) {if(reformulation[commpos]!=histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0][commpos]) mauvais = true; else commpos++;}	
 						if(exactmauvais==false) {
 							exactbon = true; 
-							curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
-							stop(800);
-							curspos(3,2); egrener("Parfait.",220);		
-							stop(1500);
-							curspos(0,0); for(int county = base.consy ; county <= mem.frontline ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);}			
-							unpause(canaux);
 							inp.accepted = true; if(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input							
-							integration(bonchapitre[bonpos],bonchainon[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal	
+							//METTRE DES CHOSES, GENRE PRENDRE UN TEMPS EN PAUSE POUR SE DIRE: "OK, J'AI COMPRIS".
+							integration(bonchapitre[bonpos],bonchainon[bonpos],canaux); return();}            //Intégrer tout de suite le bon chaînon dans le canal	
 				}				
 			//Si l'ambiguité persiste: le demander une dernière fois
-			curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
-			curspos(3,3); egrener("Vouliez-vous dire (recopiez EXACTEMENT la ligne qui correspond à votre choix) :",200);
+			curspos(3,3); out("Vouliez-vous dire (recopiez EXACTEMENT la ligne qui correspond à votre choix) :");
 			cin >> reformulation;	
 				//Vérifier de nouveau
-				bonpos = 0; exactbon = false; 
+				int bonpos = 0; exactbon = false; 
 				while(bonpos<bonchainon.longueur&&!exactbon) {
 					exactmauvais = false; commpos = 0;
-						while(!exactmauvais&&commpos<reformulation.length()) {if(reformulation[commpos]!=histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0][commpos]) exactmauvais = true; else commpos++;}	
+						while(!exactmauvais&&commpos<reformulation.lenght) {if(reformulation[commpos]!=histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0][commpos]) mauvais = true; else commpos++;}	
 						if(exactmauvais==false) {
 							exactbon = true; 
-							curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
-							stop(800);
-							curspos(3,2); egrener("C'est bon.",220);		
-							stop(1500);
-							curspos(0,0); for(int county = base.consy ; county <= mem.frontline ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);}			
-							unpause(canaux);
 							inp.accepted = true; if(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input
-							integration(bonchapitre[bonpos],bonchainon[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal	
+							//METTRE DES CHOSES, GENRE PRENDRE UN TEMPS EN PAUSE POUR SE DIRE: "OK, J'AI COMPRIS".
+							integration(bonchapitre[bonpos],bonchainon[bonpos],canaux); return();}            //Intégrer tout de suite le bon chaînon dans le canal	
 				}				
 			//Si l'ambiguité est insolvable
-			curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
-			stop(800);
-			curspos(3,4); egrener("Ce n'est toujours pas clair.   Too bad.",240);			
-			stop(3000);
-			curspos(0,0); for(int county = base.consy ; county <= mem.frontline ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);}			
-			unpause(canaux);
-			inp.accepted = false; return;				
+			
+			//METTRE DES CHOSES, COMME UN MESSAGE DE "TOO BAD" ET ON PASSE À D'AUTRE CHOSE
+			inp.accepted = false; return();				
 		}
 	}        
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //7) Fonction UserInput()
-void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& biblio, StaticVect<canal,taillecanal>& canaux, fil& histoire, memoire mem) {
+void UserInput(input& inp, inputecho& inpecho, const fen& base) {
 	if(_kbhit()){
 	//i) Capter la lettre tapée
 	bool enter = false;
@@ -1370,7 +1344,7 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 			
 		//Évaluer la commande		
 		if(enter) {								//BTW: Faire changer la vitesse/frénésie du clignotage avec la vitesse globale. Tu veux ça plus vite? Ça va être plus agressant aussi!
-			UserInputInterpret(inp.commande,canaux,biblio,histoire,base,inp,mem);
+			
 							//FAIRE UNE FONCTION À PART POUR ÉVALUER LA CORRESPONDANCE DE LA COMMANDE AVEC LES POSSIBILITÉS;
 														//ICI, SIMPLEMENT S'OCCUPER DE L'AFFICHAGE (EFFETS GRAPHIQUES DIFFÉRENTS SI C'EST ACCEPTÉ OU NON...)!														
 			inpecho.commande.remplacement(inp.commande);						
@@ -1413,12 +1387,6 @@ int main(void) {
 	//Créer les objets d'input
 	input entree; inputecho entreeecho;
 
-	//Créer la bibliothèque
-	bibliotheque biblio;
-	
-	//Créer le fil
-	fil histoire;
-	
 	//Créer les canaux utilisés
 	canal can1;
 	canal can2;
@@ -1444,13 +1412,13 @@ int main(void) {
 	int currentt;
 	while(gogogo){
 			currentt = timems();
-			if(canaux[0].actif&canaux[0].nxtt<currentt) LireCanal(canaux,0,base,mem);
-			if(canaux[1].actif&canaux[1].nxtt<currentt) LireCanal(canaux,1,base,mem);
-			UserInput(entree,entreeecho,base,biblio,canaux,histoire,mem);                   //Reste à créer ces objets!!!!
+			if(canaux.pt[0].actif&canaux.pt[0].nxtt<currentt) LireCanal(canaux,0,base,mem);
+			if(canaux.pt[1].actif&canaux.pt[1].nxtt<currentt) LireCanal(canaux,1,base,mem);
+			UserInput(entree,entreeecho,base);
 			
 			if(entreeecho.actif&entreeecho.nxtt<currentt) {UserInputEcho(entree,entreeecho,base);}
 			
-			//if(!canaux[0].actif&!canaux[1].actif) gogogo = false;
+			//if(!canaux.pt[0].actif&!canaux.pt[1].actif) gogogo = false;
 		}		
 		
 	curspos(0,13);
