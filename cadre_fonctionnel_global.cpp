@@ -63,6 +63,12 @@
 					-Créer des fonctions-raccourcies afin de facilement remplir les mailles (commandes, conditions, etc).
 						(Pour la commande, peut-être travailler avec strings + parser : aime|adore|apprécie,fleurs|pétales;fleurs|pétales,favorit|préféré
 					-Régler le cas des accents.
+					-Définir une synthaxe pour les genres
+						-Soit changer le texte de toutes les maillons au départ pour les mettre du bon genre
+						-Soit créer un code spécial universel qui : a) efface le code spécial, sauf le bon accord  b) nxtt -= delay (car ensuite, on ajoute delay); pour que le bon accord commence à s'écrire sans délai
+								ex: §g0vacante/vacant.e/vacant§    //g pour gender  ; le chiffre représente la personne : 0 = joueuxe, 1 = "je", 2 = "tu", 3-4-5.. = "iel"
+									//PERSO, j'aime mieux le code spécial			
+					-Peut-être remplacer le vieux "StringAsVect" dynamique par un "StaticVect"?				
 */
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -240,6 +246,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(nb > fin-debut) debut = fin; else debut+=nb; 
 				longueur--;
 			}
+		//Fonction de modification : supprposition       //Supprime l'entrée à la position indiquée
+			void supprposition (int pos) {
+				if(pos >= debut & pos < fin) {
+					for(int ptpos = pos; ptpos < fin-1; ptpos++) {pt[ptpos] = pt[ptpos+1];}
+					fin--; longueur--;
+				}			
 		//Fonction de modification : vide()
 			void vide(void) {debut = 0; fin = 0; longueur = 0;}	
 	};		
@@ -1049,9 +1061,92 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 			} else if(canaux[canpos].txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
 				double val = CodeSpecialExtractDouble(canaux[canpos].txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
 				canaux[canpos].vit = val;
+			} else if(canaux[canpos].txt[1]=='g'){		//'g' pour "gender" -> choisir le bon accord
+																								 //Sélectionner le genre
+				int genreselect;
+				int genreactuel = 0; 
+				
+				
+				//TENTATIVE POUR L'ÉCRIRE AVEC LA FONCTION supprpos (ou quelque chose comme ça) (FONCTION IMPORTÉE DE "StaticVect")
+						//INCONVÉNIENTS: 
+								//FORCE LE PROGRAMME À RÉÉCRIRE L'OBJET ENTIER À CHAQUE FOIS (car c'est ce que fait supprpos())
+				bool genrepasse = false; bool suppress = false;																				 
+				for(int posSpecial=3;posSpecial<CodeSpecialLong; posSpecial++) {				 //Conserver le bon accord	
+					if(canaux[canpos].txt[posSpecial]==';') {genreactuel++; suppress = true;
+					} else {
+						if(genreactuel==genreselect) {if(!genrepasse) genrepasse = true; } else suppress = true;
+					}
+					if(suppress) {
+						if(!genrepasse) canaux[canpos].txt.suppression(1); else canaux[canpos].txt.supprespos(pos)				
+					}	
+				}
+				
+				
+				
+				//TENTATIVE	POUR L'ÉCRIRE AVEC LA FONCTION intervalle() (FONCTION IMPORTÉE DE "StaticVect")
+				int posdebut = 3; int posfin = CoeSpecialLongueur - 1;		//Valeurs par défauts
+				for(int posSpecial=3;posSpecial<CodeSpecialLong; posSpecial++) {				 //Délimiter le bon accord				
+					if(canaux[canpos].txt[posSpecial]==';') {
+						genreactuel++;
+						if(genreactuel==genreselect) posdebut = posSpecial + 1; else if(genreactuel==genreselect-1) posfin = posSpecial - 1;
+					}
+				}
+				StringAsVect tempcan = new StringAsVect;										//Ajouter le bon accord à la suite du code spécial (devient: Code spécial - accord - reste du canal
+				tempcan.ajout(canaux[canpos].txt.intervalle(0,CodeSpecialLong)); tempcan.ajout(canaux[canpos].txt.intervalle(posdebut,posfin)); tempcan.ajout(canaux[canpos].txt.intervalle(CodeSpecialLong,canaux[canpos].txt.longueur));				
+				canaux[canpos].txt.remplacement(tempcan); delete tempcan;
+				canaux[canpos].nxtt -= canaux[canpos].delay;									//Ajuster le "next time" pour supprimer le délai entre l'interprétation du code et la lecture de l'accord
+			}								
+														
+		
+		
+					//Faudrait l'ajouter + ajuster à StringAsVect!		 (c'est pas encore fait, malheureusement)										
+	//Fonction d'accès : intervalle()
+		StaticVect<Type,Taille> intervalle(int posdebut, int posfin) {
+			if(posfin <= longueur) {
+				StaticVect<Type,Taille> returnvect;
+				returnvect.debut = 0; returnvect.longueur = posfin - posdebut; returnvect.fin = returnvect.longueur;
+				int returnpos = 0; for(int pos = posdebut; pos<posfin; pos++) {returnvect.pt[returnpos++] = pt[pos+debut];}
+				return(returnvect);				
+			} else {std::wcout<<"intervalle() de "; std::wcout<<posdebut; std::wcout<<" à "; std::wcout<<posfin; std::wcout<<" dans \""; for(int pos=0; pos<fin; pos++) std::wcout<<pt[pos+debut]; std::wcout<<"\", dépassant donc la longueur"; abort();}
+		}														
+														
+					//Faudrait aussi l'ajouter à StringAsVect        (pas fait)
+	//Fonction de modification : remplacement()
+		int remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
+		int remplacement(Type* nxt, int nb) {
+			if(longueur <= taille) {
+				debut = 0; fin = nb; longueur = nb;
+				for(int pos=0; pos<nb; pos++) pt[pos] = nxt[pos];	
+				return(true);			
+			} else return(false);
+		}
+		int remplacement(StaticVect<Type,Taille>& nxt) {
+			if(nxt.longueur <= taille) {
+				debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
+				int pos = 0; for(int posnxt=0; posnxt<nxt.longueur; posnxt++) pt[pos++] = nxt[posnxt];		
+				return(true);
+			} else return(false);
+		}				
+		
+					//Ishhhhh... Ce serait vraiment plus simple de simplement remplacer StringAsVect par un StaticVect. Vraiment plus simple.
+							//Parce qu'elles sont rendues à avoir EXACTEMENT les mêmes fonctions, maintenant. What a joke.
+								//Pis, bon. Pas besoin d'avoir une capacité super variable si on libère dès le début assez de place dans la mémoire.
+										//Genre... 1 000 caractères par canal? Serait-ce réaliste?
+											//Est-ce que l'écriture serait vraiment limitée par ce nombre?
+													//**Garder en tête en passant que ce n'est pas le nombre max de caract d'un chaînon, mais bien
+														//de ce qu'il y a déjà dans le canal + le chaînon.		
+					
+														
+														
 			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
+			
+			
+			
 		//Effacer le code spécial du canal
-		canaux[canpos].txt.suppression(CodeSpecialLong);                 
+		canaux[canpos].txt.suppression(CodeSpecialLong);
+		
+		
+		
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
@@ -1105,46 +1200,7 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 	template<int Taille>
 	void UserInputInterpret(StaticVect<char,Taille>& command, StaticVect<canal,taillecanal> canaux, bibliotheque& biblio, fil& histoire, const fen& base, input& inp, memoire& mem) {
 		//
-		
-		
-		/* Donc. Qu'est-ce que je fais?
-				1. Vérifier quelle chaine est active
-				2. Pour toutes les chaines actives:
-				
-					A. Vérifier quels chaînons sont actifs? 			Nan, juste inclure un if() au début de la loop for(chainon).
-						a) Pour tous les chaînons actifs :
-							I. Vérifier si elle demande une expression exacte. Si oui, vérifier de façon rigide si command == expression
-							II. Si non, pour toutes les différentes façons de dire la commande:
-								i) Vérifier si un des mots du premier groupe est présent. Si oui, garder la position. Vérifier si un des mots du prochain groupe est présent. etc.
-								ii) Si tout fonctionne, vérifier si un des mots interdits est présent.
-								
-						b) Je peux soit vérifier TOUS les chaînon, et me ramasser avec une liste des possibles à la fin.
-							Ou bien simplement choisir le premier qui est valide dans la liste.
-							
-							Dans un monde idéal, je prendrais le premier, car les commandes ne seraient pas ambigues.
-							Pourtant, l'erreur étant humaine, je préfère me donner une "failsafe".
-								Ce serait plus demandant à chaque enter, par contre.
-								Mais puisque le "enter" n'est pas appuyé souvent, je pense que ça vaudrait le coup.
-							Donc, je pourrais seulement écrire une courte description de la commande idéale pour chaque chaînon qui en demande.
-							Et, dans le cas d'ambiguité, demander : "Vouliez-vous dire XXX ou XXX?"
-								Et stocker cette courte description dans la case "exact" de la classe commande, qui est utilisée ainsi si exact == TRUE.
-								Bingo. Recyclage d'objet.
-								
-						c) S'il y a une ambiguité, vérifier les expressions exactes des chaînons. 
-							I. Si aucune ne correspond, geler l'écran (ça va être plus simple à gérer), faire une rectangle vide de la bonne taille,
-								et demander "Vouliez-vous dire...?". 
-							II. Si la commande de confirmation ne correspond pas à une des expressions exactes; Too bad, ça reprend pareil, comme si rien n'avait été entré.
-									Ou peut-être donner deux chances?
-								
-								
-				3. S'il y en a seulement un, envoyer la fonction qui poune le texte + les codes spéciaux dans le canal approprié (et qui override les nécessaire, etc.)	
-				
-			
-				
-					
-		*/
-		
-			
+
 			//IDÉE:
 			//		PEUT-ÊTRE INCLURE DIRECTEMENT DANS L'ÉVALUATION LA MISE EN MAJUSCULE AUTOMATIQUE DU PREMIER MOT?
 			//		POUR NE PAS PRENDRE TROP DE PLACE DANS LA MÉMOIRE...? MAIS EN MÊME TEMPS, LE TOTAL N'EST PAS DRAMATIQUE... MAIS ÇA ME PERMETTRAIT DE NE PAS M'EN SOUCIER. VENDU.
@@ -1418,6 +1474,79 @@ int main(void) {
 	
 	//Créer le fil
 	fil histoire;
+	
+	//Créer un chainon
+	chainonmanu test;															//Créer l'objet avant de l'intégrer?
+	//Écrire les paramètres du chaînon 
+	test.canal = 0;
+					//test.commandes.inclus[0][0][0].ajout("bonjour");    //Non, on ne peut pas faire cela...? Car il faudrait d'abord .ajout les premiers niveaux?
+							//Oui, non?
+							
+					//Eurgh. Comment faire pour gérer les StaticVect imbriqués?					
+	//Théoriquement, faudrait faire un .ajout() manuel de chaque objet;
+			//quoique?
+		//Quand on crée un StaticVect, ça alloue un espace X dans la mémoire.
+		//Pour des types simples (int), quand la valeur n'a pas été spécifiée, la position retourne N'IMPORTE QUOI (aléatoire, un peu?)
+		//Pour des types plus complexes, qui demandent des constructeurs... 
+				//Est-ce que les constructeurs par défaut sont callés quand on crée un array???
+						//Mon intuition est: probablement.
+		
+		//Si l'objet existe officiellement, on aurait pas besoin de l'inition à chaque fois; on aurait seulement qu'à updater fin et longueur de toute la chaine.
+			//Ce serait l'idéal.		//Faudrait faire un script test pour voir si c'est le cas.
+			
+			//Avec ça, j'aurais seulement à faire une fonction maison dans la classe "commande" , avec quatre arguments : trois int de position, et un string.
+			
+			//Ou mieux encore: faire mon espèce de rêve/espoir:  mettre un autre système de parsing (cette fois complètement séquentiel, c'est-à-dire sans priorité d'opération) :
+					//ex : ( Bonjour | Hello | Salut & World | Monde ) (Test)
+							// () = différentes façons de le dire ;  & = différents blocs de mots ; | = synonymes
+							
+					//Ouin. Ça serait simplement la meilleure chose à faire.
+						//Ce serait tout de même plus simple à coder si les StaticVect étaient déjà construits. Donc faire le test tout de même.		
+							
+	
+						
+	//Pour mettre les mailles...
+									//Faudrait aussi tester si on peut écrire un array en argument, genre test.maille.ajout({"1","2","3","4"},4)  .
+										//Ce serait la meilleure chose, je crois.
+										//Non. Pas vrai. La meilleure chose serait encore un parsing mechanism.
+										
+	//Pour les conditions, 
+			//le problème c'est que, comme c'est là, boolcompos prend juste des StaticVect à taille définie.
+				//Donc faudrait une fonction maison pour transformer un string qu'on lui donne en un StaticVect d'une taille définie.
+				
+	
+	//En bref, il vaudrait mieux à peu près tout transformer en fonctions maisons, la plupart avec des éléments de "parsing" (interprétation d'un string).
+	
+		//À la place de mettre ces fonctions comme fonctions de classes spécifiques,
+							//je préfère mettre comme argument le chaînon. Et va falloir tout dupliquer pour auto / manu (overrider).
+
+	//J'aurais donc (en supposant que le chainon existe déjà) :
+	
+	/*
+	int chapitre = 0;
+	int posmanu = 0;
+	
+	texte(histoire.chainemanu[chapitre][posmanu],"LaLaLaLaLa\nlala µ lulululu")       ici, ' µ ' sert de séparateur (pour l'exemple)
+	enchainement(histoire.chainemanu[chapitre][posmanu],"1-2;1;2")              '-' pour signifier un autre élément, ';' pour signifier un autre enchaînement 
+	probabilites(histoire.chainemanu[chapitre][posmanu],"comptes¶bobon*5;2;3")		';' pour signifier un autre enchaînement																	
+	commande(histoire.chainemanu[chapitre][posmanu],"(Bonjour|Hello|Salut & World|Monde) (Test)")
+	condition(histoire.chainemanu[chapitre][posmanu],"comptes¶bonbon<=3")
+	override(histoire.chainemanu[chapitre][posmanu],"0,1")
+	
+			//Ishhh. L'option d'une fonction externe rend ça difficilement lisible. J'aimerais mieux :
+					// ex :  histoire.chainemanu[chapitre][posmanu].    texte("LaLaLaLaLa\nlala µ lulululu")   (les espaces ne comptent pas, right?)
+	
+	
+	histoire.chainemanu[chapitre][posmanu].canal = 1;
+	histoire.chainemanu[chapitre][posmanu].codespeciauxdebut = "";
+	histoire.chainemanu[chapitre][posmanu].codespeciauxfin = "";
+	histoire.chainemanu[chapitre][posmanu].getbusy = true;
+	
+						//Mhhph. Pour garder l'esthétique, je pense que je préfère utiliser seulement des fonctions. Pour que tout soit aligné.
+								//Donc faire comme en haut, même pour cette partie.
+	
+	*/		
+	
 	
 	//Créer les canaux utilisés
 	canal can1;
