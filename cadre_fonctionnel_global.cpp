@@ -102,9 +102,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //1) Classes-contenantes générales
-	
-	//i) classe : StringAsVect ; permet un simulâcre d'allocation dynamique de mémoire, avec la magie de voir plus grand + indexation
-	class StringAsVect {
+	/*
+	//i) classe : StringAsVect ; permet un simulâcre d'allocation dynamique de mémoire, avec la magie de voir plus grand + indexation			//OBSOLÈTE!!!!
+	class StringAsVect {										//OBSOLÈTE!!!!
 	//Comment ça marche:
 			//L'array est d'abord créé plus gros que nécessaire. On ne supprime pas vraiment les valeurs qui y passent,
 			//on ne fait que s'étendre dans l'array:
@@ -255,6 +255,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Fonction de modification : vide()
 			void vide(void) {debut = 0; fin = 0; longueur = 0;}	
 	};		
+	*/
 
 	//ii) classe : StaticVect ; sauvegarde un array "semi-dynamique", où la mémoire utilisée est fixe, mais les fonctionnalités sont les mêmes que StringAsVect.
 	template <class Type, int Taille>
@@ -399,11 +400,11 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			out(phrase[pos]);
 		}
 	}
-	void out(StringAsVect phrase){
-		for(int pos=0; pos<phrase.longueur; pos++){
-			out(phrase[pos]);
-		}
-	}
+	//void out(StringAsVect phrase){			//OBSOLÈTE!!!!
+		//for(int pos=0; pos<phrase.longueur; pos++){
+			//out(phrase[pos]);
+		//}
+	//}
 	template<int Taille>
 	void out(StaticVect<char,Taille> phrase){
 		for(int pos=0; pos<phrase.longueur; pos++){
@@ -550,7 +551,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int delay;          //Déclarer le délai de base entre chaque entrée
 			int posx, posy;		//Déclarer les coordonnées de la dernière entrée dans la mémoire (la précédente)   
 								//les positions de la consoles sont définies en décalant ces dernières
-			StringAsVect txt;   //Déclarer le texte qui reste à lire  				
+			StaticVect<char,5000> txt;   //Déclarer le texte qui reste à lire  				
 			bool actif;			//Déclarer le compteur d'activité
 			double vit;         //Déclarer la vitesse actuelle de défilement et de pauses (toujours par rapport à la base, 1)
 		//Constructeur
@@ -588,7 +589,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	class input {
 		//Valeurs membres
 		public:
-			StaticVect<char,200> commande;          	//Phrase que contient le buffer         //Peut-il devenir un StringAsVect?
+			StaticVect<char,200> commande;          	//Phrase que contient le buffer        
 			int inputpos;                   //Position d'indexation du prochain caractère    == StaticVect.fin? Non! Car ça peut bouger!
 			bool accepted;                  //Flag concernant la dernière commande; utile pour l'affichage visuel
 			bool busy;						//Flag concernant la dernière commande; utile pour l'affichage visuel
@@ -972,7 +973,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 //4) Fonction spécialisées de petite taille
 
 	//i) Fonction : CodeSpecialLong ; retourne la longueur d'un code spécial ('§' compris)
-	int CodeSpecialLongueur(const StringAsVect& str){
+	template<int Taille>
+	int CodeSpecialLongueur(const StaticVect<char,Taille>& str){
 		int longueur = 1;               //Initier l'objet à retourner
 		bool fini = false;              
 		for(int pos = str.debut + 1; !fini&pos<str.fin ; pos++) {longueur++; if(str.pt[pos]=='§') fini = true;} 		
@@ -980,13 +982,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	}
 
 	//ii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
-	double CodeSpecialExtractDouble(const StringAsVect& str, int longueur){
+	template<int Taille>
+	double CodeSpecialExtractDouble(const StaticVect<char,Taille>& str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
 		int longmax = longueur - 1 + str.debut;      //Le dernier caractère étant le '§'		
 		for(int pos=2+str.debut; pos<longmax; pos++) nbonly += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
 		return(stod(nbonly));           //La fonction stod convertit les strings en doubles (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
 	}		
-	int CodeSpecialExtractInt(const StringAsVect& str, int longueur){
+	template<int Taille>
+	int CodeSpecialExtractInt(const StaticVect<char,Taille>& str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
 		int longmax = longueur - 1;      //Le dernier caractère étant le '§'
 		int nbonlypos = 0; for(int pos=2; pos<longmax; pos++) nbonly[nbonlypos++] += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
@@ -1064,26 +1068,12 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 			} else if(canaux[canpos].txt[1]=='g'){		//'g' pour "gender" -> choisir le bon accord
 																								 //Sélectionner le genre
 				int genreselect;
+				
+				
+				
+				
+				
 				int genreactuel = 0; 
-				
-				
-				//TENTATIVE POUR L'ÉCRIRE AVEC LA FONCTION supprpos (ou quelque chose comme ça) (FONCTION IMPORTÉE DE "StaticVect")
-						//INCONVÉNIENTS: 
-								//FORCE LE PROGRAMME À RÉÉCRIRE L'OBJET ENTIER À CHAQUE FOIS (car c'est ce que fait supprpos())
-				bool genrepasse = false; bool suppress = false;																				 
-				for(int posSpecial=3;posSpecial<CodeSpecialLong; posSpecial++) {				 //Conserver le bon accord	
-					if(canaux[canpos].txt[posSpecial]==';') {genreactuel++; suppress = true;
-					} else {
-						if(genreactuel==genreselect) {if(!genrepasse) genrepasse = true; } else suppress = true;
-					}
-					if(suppress) {
-						if(!genrepasse) canaux[canpos].txt.suppression(1); else canaux[canpos].txt.supprespos(pos)				
-					}	
-				}
-				
-				
-				
-				//TENTATIVE	POUR L'ÉCRIRE AVEC LA FONCTION intervalle() (FONCTION IMPORTÉE DE "StaticVect")
 				int posdebut = 3; int posfin = CoeSpecialLongueur - 1;		//Valeurs par défauts
 				for(int posSpecial=3;posSpecial<CodeSpecialLong; posSpecial++) {				 //Délimiter le bon accord				
 					if(canaux[canpos].txt[posSpecial]==';') {
@@ -1091,56 +1081,19 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 						if(genreactuel==genreselect) posdebut = posSpecial + 1; else if(genreactuel==genreselect-1) posfin = posSpecial - 1;
 					}
 				}
-				StringAsVect tempcan = new StringAsVect;										//Ajouter le bon accord à la suite du code spécial (devient: Code spécial - accord - reste du canal
+				StaticVect<char,5000> tempcan;										//Ajouter le bon accord à la suite du code spécial (devient: Code spécial - accord - reste du canal
 				tempcan.ajout(canaux[canpos].txt.intervalle(0,CodeSpecialLong)); tempcan.ajout(canaux[canpos].txt.intervalle(posdebut,posfin)); tempcan.ajout(canaux[canpos].txt.intervalle(CodeSpecialLong,canaux[canpos].txt.longueur));				
-				canaux[canpos].txt.remplacement(tempcan); delete tempcan;
+				canaux[canpos].txt.remplacement(tempcan);
 				canaux[canpos].nxtt -= canaux[canpos].delay;									//Ajuster le "next time" pour supprimer le délai entre l'interprétation du code et la lecture de l'accord
 			}								
 														
 		
 		
-					//Faudrait l'ajouter + ajuster à StringAsVect!		 (c'est pas encore fait, malheureusement)										
-	//Fonction d'accès : intervalle()
-		StaticVect<Type,Taille> intervalle(int posdebut, int posfin) {
-			if(posfin <= longueur) {
-				StaticVect<Type,Taille> returnvect;
-				returnvect.debut = 0; returnvect.longueur = posfin - posdebut; returnvect.fin = returnvect.longueur;
-				int returnpos = 0; for(int pos = posdebut; pos<posfin; pos++) {returnvect.pt[returnpos++] = pt[pos+debut];}
-				return(returnvect);				
-			} else {std::wcout<<"intervalle() de "; std::wcout<<posdebut; std::wcout<<" à "; std::wcout<<posfin; std::wcout<<" dans \""; for(int pos=0; pos<fin; pos++) std::wcout<<pt[pos+debut]; std::wcout<<"\", dépassant donc la longueur"; abort();}
-		}														
-														
-					//Faudrait aussi l'ajouter à StringAsVect        (pas fait)
-	//Fonction de modification : remplacement()
-		int remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
-		int remplacement(Type* nxt, int nb) {
-			if(longueur <= taille) {
-				debut = 0; fin = nb; longueur = nb;
-				for(int pos=0; pos<nb; pos++) pt[pos] = nxt[pos];	
-				return(true);			
-			} else return(false);
-		}
-		int remplacement(StaticVect<Type,Taille>& nxt) {
-			if(nxt.longueur <= taille) {
-				debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
-				int pos = 0; for(int posnxt=0; posnxt<nxt.longueur; posnxt++) pt[pos++] = nxt[posnxt];		
-				return(true);
-			} else return(false);
-		}				
-		
-					//Ishhhhh... Ce serait vraiment plus simple de simplement remplacer StringAsVect par un StaticVect. Vraiment plus simple.
-							//Parce qu'elles sont rendues à avoir EXACTEMENT les mêmes fonctions, maintenant. What a joke.
-								//Pis, bon. Pas besoin d'avoir une capacité super variable si on libère dès le début assez de place dans la mémoire.
-										//Genre... 1 000 caractères par canal? Serait-ce réaliste?
-											//Est-ce que l'écriture serait vraiment limitée par ce nombre?
-													//**Garder en tête en passant que ce n'est pas le nombre max de caract d'un chaînon, mais bien
-														//de ce qu'il y a déjà dans le canal + le chaînon.		
-					
 														
 														
 			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
 			
-			
+			   //AJOUTER AUSSI UN CODE SPÉCIAL POUR 
 			
 		//Effacer le code spécial du canal
 		canaux[canpos].txt.suppression(CodeSpecialLong);
