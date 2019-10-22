@@ -62,11 +62,10 @@
 				Ce qu'il me reste à faire:
 					-Tester, avec des vraies mailles (manuelles), si le UserInputInterpret agit comme il le devrait.
 					-Créer un équivalent de la fonction pour les mailles automatiques
-					-Créer des fonctions-raccourcies afin de facilement remplir les mailles (commandes, conditions, etc).
-						(Pour la commande, peut-être travailler avec strings + parser : aime|adore|apprécie,fleurs|pétales;fleurs|pétales,favorit|préféré
 					-Régler le cas des accents. ESSAYER AVEC LES INPUTS INTERPRÉTÉS COMME 'int' À LA PLACE DE 'char'!
 					-Intégrer dans l'interprétation de l'input la première (ou toutes?) majuscule optionnelle
-					
+					-Peut-être changer la mémoire de "long terme, finie" à "court terme, infinie" en sauvant moins de lignes mais en écrivant par-dessus?
+					-Je ne sais pas si j'ai fait tous les "checks" de (dés)activation des canaux... À la fois quand le canal s'épuise, et quand il est overridé!
 */					
 
 /*
@@ -135,7 +134,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 
 	//i) classe : StaticVect ; sauvegarde un array "semi-dynamique", où la mémoire utilisée est fixe, mais les fonctionnalités sont les mêmes que StringAsVect.
 	template <class Type, int Taille>
-		class StaticVect {
+		class StaticVect<Type, Taille> {
 			//Valeurs membres	
 			public:
 				Type pt [Taille];   //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
@@ -169,15 +168,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}
 			//Fonction de modification : ajout()
 				bool ajout(Type nxt) {if(fin+1 <= taille) {pt[fin] = nxt; fin++; longueur++; return(true);} else return(false);}       //Fonction de retour pour communiquer la réussite ou non!				
-				bool ajout(Type nxt, int pos) {
+				bool ajout(Type nxt, int pos) {			//Ajoute l'entrée à une position précise
 					if(fin+1 <= taille) {
 						for(int ptpos = fin; ptpos>pos; ptpos--) pt[ptpos] = pt[ptpos-1];
 						pt[pos] = nxt; fin++; longueur++;
 						return(true);
 					} else return(false);
 				}
-				bool ajout(Type* nxt, int nb) {
-					if(fin+longueur <= taille) {
+				bool ajout(Type* nxt, int nb) {			//Ajoute un array à la suite du StaticVect
+					if(fin+nb <= taille) {
 						int nouvfin = fin + nb; int posnxt = 0;
 						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
 						fin+=nb; longueur+=nb; 
@@ -185,18 +184,18 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					} else return(false);
 				}
 			//Fonction de modification : remplacement()
-				int remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
-				int remplacement(Type* nxt, int nb) {
-					if(longueur <= taille) {
+				bool remplacement(Type nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
+				bool remplacement(Type* nxt, int nb) {
+					if(nb <= taille) {
 						debut = 0; fin = nb; longueur = nb;
 						for(int pos=0; pos<nb; pos++) pt[pos] = nxt[pos];	
 						return(true);			
 					} else return(false);
 				}
-				int remplacement(StaticVect<Type,Taille>& nxt) {
+				bool remplacement(const StaticVect<Type,Taille>& nxt) {
 					if(nxt.longueur <= taille) {
 						debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
-						int pos = 0; for(int posnxt=0; posnxt<nxt.longueur; posnxt++) pt[pos++] = nxt[posnxt];		
+						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];		
 						return(true);
 					} else return(false);
 				}
@@ -216,6 +215,104 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}		
 			};	
 
+	//ii) spécialisation de classe : StaticVect<char>, permet d'intégrer les strings
+	template<int Taille>
+		class StaticVect<char, Taille> {		//Je copie exactement les membres et fonctions de la classe générale, mais en ajoutant une override à ajout().
+			//Valeurs membres	
+			public:
+				char pt [Taille];   //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
+				int taille = Taille; //Nombre d'objets de l'array
+				int debut;  //Position actuelle de début
+				int fin;    //Position actuelle de fin
+				int longueur;       //Nombre d'objets entre le début et la fin
+			//Constructeurs	:
+				StaticVect<char,Taille>() : debut(0), fin(0), longueur(0) {}  //Défaut 
+				StaticVect<char,Taille>(char nxt) : debut(0), fin(1), longueur(0) {pt[0] = nxt;}  //Une seule valeur
+				StaticVect<char,Taille>(char* ptarr, int nb) : debut(0), fin(nb), longueur(nb) {for(int pos=0;pos<nb;pos++) pt[pos] = ptarr[pos];}   //Array
+				StaticVect<char,Taille>(const StaticVect<char,Taille>& nxt) : debut(0), fin(nxt.longueur), longueur(nxt.longueur) {for(int pos=0;pos<longueur;pos++) pt[pos] = nxt.pt[nxt.debut + pos];}
+				StaticVect<char,Taille>(const string& nxt) : debut(0), fin(nxt.length()), longueur(nxt.length()) {for(int pos=0;pos<longueur;pos++) pt[pos] = nxt[pos];}
+			//Copy assignement :
+				StaticVect<char,Taille>& operator = (const StaticVect<char,Taille>& nxt) {
+					debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
+					for(int pos=0;pos<nxt.longueur;pos++) pt[pos] = nxt.pt[nxt.debut + pos];
+					return(*this);			
+				}	
+	   		//Opérateur d'accès : []
+			   char& operator[] (int pos) {
+			   		return(pt[debut + pos]);
+			   }
+			//Fonction d'accès : intervalle()
+				StaticVect<char,Taille> intervalle(int posdebut, int posfin) {
+					if(posfin <= longueur) {
+						StaticVect<char,Taille> returnvect;
+						returnvect.debut = 0; returnvect.longueur = posfin - posdebut; returnvect.fin = returnvect.longueur;
+						int returnpos = 0; for(int pos = posdebut; pos<posfin; pos++) {returnvect.pt[returnpos++] = pt[pos+debut];}
+						return(returnvect);				
+					} else {std::wcout<<"intervalle() de "; std::wcout<<posdebut; std::wcout<<" à "; std::wcout<<posfin; std::wcout<<" dans \""; for(int pos=0; pos<fin; pos++) std::wcout<<pt[pos+debut]; std::wcout<<"\", dépassant donc la longueur"; abort();}
+				}
+			//Fonction de modification : ajout()
+				bool ajout(char nxt) {if(fin+1 <= taille) {pt[fin] = nxt; fin++; longueur++; return(true);} else return(false);}       //Fonction de retour pour communiquer la réussite ou non!				
+				bool ajout(char nxt, int pos) {			//Ajoute l'entrée à une position précise
+					if(fin+1 <= taille) {
+						for(int ptpos = fin; ptpos>pos; ptpos--) pt[ptpos] = pt[ptpos-1];
+						pt[pos] = nxt; fin++; longueur++;
+						return(true);
+					} else return(false);
+				}
+				bool ajout(char* nxt, int nb) {			//Ajoute un array à la suite du StaticVect
+					if(fin+nb <= taille) {
+						int nouvfin = fin + nb; int posnxt = 0;
+						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
+						fin+=nb; longueur+=nb; 
+						return(true);
+					} else return(false);
+				}
+				bool ajout(const string& nxt) {			//Ajoute un string à la suite du StaticVect
+					if(fin+nxt.length() <= taille) {
+						int nouvfin = fin + nxt.length(); int posnxt = 0;
+						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
+						fin+=nxt.length(); longueur+=nxt.length();
+						return(true);
+					} else return(false);
+				}
+			//Fonction de modification : remplacement()
+				bool remplacement(char nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
+				bool remplacement(char* nxt, int nb) {
+					if(nb <= taille) {
+						debut = 0; fin = nb; longueur = nb;
+						for(int pos=0; pos<nb; pos++) pt[pos] = nxt[pos];	
+						return(true);			
+					} else return(false);
+				}
+				bool remplacement(const StaticVect<char,Taille>& nxt) {
+					if(nxt.longueur <= taille) {
+						debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
+						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];		
+						return(true);
+					} else return(false);
+				}
+				bool remplacement(const string& nxt) {
+					if(nxt.length()) <= taille) {
+						debut = 0; fin = nxt.length(); longueur = nxt.length();
+						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];		
+						return(true);
+					} else return(false);
+				}
+			//Fonction de modification : vide()
+				void vide(void) {debut = 0; fin = 0; longueur = 0;}
+			//Fonction de modification : suppression          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
+				void suppression (int nb) {
+					if(nb > fin-debut) debut = fin; else debut+=nb; 
+					longueur-=nb;
+				}
+			//Fonction de modification : supprposition       //Supprime l'entrée à la position indiquée
+				void supprposition (int pos) {
+					if(pos >= debut & pos < fin) {
+						for(int ptpos = pos; ptpos < fin-1; ptpos++) {pt[ptpos] = pt[ptpos+1];}
+						fin--; longueur--;
+					}
+				}		
+			};	
 			
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //2) Fonctions et objets pour interagir avec la console
@@ -335,16 +432,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	void egrener(string str, int delay) {
 		for(int pos=0; pos<str.length(); pos++) {out(str[pos]); stop(delay);}
 	}
-	
-	//xi Fonction : StringToStaticVect ; 
-	templante<int Taille>
-	StaticVect<char,Taille> StringToStaticVect(const &string str) {
-		StaticVect<char,Taille> conversion(str.begin(),str.lenght());				//Je ne sais pas si "str.begin()" va vraiment donner le pointeur que je veux; peut-être y aller avec "str.const_pointer" à la place?
-		return(conversion);				//Le constructeur utilisé prend un array comme argument : StaticVect<Type,Taille>(Type* ptarr, int nb)
-	}
-						//CETTE FONCTION RESTE À TESTER!!! IDÉALEMENT, LE FAIRE INDÉPENDAMMENT, AVANT DE TESTER LE RESTE!!!!!
-									//PIS... ÉCRIT DE MÊME, FAUDRAIT TOUT LE TEMPS SPÉCIFIER LA TAILLE QU'ON VEUT À CHAQUE ITÉRATION??????
-
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //3) Classes-contenantes spécialisées (canaux et autres)
@@ -930,78 +1017,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.ajout(histoire.chainemanu[chapitrepos][chainonpos].codespeciauxfin);		
 	}
 
-											//OUPSSSSS! ATTENTION! ICI, ON AJOUTE DES STRINGS!!!
-												//LA SYNTHAXE N'EST DONC PAS BONNE, CAR ELLE FAIT COMME SI ON AJOUTAIT DES "StaticVect" DIRECTEMENT
-												
-												
-														//CHANGER ÇA AVANT DE TESTER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-															//(CE SERAIT VRAIMENT PLUS FACILE DE METTRE UNE CLASSE À PART DE "StaticVect" qui est construite à partir de "char"... Avec une fonction "ajout()" spéciale pour les strings)
-																	//Ou dans le fond, juste préciser dans la définition de la classe????
-	
 	
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //5) Fonctions de remplissage aisé des objets utilisés
-
-/*
-	
-		IDÉES DE CHOSES À CRÉER POUR QUE CE SOIT SIMPLE!
-
-	int chapitre = 0;
-	int posmanu = 0;
-	int posauto = 0;
-	bool ismanu = true;
-	
-	int posrayon = 0;
-	int poslivre = 0;
-	
-	
-	
-		//Un objet qui comprend simplement TOUT, pour n'avoir qu'un argument (donc tous les objets précédents seraient ses membres).
-		
-		//Idéalement, une bibliothèque qui se remplit seule, à l'aide des codes spéciaux?
-				//Mais ça pourrait faciliter l'abilité de la personne qui écrit (dont moi) à perdre le fil de la bibliothèque...
-					//Je préférerais: Une fonction qui change de rayon (en crée un nouveau à la suite), et une fonction qui crée des livres.
-					//Idéalement, mettre la fonction avec les livres sous forme de parser, pour ne lui donner qu'un seul string en argument.
-					//Bref:
-					
-	//Une fonction pour créer un nouveau rayon dans la bibliothèque
-	//Une fonction pour créer tout les livres du rayon actuel (argument: un long string, séparateur = " ; " ou whatever)			
-		
-						//Une fonction pour changer de type de chaînon (auto vs manu)
-						//Une fonction pour avancer au prochain chaînon (du type actuel)
-						//Une fonction pour déterminer les mailles (texte) du chaînon actuel
-						//Une fonction pour déterminer les enchaînements (de mailles) possibles
-						//Une fonction pour déterminer les probabilités associées aux enchaînements (résultat = un nombre entier; le "vainqueur" est déterminé en pigeant (rappel))
-						//Une fonction pour déterminer quelles commandes activent le chaînon actuel
-						//Une fonction pour déterminer les conditions d'activation du chaînon actuel
-						//Une fonction pour déterminer quels canaux sont overridés par le chaînon actuel
-
-							//Ishhh...
-									//J'suis en train de me demander si ça serait réellement pratique à utiliser de n'avoir qu'une itération de chaque fct,
-											//et de changer entre auto/manu avant le bloc de texte...
-											
-									//Ça serait effectivement pratique si l'écriture était naturellement séparée entre automatique et manuelle
-									
-									//Mais à bien y penser, l'écriture va probablement beaucoup plus progresser selon l'ordre logique des évènements,
-										//amenant donc plusieurs segments automatiques à succéder à une commande manuelle (pouvant quant à elle être interrompue
-										//par une deuxième commande manuelle).
-										
-									//Pour bien s'y retrouver, il serait donc important de facilement identifier quel segment est manuel, et quel est automatique.
-										//Also, bien s'assurer de mettre un titre à chaque chaînon (storé comme unique expression exacte dans la plupart des chaînons)? 			
-
-
-	//Une fonction pour avancer au prochain chaînon				//Ou... caduc? Caduc. J'vais l'intégrer dans la fonction titre().    	//Caduc.
-	//Une fonction pour "nommer" le chaînon actuel (l'expression est alors conservée comme l'unique expression exacte de référence)		//Done.
-	//Une fonction pour déterminer les mailles (texte) du chaînon actuel																//
-	//Une fonction pour déterminer les enchaînements (de mailles) possibles																//
-	//Une fonction pour déterminer les probabilités associées aux enchaînements (résultat = un nombre entier; le "vainqueur" est déterminé en pigeant (rappel))		//
-	//Une fonction pour déterminer quelles commandes activent le chaînon actuel (situation normale : inclus et exclus seulement)		//
-	//Une fonction pour déterminer quelles commandes activent le chaînon actuel (exception : exact ; s'inscrivent à la suite du titre)	//	
-	//Une fonction pour déterminer les conditions d'activation du chaînon actuel														//
-	//Une fonction pour déterminer quels canaux sont overridés par le chaînon actuel													//
-	
-			// X2 (à part pour les commandes), pour faire à la fois auto et manu! (ex: autotitre() vs manutitre() ) <- atitre vs mtitre
-*/
 
 //Contenant pour conserver tous les objets
 class univers {
@@ -1017,6 +1035,9 @@ class univers {
 	univers() : chapitre(0), posmanu(0), posauto(0), poslivre(0) {};
 }; 
 
+//FONCTION POUR REMPLIR LA BIBLIOOO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+
+
 //Fonction pour changer de chapitre
 void nxtchapt(&univers monde) {
 	monde.chapitre++;
@@ -1030,20 +1051,6 @@ void mtitre(&univers monde, const &string str) {
 
 //Fonction pour écire le texte ("mailles") du chaînon (manuel)
 void mtexte(&univers monde, const &string str) {
-	//int strnb = str.lenght();		//Aller chercher la taille du string
-	//int countmaille = 0;				//Créer un compteur pour les mailles
-	//for(int countstr=0; countstr<strnb; countstr++){
-	//	if(str[countstr]=='µ') countmaille++; else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille[countmaille]+=str[countstr];  
-	//}					//Faire un parser! La note (exemple) que je m'étais laissée utilisais 'µ' comme séparateur... Est-ce que je le garde?	
-	
-			//Est-ce... que... c'est correct comme parser? Me semble que c'est simple...?
-				//Fait que j'ajoute une lettre à la fois aux strings (qui sont d'abord vides). I guess que ça pourrait marcher..?
-				//Sinon, au pire, j'peux toujours enregistrer les "strings" des mailles comme des staticvects...?
-				
-				
-				//Ou, au pire, je coupe le string dès que je croise 'µ' ou que str finit, et je l'insère en entier dans l'objet?
-				//Ce qui donnerait:
-				
 	int strnb = str.lenght();		//Aller chercher la taille du string
 	int countmaille = 0;			//Créer un compteur pour les mailles
 	int debmaille = 0;				//Créer un compteur pour le début de la maille actuelle
@@ -1056,8 +1063,6 @@ void mtexte(&univers monde, const &string str) {
 		}
 	}
 	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille[countmaille] = str.substr(debmaille,strnb);		//Entrer la dernière maille
-
-				//Bon, bref, j'aime mieux avec substr; faudra effacer l'autre après la dernière sauvegarde.	
 }
 
 //Fonction pour définir les enchaînements possibles
@@ -1078,55 +1083,6 @@ void mordre(&univers monde, const &string str) {
 	}
 	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchainement[countordre][countchiffre] = stoi(str.substr(debnombre,strnb));		//Entrer le dernier chiffre
 }																			
-
-
-//Fonction pour définir les probabilités associées avec chaque enchaînement
-		
-			//Iiii! C'est ici (et dans les conditions) que ça va être difficile, ayant à transformer des noms de rayons/livres en chiffre!
-					//Donc, va falloir construire la bibliothèque en amont.			//////JE N'AI PAS À TRANSFORMER LES NOMS EN CHIFFRE!; LES FONCTIONS DE BASE LE FONT TOUTES SEULES!
-
-			//ok, ça va être une bonne occasion pour refondre les expressions à évaluer au complet, peut-être;
-					//Spécialement
-			
-	//ICI, ';' EST LE SÉPARATEUR ENTRE DEUX PROBABILITÉS DIFFÉRENTES!
-
-
-					//VERSION QUI DUPLIQUAIT VRAIMENT BÊTEMENT LA TRANSFORMATION DES NOMS EN CHIFFRES!
-/*
-
-void mprob(&univers monde, const &string str){
-	int strnb = str.length();		//Aller chercher la taille du string
-	string strench;                //Créer un string dans lequel stocker l'expression finale (où les noms ont été remplacés par leur position)
-	string biblioname;				//Créer un string dans lequel stocker les noms à chercher
-	int countench = 0;				//Créer un compteur pour savoir à quel enchaînement on est rendu.es
-	bool rayon = true;				//Créer un compteur pour savoir si on est rendues au rayon ou au livre
-	for(int countstr=0; countstr<strnb; countstr++){
-		if(str[countstr]==';'|str[countstr]=='¶'|str[countstr]=='+'|str[countstr]=='-'|str[countstr]=='*'|str[countstr]=='/'|str[countstr]=='('|str[countstr]==')') {  //Si le caractère ne fait pas partie d'un nom à rechercher
-			
-			if(biblioname.length()!=0) {	//Si un nom à rechercher a été accumulé
-				if(rayon) {
-				strench += ColNameFind(biblioname,monde.biblio.nomrayon); 		//Rechercher le nom pour le remplacer par son numéro
-				}else strench += ColNameFind(biblioname,monde.biblio.nomlivre);
-				biblioname.clear();		//Efface tout le contenu du nom à rechercher, pour renouveler 
-				if(!rayon) rayon = true;    //Si on vient de noter la position d'un livre, on recherche de nouveau un rayon
-			}
-			if(str[countstr]==';'){		//Si l'expression de la probabilité de cet enchaînement est terminée
-				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchaineprob[countench].set(StringToStaticVect(str.substr(begprob,countstr-1)),monde.biblio);		//Remplir le conteneur d'expressions avec l'expression raffinée (avec des chiffres, pas des mots)
-																										//EST-CE QUE J'AI VRAIMENT BESOIN DE METTRE BIBLIO COMME 2E ARGUMENT???
-																						//TRÈS PROBABLE QUE JE SCRAPPE LA FONCTION "StringToStaticVect" POUR JUSTE SPÉCIFIER DES DÉFINITIONS QUI MARCHENT AVEC DES STRINGS?
-																							//OH; PAR CONTRE, ÇA CASSERAIT CE CODE....
-																									//I GUESS QUE LE MIEUX SERAIT DE CHANGER LE CODE À LA BASE, POUR QUE L'ARGUMENT SOIT UN STRING
-																									//OU DE L'OVERRIDER (AVOIR DEUX VERSIONS, UNE EN STRING, UNE EN STATICVECT?)				
-																				//GODE, J'ME SUIS COMPLIQUÉ LA VIE AVEC MES CLASSES PERSONALISÉES																			
-			} else {
-				strench+=str[countstr];		//Intégrer le symbole ne faisant pas partie d'un nom à l'expression finale
-				if(str[countstr=='¶']) rayon = false;
-			}															
-		} else biblioname += str[countstr];		//Si c'est juste une lettre du nom, l'ajouter simplement	
-	}
-}
-
-	*/
 
 //Fonction pour définir les probabilités associées avec chaque enchaînement
 void mprob(&univers monde, const &string str){
@@ -1196,27 +1152,19 @@ void mcond(&univers monde, const &string str){
 }
 
 //Fonction pour définir quels canaux seront vidés dès l'activation de ce chaînon
-
-	
-		//Euphh... J'aime pas trop la manière "constitutive" (intégrée à l'intérieur du chaînon) dont cette action fonctionne.
-				//J'comprends que ce soit nécessaire pour le canal LUI-MÊME, si on veut jouer tout de suite le chaînon.
-					//Mais pour les autres canaux, j'trouve que c'est mal placé.
-						//Logiquement, ça se placerait beaucoup mieux dans un code spécial: lorsque ce code est lu, on exécute telle action.
-						//Donc... idéalement, juste mettre une valeur TRUE ou FALSE comme argument? (0 ou 1, pour aller plus vite)
-				//Ouin, définitivement, mettre un logical.
 void mover(&univers monde, bool bl){
 	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].override = bl;
 }				
 
 				
-
+/*		//EXEMPLE:
 	texte(histoire.chainemanu[chapitre][posmanu],"LaLaLaLaLa\nlala µ lulululu")       ici, ' µ ' sert de séparateur (pour l'exemple)
 	enchainement(histoire.chainemanu[chapitre][posmanu],"1-2;1;2")              '-' pour signifier un autre élément, ';' pour signifier un autre enchaînement 
 	probabilites(histoire.chainemanu[chapitre][posmanu],"comptes¶bobon*5;2;3")		';' pour signifier un autre enchaînement																	
 	commande(histoire.chainemanu[chapitre][posmanu],"(Bonjour|Hello|Salut & World|Monde) (Test)")	
 	condition(histoire.chainemanu[chapitre][posmanu],"comptes¶bonbon<=3")
-	override(histoire.chainemanu[chapitre][posmanu],"0,1")
-	
+	override(histoire.chainemanu[chapitre][posmanu],1)
+*/	
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //6) Fonction LireCanal()
@@ -1584,112 +1532,7 @@ int main(void) {
 
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
 	//x, y, width, height,
-	fen base(600,30,500,500);                                           //Crée également l'objet dans lequel ces paramètres sont définis
-	
-	//Créer l'objet de mémoire, qui stockera tous les caractères utilisés
-	memoire mem {base.limtxtx};
-
-	//Créer les objets d'input
-	input entree; inputecho entreeecho;
-
-	//Créer la bibliothèque
-	bibliotheque biblio;
-	
-	//Créer le fil
-	fil histoire;
-	
-	//Créer un chainon
-	chainonmanu test;															//Créer l'objet avant de l'intégrer?
-	//Écrire les paramètres du chaînon 
-	test.canal = 0;
-					//test.commandes.inclus[0][0][0].ajout("bonjour");    //Non, on ne peut pas faire cela...? Car il faudrait d'abord .ajout les premiers niveaux?
-							//Oui, non?
-							
-					//Eurgh. Comment faire pour gérer les StaticVect imbriqués?					
-	//Théoriquement, faudrait faire un .ajout() manuel de chaque objet;
-			//quoique?
-		//Quand on crée un StaticVect, ça alloue un espace X dans la mémoire.
-		//Pour des types simples (int), quand la valeur n'a pas été spécifiée, la position retourne N'IMPORTE QUOI (aléatoire, un peu?)
-		//Pour des types plus complexes, qui demandent des constructeurs... 
-				//Est-ce que les constructeurs par défaut sont callés quand on crée un array???
-						//Mon intuition est: probablement.
-		
-		//Si l'objet existe officiellement, on aurait pas besoin de l'inition à chaque fois; on aurait seulement qu'à updater fin et longueur de toute la chaine.
-			//Ce serait l'idéal.		//Faudrait faire un script test pour voir si c'est le cas.
-			
-			//Avec ça, j'aurais seulement à faire une fonction maison dans la classe "commande" , avec quatre arguments : trois int de position, et un string.
-			
-			//Ou mieux encore: faire mon espèce de rêve/espoir:  mettre un autre système de parsing (cette fois complètement séquentiel, c'est-à-dire sans priorité d'opération) :
-					//ex : ( Bonjour | Hello | Salut & World | Monde ) (Test)
-							// () = différentes façons de le dire ;  & = différents blocs de mots ; | = synonymes
-							
-					//Ouin. Ça serait simplement la meilleure chose à faire.
-						//Ce serait tout de même plus simple à coder si les StaticVect étaient déjà construits. Donc faire le test tout de même.		
-							
-	
-						
-	//Pour mettre les mailles...
-									//Faudrait aussi tester si on peut écrire un array en argument, genre test.maille.ajout({"1","2","3","4"},4)  .
-										//Ce serait la meilleure chose, je crois.
-										//Non. Pas vrai. La meilleure chose serait encore un parsing mechanism.
-										
-	//Pour les conditions, 
-			//le problème c'est que, comme c'est là, boolcompos prend juste des StaticVect à taille définie.
-				//Donc faudrait une fonction maison pour transformer un string qu'on lui donne en un StaticVect d'une taille définie.
-				
-	
-	//En bref, il vaudrait mieux à peu près tout transformer en fonctions maisons, la plupart avec des éléments de "parsing" (interprétation d'un string).
-	
-		//À la place de mettre ces fonctions comme fonctions de classes spécifiques,
-							//je préfère mettre comme argument le chaînon. Et va falloir tout dupliquer pour auto / manu (overrider).
-
-	//J'aurais donc (en supposant que le chainon existe déjà) :
-	
-	/*
-	int chapitre = 0;
-	int posmanu = 0;
-	
-	texte(histoire.chainemanu[chapitre][posmanu],"LaLaLaLaLa\nlala µ lulululu")       ici, ' µ ' sert de séparateur (pour l'exemple)
-	enchainement(histoire.chainemanu[chapitre][posmanu],"1-2;1;2")              '-' pour signifier un autre élément, ';' pour signifier un autre enchaînement 
-	probabilites(histoire.chainemanu[chapitre][posmanu],"comptes¶bobon*5;2;3")		';' pour signifier un autre enchaînement																	
-	commande(histoire.chainemanu[chapitre][posmanu],"(Bonjour|Hello|Salut & World|Monde) (Test)")
-	condition(histoire.chainemanu[chapitre][posmanu],"comptes¶bonbon<=3")
-	override(histoire.chainemanu[chapitre][posmanu],"0,1")
-	
-			//Ishhh. L'option d'une fonction externe rend ça difficilement lisible. J'aimerais mieux :
-					// ex :  histoire.chainemanu[chapitre][posmanu].    texte("LaLaLaLaLa\nlala µ lulululu")   (les espaces ne comptent pas, right?)
-	
-	
-	histoire.chainemanu[chapitre][posmanu].canal = 1;
-	histoire.chainemanu[chapitre][posmanu].codespeciauxdebut = "";
-	histoire.chainemanu[chapitre][posmanu].codespeciauxfin = "";
-	histoire.chainemanu[chapitre][posmanu].getbusy = true;
-	
-						//Mhhph. Pour garder l'esthétique, je pense que je préfère utiliser seulement des fonctions. Pour que tout soit aligné.
-								//Donc faire comme en haut, même pour cette partie.
-	
-	*/		
-	
-	
-	//Créer les canaux utilisés
-	canal can1;
-	canal can2;
-	
-	//Test: changer les délais manuellement
-	can1.delay = 140;
-	can2.delay = 230;
-	
-	//Ajouter du texte aux canaux
-	string txt0 = "Celà est du texte!\nJe dis du texte, maintenant! \n Wouhouuuu! Je suis le canal 1!";
-	string txt1 = "§p1000§\nLe canal 1 \n           est sooooo boring. Ark.§p1000§\n§p1000§Je suis le canal 2.";
-	can1.txt.ajout(txt0); can2.txt.ajout(txt1);
-	
-	//Rendre manuellement les canaux actifs
-	can1.actif = true; can2.actif = true;	
-	
-	//Ajouter les canaux dans l'objet StaticVect<canal>
-	canal canx [2] = {can1,can2};
-	StaticVect<canal,2> canaux (canx,2);          
+	fen base(600,30,500,500);                                           //Crée également l'objet dans lequel ces paramètres sont définis       
 
 	//Faire une boucle pour que les canaux s'expriment!
 	bool gogogo = true;
