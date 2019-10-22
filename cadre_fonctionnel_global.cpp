@@ -28,25 +28,6 @@
 				qui est ma foi un peu patantée. Je ne sais pas pourquoi elle marche, mais c'est la seule qui marche. À revérifier plus tard.
 */
 
-/*
-	2019-06-22:
-				La fonction pour afficher l'input semble avoir de la difficulté à gérer les accents.
-				Les bouts de texte écrits dans le script s'affichent correctement,
-				mais le unicode utilisé pour getch() ne semble pas correspondre aux bons symboles.
-				Bon.
-				Même quand j'associe manuellement le code numérique aux bon char, ça garde la même erreur.
-				Comme si les char provenant de l'user input était différents de ceux du script?
-				
-				Bon, c'est officiel, la liste de if() else() dans out() ne reconnaît pas les char provenant du clavier.
-				Je ne sais pas quoi y faire. Est-ce que ça va chier aussi la reconnaissance dans "find()"???
-				
-				C'est vraiment étrange.
-				
-				2019-08-18 : C'est peut-être simplement parce que j'ai codé "key" (la réception de la touche) à l'aide de 'char'.
-							 À cause de celà, le nombre de possibilités pourrait être limité (donc je reste avec ACSII).
-							 Pour y remédier, je n'aurais qu'à changer pour 'int' ou 'unsigned int' ? 
-*/
-
 
 /*
 	2019-07-05:
@@ -62,7 +43,6 @@
 				Ce qu'il me reste à faire:
 					-Tester, avec des vraies mailles (manuelles), si le UserInputInterpret agit comme il le devrait.
 					-Créer un équivalent de la fonction pour les mailles automatiques
-					-Régler le cas des accents. ESSAYER AVEC LES INPUTS INTERPRÉTÉS COMME 'int' À LA PLACE DE 'char'!
 					-Intégrer dans l'interprétation de l'input la première (ou toutes?) majuscule optionnelle
 					-Peut-être changer la mémoire de "long terme, finie" à "court terme, infinie" en sauvant moins de lignes mais en écrivant par-dessus?
 					-Je ne sais pas si j'ai fait tous les "checks" de (dés)activation des canaux... À la fois quand le canal s'épuise, et quand il est overridé!
@@ -1431,10 +1411,10 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 	if(_kbhit()){
 	//i) Capter la lettre tapée
 	bool enter = false;
-	char key = _getch();                  		//Enregistrer quelle touche a été pressée
-			if (key == 0 || key == -32 || key == 224) {      //La valeur est spéciale: elle nécessite de la ré-examiner
-				key = _getch();                              //Examiner une deuxième valeur pour identifier
-				if(key == 75) {     								 				 //flèche gauche : reculer dans la commande tapée 
+	char charkey; int intkey = _getch();                  		//Enregistrer quelle touche a été pressée
+			if (intkey == 0 || intkey == -32 || intkey == 224) {      //La valeur est spéciale: elle nécessite de la ré-examiner
+				intkey = _getch();                              //Examiner une deuxième valeur pour identifier
+				if(intkey == 75) {     								 				 //flèche gauche : reculer dans la commande tapée 
 					if(inp.inputpos!=0) {
 						if(inp.inputpos!=inp.commande.longueur) {
 							curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]);	
@@ -1442,15 +1422,15 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 						inp.inputpos--;  
 					}
 				}
-				else if (key == 77) {											 	 //flèche droite : avancer dans la commande tapée				
+				else if (intkey == 77) {											 	 //flèche droite : avancer dans la commande tapée				
 					if(inp.inputpos!=inp.commande.longueur) {
 						curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]);	
 						inp.inputpos++;		
 					}			//Remettre en gris la position précédente
 				} 
-				else if (key == 72)  ;  											 //Flèche du haut   ... Rien ne se passe?
-				else if (key == 80)  ;  											 //Flèche du bas    ... Rien ne se passe?
-				else if (key == 83) {                                                //Delete : supprimer un caractère de la commande actuelle
+				else if (intkey == 72)  ;  											 //Flèche du haut   ... Rien ne se passe?
+				else if (intkey == 80)  ;  											 //Flèche du bas    ... Rien ne se passe?
+				else if (intkey == 83) {                                                //Delete : supprimer un caractère de la commande actuelle
 					if(inp.inputpos!=inp.commande.longueur) {
 						inp.commande.supprposition(inp.inputpos);    
 						curspos(inp.inputpos,base.limtxty);
@@ -1460,11 +1440,11 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 				}
 			} else 	{                                        //La valeur est "normale"
 				//Touches-fonctions
-				if(key == 27) {														 //Escape : terminer le programme
+				if(intkey == 27) {														 //Escape : terminer le programme
 					curspos(0,base.limtxty); out("Vous avez entré ESC, le programme se ferme donc."); abort(); 
-				} else if(key == 13) {												 //Enter : envoyer la commande
+				} else if(intkey == 13) {												 //Enter : envoyer la commande
 					enter = true;
-				} else if(key == 8) {                                                //Backspace : supprimer le caractère précédent
+				} else if(intkey == 8) {                                                //Backspace : supprimer le caractère précédent
 					if(inp.inputpos!=0) {
 						inp.inputpos--;
 						inp.commande.supprposition(inp.inputpos);   
@@ -1472,17 +1452,16 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 						for(int pos=inp.inputpos; pos<inp.commande.longueur; pos++) out(inp.commande[pos]);   
 						out(' ');    					
 					}
-					///////////////ICI, JE GÈRE LES ACCENTS MANUELLEMENT, COMME ILS SEMBLENT POSER PROBLÈME!
-					//NE MARCHE MÊME PAS, CAR MÊME LE CODE NUMÉRIQUE NE SEMBLE PAS ÊTRE RECONNU!!!
-					
-				} else if(key==183) {key = 'À'; cout << "test";} else if(key==133) {key = 'à'; cout << "test";} else if(key==128) {key = 'Ç'; cout << "test";} else if(key==135) {key = 'ç'; cout << "test";
-				} else if(key==144) {key = 'É'; cout << "test";} else if(key==130) {key = 'é'; cout << "test";} else if(key==212) {key = 'È'; cout << "test";} else if(key==138) {key = 'è'; cout << "test";
-				} else if(key==210) {key = 'Ê'; cout << "test";} else if(key==136) {key = 'ê'; cout << "test";} else if(key==215) {key = 'Î'; cout << "test";} else if(key==140) {key = 'î'; cout << "test";
-				} else if(key==216) {key = 'Ï'; cout << "test";} else if(key==139) {key = 'ï'; cout << "test";} else if(key==226) {key = 'Ô'; cout << "test";} else if(key==147) {key = 'ô'; cout << "test";
-				} else if(key==235) {key = 'Ù'; cout << "test";} else if(key==151) {key = 'ù'; cout << "test";} else if(key==234) {key = 'Û'; cout << "test";} else if(key==150) {key = 'û'; cout << "test";
-				} else {															 //Caractère normal : l'ajouter à la commande	
+				} else {							//Caractère non ASCII
+					if(intkey==183) charkey = 'À'; else if(intkey==133) charkey = 'à'; else if(intkey==128) charkey = 'Ç'; else if(intkey==135) {charkey = 'ç';
+					} else if(intkey==144) charkey = 'É'; else if(intkey==130) charkey = 'é'; else if(intkey==212) charkey = 'È'; else if(intkey==138) {charkey = 'è';
+					} else if(intkey==210) charkey = 'Ê'; else if(intkey==136) charkey = 'ê'; else if(intkey==215) charkey = 'Î'; else if(intkey==140) {charkey = 'î';
+					} else if(intkey==216) charkey = 'Ï'; else if(intkey==139) charkey = 'ï'; else if(intkey==226) charkey = 'Ô'; else if(intkey==147) {charkey = 'ô';
+					} else if(intkey==235) charkey = 'Ù'; else if(intkey==151) charkey = 'ù'; else if(intkey==234) charkey = 'Û'; else if(intkey==150) {charkey = 'û';
+					} else charkey = intkey;		//Caractère ASCII		 
+				//Caractère normal : l'ajouter à la commande	
 					if(inp.commande.longueur<base.limtxtx-1){
-						inp.commande.ajout(key,inp.inputpos);
+						inp.commande.ajout(charkey,inp.inputpos);
 						inp.inputpos++;
 						curspos(inp.inputpos-1,base.limtxty);	                    
 						for(int pos=inp.inputpos-1; pos<inp.commande.longueur; pos++) out(inp.commande[pos]);
@@ -1513,7 +1492,6 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 					inpecho.clignote.remplacement(clignarr, 6);
 				}                				
 			} else{						//Faire clignoter le texte, en rouge foncé, pendant quelques secondes.
-				
 				inpecho.couleur = "rouge sombre";
 				int clignarr [8] {500,-500,500,-500,500,-500,500,-1};				
 				inpecho.clignote.remplacement(clignarr,8);	

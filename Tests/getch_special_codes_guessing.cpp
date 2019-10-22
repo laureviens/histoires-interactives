@@ -13,7 +13,7 @@ int main ()
     {
         printf("%d", ch);
         if (ch == 0 || ch == 224)
-            printf (", %d", _getch ()); 
+            printf (", %d", _getch ());  if(ch==130) printf("   e accent aigu"); if(ch==138) printf("   e accent grave");
         printf("\n");
     }
 
