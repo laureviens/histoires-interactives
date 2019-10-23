@@ -80,6 +80,17 @@
 							//Juste à l'écrire comme ça, j'ai beaucoup mieux a).
 */
 
+/*
+	2019-10-22:
+				Eurggghhh. 
+				La fonction "substr()" n'agit vraiment pas comme je le pensais (j'ai simplement mal lu).
+				Je pensais qu'elle agissait comme ma fonction "intervalle()": prendre le début et la fin comme arguments.
+				À la place, elle prend le début, puis le nombre de caractères à inclure.
+				Il faudra donc que je remplace toutes les "substr()" par une fonction maison que je coderai moi-même. Beurgh.
+*/
+
+
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
 #include <iostream>   //Pour les entrées/sorties
@@ -114,7 +125,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 
 	//i) classe : StaticVect ; sauvegarde un array "semi-dynamique", où la mémoire utilisée est fixe, mais les fonctionnalités sont les mêmes que StringAsVect.
 	template <class Type, int Taille>
-		class StaticVect<Type, Taille> {
+		class StaticVect {
 			//Valeurs membres	
 			public:
 				Type pt [Taille];   //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
@@ -172,108 +183,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						return(true);			
 					} else return(false);
 				}
-				bool remplacement(const StaticVect<Type,Taille>& nxt) {
+				bool remplacement(StaticVect<Type,Taille>& nxt) {
 					if(nxt.longueur <= taille) {
 						debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
-						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];		
-						return(true);
-					} else return(false);
-				}
-			//Fonction de modification : vide()
-				void vide(void) {debut = 0; fin = 0; longueur = 0;}
-			//Fonction de modification : suppression          //"Supprime" le nombre de positions en right-hand AU DÉBUT des valeurs déjà contenues
-				void suppression (int nb) {
-					if(nb > fin-debut) debut = fin; else debut+=nb; 
-					longueur-=nb;
-				}
-			//Fonction de modification : supprposition       //Supprime l'entrée à la position indiquée
-				void supprposition (int pos) {
-					if(pos >= debut & pos < fin) {
-						for(int ptpos = pos; ptpos < fin-1; ptpos++) {pt[ptpos] = pt[ptpos+1];}
-						fin--; longueur--;
-					}
-				}		
-			};	
-
-	//ii) spécialisation de classe : StaticVect<char>, permet d'intégrer les strings
-	template<int Taille>
-		class StaticVect<char, Taille> {		//Je copie exactement les membres et fonctions de la classe générale, mais en ajoutant une override à ajout().
-			//Valeurs membres	
-			public:
-				char pt [Taille];   //Déclarer l'array(pointeur) comme public, pour qu'on puisse changer facilement des valeurs depuis l'extérieur 
-				int taille = Taille; //Nombre d'objets de l'array
-				int debut;  //Position actuelle de début
-				int fin;    //Position actuelle de fin
-				int longueur;       //Nombre d'objets entre le début et la fin
-			//Constructeurs	:
-				StaticVect<char,Taille>() : debut(0), fin(0), longueur(0) {}  //Défaut 
-				StaticVect<char,Taille>(char nxt) : debut(0), fin(1), longueur(0) {pt[0] = nxt;}  //Une seule valeur
-				StaticVect<char,Taille>(char* ptarr, int nb) : debut(0), fin(nb), longueur(nb) {for(int pos=0;pos<nb;pos++) pt[pos] = ptarr[pos];}   //Array
-				StaticVect<char,Taille>(const StaticVect<char,Taille>& nxt) : debut(0), fin(nxt.longueur), longueur(nxt.longueur) {for(int pos=0;pos<longueur;pos++) pt[pos] = nxt.pt[nxt.debut + pos];}
-				StaticVect<char,Taille>(const string& nxt) : debut(0), fin(nxt.length()), longueur(nxt.length()) {for(int pos=0;pos<longueur;pos++) pt[pos] = nxt[pos];}
-			//Copy assignement :
-				StaticVect<char,Taille>& operator = (const StaticVect<char,Taille>& nxt) {
-					debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
-					for(int pos=0;pos<nxt.longueur;pos++) pt[pos] = nxt.pt[nxt.debut + pos];
-					return(*this);			
-				}	
-	   		//Opérateur d'accès : []
-			   char& operator[] (int pos) {
-			   		return(pt[debut + pos]);
-			   }
-			//Fonction d'accès : intervalle()
-				StaticVect<char,Taille> intervalle(int posdebut, int posfin) {
-					if(posfin <= longueur) {
-						StaticVect<char,Taille> returnvect;
-						returnvect.debut = 0; returnvect.longueur = posfin - posdebut; returnvect.fin = returnvect.longueur;
-						int returnpos = 0; for(int pos = posdebut; pos<posfin; pos++) {returnvect.pt[returnpos++] = pt[pos+debut];}
-						return(returnvect);				
-					} else {std::wcout<<"intervalle() de "; std::wcout<<posdebut; std::wcout<<" à "; std::wcout<<posfin; std::wcout<<" dans \""; for(int pos=0; pos<fin; pos++) std::wcout<<pt[pos+debut]; std::wcout<<"\", dépassant donc la longueur"; abort();}
-				}
-			//Fonction de modification : ajout()
-				bool ajout(char nxt) {if(fin+1 <= taille) {pt[fin] = nxt; fin++; longueur++; return(true);} else return(false);}       //Fonction de retour pour communiquer la réussite ou non!				
-				bool ajout(char nxt, int pos) {			//Ajoute l'entrée à une position précise
-					if(fin+1 <= taille) {
-						for(int ptpos = fin; ptpos>pos; ptpos--) pt[ptpos] = pt[ptpos-1];
-						pt[pos] = nxt; fin++; longueur++;
-						return(true);
-					} else return(false);
-				}
-				bool ajout(char* nxt, int nb) {			//Ajoute un array à la suite du StaticVect
-					if(fin+nb <= taille) {
-						int nouvfin = fin + nb; int posnxt = 0;
-						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
-						fin+=nb; longueur+=nb; 
-						return(true);
-					} else return(false);
-				}
-				bool ajout(const string& nxt) {			//Ajoute un string à la suite du StaticVect
-					if(fin+nxt.length() <= taille) {
-						int nouvfin = fin + nxt.length(); int posnxt = 0;
-						for(int pos=fin; pos<nouvfin; pos++) {pt[pos] = nxt[posnxt++];}
-						fin+=nxt.length(); longueur+=nxt.length();
-						return(true);
-					} else return(false);
-				}
-			//Fonction de modification : remplacement()
-				bool remplacement(char nxt) {debut = 0; fin = 1; pt[0] = nxt; return(true);}  	
-				bool remplacement(char* nxt, int nb) {
-					if(nb <= taille) {
-						debut = 0; fin = nb; longueur = nb;
-						for(int pos=0; pos<nb; pos++) pt[pos] = nxt[pos];	
-						return(true);			
-					} else return(false);
-				}
-				bool remplacement(const StaticVect<char,Taille>& nxt) {
-					if(nxt.longueur <= taille) {
-						debut = 0; fin = nxt.longueur; longueur = nxt.longueur;
-						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];		
-						return(true);
-					} else return(false);
-				}
-				bool remplacement(const string& nxt) {
-					if(nxt.length()) <= taille) {
-						debut = 0; fin = nxt.length(); longueur = nxt.length();
 						for(int pos=0; pos<longueur; pos++) pt[pos] = nxt[pos];		
 						return(true);
 					} else return(false);
@@ -412,6 +324,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	void egrener(string str, int delay) {
 		for(int pos=0; pos<str.length(); pos++) {out(str[pos]); stop(delay);}
 	}
+	
+	//xi Fonction : strintervalle ; retourne un string
+	string strintervalle(string str, int deb, int fin) {
+		string nwstr;
+		for(int pos=deb;pos<=fin;pos++) nwstr+=str[pos];
+		return(nwstr);
+	}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //3) Classes-contenantes spécialisées (canaux et autres)
@@ -493,15 +412,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	class canal {
 		//Membres
 		public:
-			static const int taillecanal = 2;
 			int nxtt;           //Déclarer le moment où la prochaine entrée sera traitée         
 			int pausedt;	    //Différence entreposée entre nxtt et currentt, dans le cas où l'exécution est arrêtée (ex: faire apparaître un menu)				
 			int delay;          //Déclarer le délai de base entre chaque entrée
 			int posx, posy;		//Déclarer les coordonnées de la dernière entrée dans la mémoire (la précédente)   
 								//les positions de la consoles sont définies en décalant ces dernières
-			StaticVect<char,5000> txt;   //Déclarer le texte qui reste à lire  				
+			string txt;   		//Déclarer le texte qui reste à lire  				
 			bool actif;			//Déclarer le compteur d'activité
 			double vit;         //Déclarer la vitesse actuelle de défilement et de pauses (toujours par rapport à la base, 1)
+			string nom;			//Déclarer le nom que porte le canal
 		//Constructeur
 		canal() : delay(400), posx(-1), posy(0), actif(false), vit(1) {nxtt = timems();}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 	};
@@ -572,7 +491,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Fonction d'accès : acces ; retourner la valeur à certaines positions
 		int acces(int posrayon, int poslivre) {return(rayon[posrayon][poslivre]);}
 		//Fonction de modification : modif ; modifie la valeur à certaines positions
-		void modif(int posrayon, int poslivre, int value) {rayon[posrayon][poslivre] = value;}
+		void modif(int posrayon, int poslivre, int value) {}
+		void modif(string rayonstr, string livrestr, int value) {
+			int posrayon = ColNameFind(rayonstr,nomrayon);
+			int poslivre = ColNameFind(livrestr,nomlivre[posrayon]);
+			rayon[posrayon][poslivre] = value;
+		}
 	};
 
 	//vii) classe : inteval ; contient l'expression à évaluer (la plus simple) ; constructeur transforme les noms de "livre" en position d'indexation
@@ -584,11 +508,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int boolval; int intval;
 			int constbool; int constint;      //TRUE si les valeurs sont booléennes ou int, à la place d'évaluées.
 		//Constructeur
-		inteval () {}; //Constructeur par défaut : vide. 
+		inteval ()  : constbool(false), constint(false) {}; //Constructeur par défaut : vide. 
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression
-		template<int Taille>
-		void set(string str, bibliotheque& biblio) : constbool(false), constint(false) {
-			strnb = str.length();
+		void set(string str, bibliotheque& biblio) {
+			int strnb = str.length();
 			string rayon, livre;    //Initier un string, dans lequel seront insérés seulement les noms des rayons/livres
 			int strpos, pos; strpos = 0; pos = 0; while(str[pos]!='¶'&pos<strnb) rayon += str[pos++];
 			//Évaluer si le string contient des noms ou une valeur
@@ -617,11 +540,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			inteval* RHsimple;
 			bool Lcompos; bool Rcompos;				//TRUE si les valeurs sont composites
 		//Constructeur
-		intoper () {}; //Constructeur par défaut : vide. 
+		intoper ()  : Lcompos(false), Rcompos(false) {}; //Constructeur par défaut : vide. 
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression
-		template<int Taille>
-		void set(string str, bibliotheque& biblio) : Lcompos(false), Rcompos(false) {
-			strnb = str.length();
+		void set(string str, bibliotheque& biblio){
+			int strnb = str.length();
 			string LH;									
 			string RH;			
 			int posPAR; bool trouvPAR = false; int nbPAR = 0;
@@ -634,7 +556,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[pos]==')') {if(nbPAR==0) {posPAR = pos; trouvPAR = true;} else nbPAR--;}
 					pos++;
 				} if(!trouvPAR) out("\n\nLa parenthèse n'est pas refermée dans: "+str); abort();
-				if(trouvPAR&&pos==strnb) {str = str.substr(1,strnb-1); trouvPAR = false; pos = 0;   //Supprimer la parenthèse et remettre les compteurs à 0, pour continuer		
+				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-1); trouvPAR = false; pos = 0;   //Supprimer la parenthèse et remettre les compteurs à 0, pour continuer		
 				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient au minimum une parenthèse), et continuer à partir d'après la parenthèse
 			} else { 							
 			//Cas général : on cherche '+' ou '-', car '*' et '/' ont la priorité d'opération
@@ -645,22 +567,22 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}
 				if(trouvAD) {
 					operateur = str[posAD]; 					
-					LH = str.substr(0,posAD);					//Définir les limites de l'expression à gauche						
-					RH = str.substr(posAD+1,strnb);		//Définir les limites de l'expression à droite						
+					LH = strintervalle(str,0,posAD);					//Définir les limites de l'expression à gauche						
+					RH = strintervalle(str,posAD+1,strnb);		//Définir les limites de l'expression à droite						
 					if(trouvMU) Lcompos = true; //(car '*''/' ont la priorité d'opération sur '+''-')
 					while(!Rcompos&&pos<strnb) {if(str[pos]=='+'|str[pos]=='-'|str[pos]=='*'|str[pos]=='/') Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite
 				} else if(trouvMU) {
 					operateur = str[posMU];  
-					LH = str.substr(0,posMU);					//Définir les limites de l'expression à gauche						
-					RH = str.substr(posMU+1,strnb);		//Définir les limites de l'expression à droite
+					LH = strintervalle(str,0,posMU);					//Définir les limites de l'expression à gauche						
+					RH = strintervalle(str,posMU+1,strnb);		//Définir les limites de l'expression à droite
 					pos = posMU + 1; while(!Rcompos&&pos<strnb) {if(str[pos]=='*'|str[pos]=='/') Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite				
 				} else {
 					operateur = ' '; LH = str;   //Aucune opération, seulement une évaluation				
 				}		
 			}			
 			//Assigner les valeurs aux membres
-			if(Lcompos) {LHcompos = new intoper; LHcompos.set(LH,biblio); LHsimple = nullptr;} else {LHsimple = new inteval; LHsimple.set(LH,biblio); LHcompos = nullptr;}
-			if(operateur!=' ') {if(Rcompos) {RHcompos = new intoper; RHcompos.set(RH,biblio); RHsimple = nullptr;} else {RHsimple = new inteval; RHsimple.set(RH,biblio); RHcompos = nullptr;}}
+			if(Lcompos) {LHcompos = new intoper; LHcompos->set(LH,biblio); LHsimple = nullptr;} else {LHsimple = new inteval; LHsimple->set(LH,biblio); LHcompos = nullptr;}
+			if(operateur!=' ') {if(Rcompos) {RHcompos = new intoper; RHcompos->set(RH,biblio); RHsimple = nullptr;} else {RHsimple = new inteval; RHsimple->set(RH,biblio); RHcompos = nullptr;}}
 		}			
 		//Fonction d'accès : eval()				
 		int eval(bibliotheque& biblio) {
@@ -707,10 +629,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool constbool;			   //TRUE si l'argument à gauche doit être comparé à un booléen implicite
 			bool boolval;		
 		//Constructeur ;
-		boolcompar () {}; //Constructeur par défaut : vide. 
-		template<int Taille>
+		boolcompar () : constbool(false), boolval(0) {}; //Constructeur par défaut : vide. 
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression
-		void set(string str, bibliotheque& biblio) : constbool(false), boolval(0) {
+		void set(string str, bibliotheque& biblio) {
 			int strnb = str.length();
 			if(strnb==0) {comparateur = ' ';}        //Cas spécial: retourne TRUE automatiquement
 			//Recueillir l'opérateur			
@@ -740,10 +661,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Message d'erreur
 			if(erreur) {out("\n\nL'opérateur n'est pas complet dans: "+str); abort();}
 			//Créer les objets intoper
-			LH = new intoper; LH.set(str.substr(0,poscomparateur),biblio);
+			LH = new intoper; LH->set(strintervalle(str,0,poscomparateur),biblio);
 			if(!constbool){
-				RH = new interoper;
-				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH.set(str.substr(poscomparateur+2,strnb),biblio); else RH.set(str.substr(poscomparateur+1,strnb),biblio);	
+				RH = new intoper;
+				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH->set(strintervalle(str,poscomparateur+2,strnb),biblio); else RH->set(strintervalle(str,poscomparateur+1,strnb),biblio);	
 			}			
 		}
 		//Fonction d'accès : eval
@@ -769,10 +690,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			boolcompar* RHsimple; boolcompos* RHcompos;
 			bool Lcompos; bool Rcompos;	
 		//Constructeur
-		boolcompos () {}; //Constructeur par défaut : vide. 
+		boolcompos () : Lcompos(false), Rcompos(false)	{}; //Constructeur par défaut : vide. 
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression		
-		template<int Taille>		
-		void set(string str, bibliotheque& biblio) : Lcompos(false), Rcompos(false)	{    //false : valeurs par défaut qui pourront changer à l'intérieur du constructeur
+		void set(string str, bibliotheque& biblio) {    //false : valeurs par défaut qui pourront changer à l'intérieur du constructeur
 			int strnb = str.length();
 			string LH;
 			string RH;
@@ -788,7 +708,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(!trouvOU&str[pos]=='|') {posOU = pos; trouvOU = true;}		
 					pos++;		
 				}
-				LH = str.substr(1,strnb);		//Définir les limites de l'expression à gauche					
+				LH = strintervalle(str,1,strnb);		//Définir les limites de l'expression à gauche					
 				if(trouvET|trouvOU) Lcompos = true;     //Définir si LH est composiple
 		    } else if(str[0]=='(') {
 				while(!trouvPAR&pos<strnb) {
@@ -796,7 +716,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[pos]==')') {if(nbPAR==0) {posPAR = pos; trouvPAR = true;} else nbPAR--;}
 					pos++;
 				} if(!trouvPAR) out("\n\nLa parenthèse n'est pas refermée dans: "); out(str); abort();
-				if(trouvPAR&pos==strmb) {str = str.substr(1,strnb-1); trouvPAR = false; pos = 0;   //Supprimer la parenthèse et remettre les compteurs à 0, pour continuer		
+				if(trouvPAR&pos==strnb) {str = strintervalle(str,1,strnb-1); trouvPAR = false; pos = 0;   //Supprimer la parenthèse et remettre les compteurs à 0, pour continuer		
 				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient au minimum une parenthèse), et continuer à partir d'après la parenthèse
 			} else { 							
 			//Cas général : on cherche '|', car '&' a la priorité d'opération
@@ -807,22 +727,22 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}
 				if(trouvOU) {
 					compositeur = '|';
-					LH = str.substr(0,posOU);					//Définir les limites de l'expression à gauche						
-					RH = str.substr(posOU+1,strnb);		//Définir les limites de l'expression à droite						
+					LH = strintervalle(str,0,posOU);					//Définir les limites de l'expression à gauche						
+					RH = strintervalle(str,posOU+1,strnb);		//Définir les limites de l'expression à droite						
 					if(trouvET) Lcompos = true; //(car '&' a la priorité d'opération sur '|')
 					while(!Rcompos&pos<strnb) {if(str[pos]=='&'|str[pos]=='|') Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite
 				} else if(trouvET) {  
 					compositeur = '&';
-					LH = str.intervalle(0,posET);					//Définir les limites de l'expression à gauche						
-					RH = str.intervalle(posET+1,strnb);		//Définir les limites de l'expression à droite
+					LH = strintervalle(str,0,posET);					//Définir les limites de l'expression à gauche						
+					RH = strintervalle(str,posET+1,strnb);		//Définir les limites de l'expression à droite
 					pos = posET + 1; while(!Rcompos&pos<strnb) {if(str[pos]=='&') Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite				
 				} else {
-					compositeur = ' '; StaticVect<char,Taille> LH = str;   //Aucune comparaison, seulement une évaluation				
+					compositeur = ' '; LH = str;   //Aucune comparaison, seulement une évaluation				
 				}		
 			}			
 			//Assigner les valeurs aux membres
-			if(Lcompos) {LHcompos = new boolcompos; LHcompos.set(LH,biblio); LHsimple = nullptr;} else {LHsimple = new boolcompar; LHsimple.set(LH,biblio); LHcompos = nullptr;}
-			if(compositeur!='!'&&compositeur!=' ') {if(Rcompos) {RHcompos = new boolcompos; RHcompos.set(RH,biblio); RHsimple = nullptr;} else {RHsimple = new boolcompar; RHsimple.set(RH,biblio); RHcompos = nullptr;}}		
+			if(Lcompos) {LHcompos = new boolcompos; LHcompos->set(LH,biblio); LHsimple = nullptr;} else {LHsimple = new boolcompar; LHsimple->set(LH,biblio); LHcompos = nullptr;}
+			if(compositeur!='!'&&compositeur!=' ') {if(Rcompos) {RHcompos = new boolcompos; RHcompos->set(RH,biblio); RHsimple = nullptr;} else {RHsimple = new boolcompar; RHsimple->set(RH,biblio); RHcompos = nullptr;}}		
 		}
 		//Fonction d'accès : eval
 		bool eval(bibliotheque& biblio) {
@@ -884,12 +804,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			StaticVect<StaticVect<int,10>,10> enchainement;  	//int réfère aux positions des mailles         
 			StaticVect<intoper,10> enchaineprob;        	 	//Avec le même ordre d'indexation que enchaînement
 			boolcompos condition;								//Conditions à respecter pour l'ajout au canal sans UserInput 
-			StaticVect<string,10> codespeciauxdebut;
-			StaticVect<string,10> codespeciauxfin;
+			string codespeciauxdebut;
+			string codespeciauxfin;
 			bool override;										//TRUE si l'activation de chaînon vide instantannément le canal utilisé
 			int canal;											//Position du canal dans lequel écrire le texte
 		//Constructeur
-		chainonauto() : fini(false) {};
+		chainonauto() : override(false) {};
 	};
 	
 	//xii) classe : chainonmanu ; permet le stockage du texte et des conditions d'apparition (manuelle)
@@ -907,7 +827,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			commande commandes;                					//Mots à rechercher pour l'ajout au canal à partir du UserInput			
 			bool getbusy;                                       //TRUE si le UserInput devient bloqué après que ce chaînon ait été appelé
 		//Constructeur
-		chainonmanu() : fini(false), getbusy(true) {};	
+		chainonmanu() : getbusy(true), override(false) {};	
 	};
 	
 	//xiii) classe : fil ; permet de stocker toutes les textes + commandes selon des catégories (ex: chapitres), pour faciliter la recherche
@@ -925,29 +845,30 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 //4) Fonction spécialisées de petite taille
 
 	//i) Fonction : CodeSpecialLong ; retourne la longueur d'un code spécial ('§' compris)
-	template<int Taille>
-	int CodeSpecialLongueur(const StaticVect<char,Taille>& str){
+	int CodeSpecialLongueur(string str){
 		int longueur = 1;               //Initier l'objet à retourner
-		bool fini = false;              
-		for(int pos = str.debut + 1; !fini&pos<str.fin ; pos++) {longueur++; if(str.pt[pos]=='§') fini = true;} 		
+		bool fini = false; int pos = 1;
+		while(!fini&&pos<str.length()) {
+			longueur++; pos++;
+			if(str[pos]=='§') fini = true;
+		}              
 		return(longueur);		
 	}
 
 	//ii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
-	template<int Taille>
-	double CodeSpecialExtractDouble(const StaticVect<char,Taille>& str, int longueur){
+	double CodeSpecialExtractDouble(string str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int longmax = longueur - 1 + str.debut;      //Le dernier caractère étant le '§'		
-		for(int pos=2+str.debut; pos<longmax; pos++) nbonly += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
+		int longmax = longueur - 1;      //Le dernier caractère étant le '§'		
+		for(int pos=2; pos<longmax; pos++) nbonly += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
 		return(stod(nbonly));           //La fonction stod convertit les strings en doubles (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
 	}		
-	template<int Taille>
-	int CodeSpecialExtractInt(const StaticVect<char,Taille>& str, int longueur){
+	//ii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
+	int CodeSpecialExtractInt(string str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int longmax = longueur - 1;      //Le dernier caractère étant le '§'
-		int nbonlypos = 0; for(int pos=2; pos<longmax; pos++) nbonly[nbonlypos++] += str.pt[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)
+		int longmax = longueur - 1;      //Le dernier caractère étant le '§'		
+		for(int pos=2; pos<longmax; pos++) nbonly += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
 		return(stoi(nbonly));           //La fonction stoi convertit les strings en int (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
-	}		
+	}			
 
 	//iii) Fonction : UserInputEcho ; validant graphiquement l'acceptation ou le refus des commandes envoyées
 	void UserInputEcho(input& inp, inputecho& inpecho, const fen& base) {	
@@ -978,7 +899,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	void integrationmanu(int chapitrepos, int chainonpos, StaticVect<canal,taillecanal>& canaux, fil& histoire, bibliotheque& biblio) {
 		int currentt = timems();	
 		//Overloader le canal si nécessaire
-		if(histoire.chainemanu[chapitrepos][chainonpos].override) canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.vide();
+		if(histoire.chainemanu[chapitrepos][chainonpos].override) canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt = "";
 		//Choisir l'enchaînement à insérer dans le canal
 		int sumprob = 0; StaticVect<int,10> vectprob;
 		for(int posprob=0; posprob<histoire.chainemanu[chapitrepos][chainonpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
@@ -990,100 +911,139 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			if(randval<vectprob[posprob]) {choix = posprob; break;}
 		}	
 		//Ajouter le texte au canal
-		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.ajout(histoire.chainemanu[chapitrepos][chainonpos].codespeciauxdebut); 
+		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt += histoire.chainemanu[chapitrepos][chainonpos].codespeciauxdebut;   //Code spéciaux début
 		for(int posench=0; posench<histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix].longueur; posench++) {
-			canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.ajout(histoire.chainemanu[chapitrepos][chainonpos].maille[histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix][posench]]);
+			canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt += histoire.chainemanu[chapitrepos][chainonpos].maille[histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix][posench]];
 		}		
-		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.ajout(histoire.chainemanu[chapitrepos][chainonpos].codespeciauxfin);		
+		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt += histoire.chainemanu[chapitrepos][chainonpos].codespeciauxfin;		//Code spéciaux fin	
 	}
 
 	
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //5) Fonctions de remplissage aisé des objets utilisés
-
-//Contenant pour conserver tous les objets
-class univers {
+	
+	//Contenant pour conserver tous les objets
+	class univers {
 	//Membres
 	public:
-		int chapitre;
-		int posmanu;
-		int posauto;		
 		int poslivre;
+		int posrayon;
+		int poscanal;
+		int chapitre;	
+		int posmanu;
+		int posauto;	
 		fil histoire;
-		//...
+		bibliotheque biblio;
+		StaticVect<canal,taillecanal> canaux;
+		input inp;
+		inputecho inpecho;
+		
 	//Constructeur
-	univers() : chapitre(0), posmanu(0), posauto(0), poslivre(0) {};
-}; 
-
-//FONCTION POUR REMPLIR LA BIBLIOOO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-
-
-//Fonction pour changer de chapitre
-void nxtchapt(&univers monde) {
+	univers() : posrayon(-1), poslivre(-1), poscanal(-1), chapitre(-1), posmanu(0), posauto(0) {};
+	}; 
+	
+	//Fonction pour créer un nouveau rayon et le nommer
+	void nvrayon(univers& monde, const string& str) {
+	monde.posrayon++; monde.poslivre = -1;
+	monde.biblio.nomrayon.ajout(str);
+	}
+	
+	//Fonction pour créer un nouveau livre et le nommer
+	void nvlivre(univers& monde, const string& str) {
+	monde.poslivre++;
+	monde.biblio.nomlivre.ajout(str); monde.biblio.modif(monde.posrayon,monde.poslivre,0);		//Mettre 0 comme valeur par défaut (par défaut, tous les livres = FALSE)
+	}
+	
+	//Fonction pour créer un nouveau canal et le nommer
+	void nvcanal(univers& monde, const string& str) {
+	monde.poscanal++;
+	monde.canaux[monde.poscanal].nom = str;
+	}
+	
+	//Fonction pour modifier le délai du canal
+	void canaldelai(univers& monde, int val) {
+	monde.canaux[monde.poscanal].delay = val;
+	}
+	
+	//Fonction pour modifier la vitesse du canal
+	void canalvit(univers& monde, double val) {
+	monde.canaux[monde.poscanal].vit = val;
+	}
+	
+	//Fonction pour créer un nouveau chapitre
+	void nvchapt(univers& monde) {
 	monde.chapitre++;
-}
-
-//Fonction pour "créer" un nouveau chaînon et le nommer (manuel)
-void mtitre(&univers monde, const &string str) {
+	}
+	
+	//Fonction pour "créer" un nouveau chaînon et le nommer (manuel)
+	void mtitre(univers& monde, const string& str) {
 	monde.posmanu++;								//Passer au prochain chaînon
 	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exact.ajout(str);     //Conserver le titre comme "commande exacte"
-} 
-
-//Fonction pour écire le texte ("mailles") du chaînon (manuel)
-void mtexte(&univers monde, const &string str) {
-	int strnb = str.lenght();		//Aller chercher la taille du string
-	int countmaille = 0;			//Créer un compteur pour les mailles
+	} 
+	
+	//Fonction pour écire le texte ("mailles") du chaînon (manuel)
+	void mtexte(univers& monde, const string& str) {
+	int strnb = str.length();		//Aller chercher la taille du string
 	int debmaille = 0;				//Créer un compteur pour le début de la maille actuelle
 	for(int countstr=0; countstr<strnb; countstr++){
 		if(str[countstr]=='µ') {
 			if(debmaille>=countstr-1) {
-				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille[countmaille] = str.substr(debmaille,countstr-1);
-			} else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille[countmaille] = "";     //substr: retourne la portion entre les deux positions.
-			debmaille = countstr+1;	countmaille++;		//if(...) : évite les intervalles [1,0] (à la place de [0,1]), et skippe seulement la maille si la maille est vide (ex: "µµ")
+				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille.ajout(strintervalle(str,debmaille,countstr-1));
+			} else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille.ajout("");   
+			debmaille = countstr+1;		//if(...) : évite les intervalles [1,0] (à la place de [0,1]), et skippe seulement la maille si la maille est vide (ex: "µµ")
 		}
 	}
-	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille[countmaille] = str.substr(debmaille,strnb);		//Entrer la dernière maille
-}
-
-//Fonction pour définir les enchaînements possibles
-void mordre(&univers monde, const &string str) {
-	int strnb = str.lenght();		//Aller chercher la taille du string
+	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].maille.ajout(strintervalle(str,debmaille,strnb));		//Entrer la dernière maille
+	}																						//AJOUTER PAR DÉFAUT UN SEUL ENCHAÎNEMENT LISANT TOUTES LES MAILLES DANS L'ORDRE + SA PROBABILITÉ DE 1; (sera overridé par la prochaine commande)
+	
+	//Fonction pour définir les enchaînements possibles (manuel)
+	void mordre(univers& monde, const string& str) {
+	int strnb = str.length();		//Aller chercher la taille du string
 	int countordre = 0;				//Créer un compteur pour l'ordre
-	int countchiffre = 0;
 	int debnombre = 0;				//Créer un compteur d'indexation pour le début du nombre
 	for(int countstr=0; countstr<strnb; countstr++){
 		if(str[countstr]=='-'|str[countstr]==';') {
 			if(debnombre>=countstr-1) {
-				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchainement[countordre][countchiffre] = stoi(str.substr(debnombre,countstr-1));			//La fonction stoi() transforme les strings en int
+				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1)));			//La fonction stoi() transforme les strings en int
 				} else {out("L'enchaînement \""); out(str); out("\" contient une valeur vide qui fait planter le parsing. Changer ça svp."); abort();}			
-			if(str[countstr=='-']) countchiffre++;
-			if(str[countstr==';']) {countordre++; countchiffre=0;}
+			if(str[countstr=='-']) ;
+			if(str[countstr==';']) {countordre++;}
 			debnombre = countstr+1;
 		}
 	}
-	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchainement[countordre][countchiffre] = stoi(str.substr(debnombre,strnb));		//Entrer le dernier chiffre
-}																			
-
-//Fonction pour définir les probabilités associées avec chaque enchaînement
-void mprob(&univers monde, const &string str){
+	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb)));		//Entrer le dernier chiffre
+	}																						//AJOUTER PAR DÉFAUT UNE PROBABILITÉ DE 1 POUR TOUS LES ENCHAÎNEMENTS; (sera overridé par la prochaine commande)
+	
+	//Fonction pour définir les probabilités associées avec chaque enchaînement (manuel)
+	void mprob(univers& monde, const string& str){
 	int strnb = str.length();		//Aller chercher la taille du string
 	int debench = 0;				//Noter la position d'indexation du début de l'enchaînement
 	int countench = 0;				//Position de l'enchaînement visé
 	for(int countstr=0; countstr<strnb; countstr++){
 		if(str[countstr]==';') {
 			if(countstr-debench>0){
-				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchaineprob[countench].set(str.substr(debench,countstr-1),monde.biblio);
+				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchaineprob[countench].set(strintervalle(str,debench,countstr-1),monde.biblio);
 			} else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchaineprob[countench].set("0",monde.biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 0. Ça lui apprendra.
 			debench = countstr + 1; countench++;
 		}
 	}
-	if(debench!=strnb) monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchaineprob[countench].set(str.substr(debench,strnb));		//Entrer le dernier chiffre
-}
-
+	if(debench!=strnb) monde.histoire.chainemanu[monde.chapitre][monde.posmanu].enchaineprob[countench].set(strintervalle(str,debench,strnb),monde.biblio);		//Entrer le dernier chiffre
+	}
+	
+	//Fonction pour définir les codes spéciaux appelés au début du chaînon (manuel)
+	void mdeb(univers& monde, const string& str){
+	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].codespeciauxdebut = str;
+	}
+	
+	//Fonction pour définir les codes spéciaux appelés au début du chaînon (manuel)
+	void mfin(univers& monde, const string& str){
+	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].codespeciauxfin = str;
+	}
+	
 		//ICI, '|' SÉPARE LES SYNONYMES, '&' SÉPARE LES GROUPES DE MOTS NÉCESSAIRES, "[]" DÉNOTE LES MOTS À EXCLURE ET "()" SÉPARENT LES DIFFÉRENTES FAÇONS DE LE DIRE
 			//NOTE: LES MOTS À EXCLURE N'ONT PAS DE GROUPES DE MOTS, ILS N'ONT QUE DES SYNONYMES!
-//Fonction pour définir les combinaisons de mots qui appeleront le chaînon
-void mcomm(&univers monde, const &string str){
+	//Fonction pour définir les combinaisons de mots qui appeleront le chaînon (manuel)
+	void mcomm(univers& monde, const string& str){
 	int strnb = str.length();
 	int posfac = 0;			//Position des différentes façons de dire la commande
 	int posgr = 0;          //Position des groupes de mots nécessaires
@@ -1092,63 +1052,63 @@ void mcomm(&univers monde, const &string str){
 	string mot;				//Mot à inclure/exclure dans la commande
 	for(int countstr=0; countstr<strnb; countstr++){
 		if(str[countstr]=='('|str[countstr]=='[') {		//Si c'est le début d'une parenthèse, ne rien inscrire
-			if(str[countstr]=='[') {exclus = true; possyn = 0;}
+			if(str[countstr]=='[') {exclus = true;}
 		}else if(str[countstr]=='|'|str[countstr]=='&'|str[countstr]==')'|str[countstr]==']'){
 			//Enregistrer le mot comme commande
-			if(mot[0]==' ') mot = mot.substr(1,mot.length());		//Enlever les espaces en début et en fin de mot; permet d'espacer l'écriture des commandes au besoin
-			if(mot[mot.length()]==' ') mot = mot.substr(0,mot.length()-1);
-			if(exclus) {monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exclus[posfac][possyn] = mot;
-			} {else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.inclus[posfac][posgr][possyn] = mot;
+			if(mot[0]==' ') mot = strintervalle(mot,1,mot.length());		//Enlever les espaces en début et en fin de mot; permet d'espacer l'écriture des commandes au besoin
+			if(mot[mot.length()]==' ') mot = strintervalle(mot,0,mot.length()-1);
+			if(exclus) {monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exclus[posfac].ajout(mot);
+			} else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.inclus[posfac][posgr].ajout(mot);
 			//Changer de position
-			if(str[countstr]=='|') {possyn++;
-			}else if(str[countstr]=='&') {possyn=0; posgr++;
-			} else if(str[countstr]==')') {possyn=0; posgr=0; posfac++;
-			} else if(str[countstr]==']') {possyn=0; exclus = false;
+			if(str[countstr]=='|') {
+			}else if(str[countstr]=='&') {posgr++;
+			} else if(str[countstr]==')') {posgr=0; posfac++;
+			} else if(str[countstr]==']') {exclus = false;
 			}
 		} else mot+=str[countstr];		//Ajouter la lettre si c'est un caractère simple	
 	}
-}
-
-//Fonction pour définir les commandes exactes qui appeleront le chaînon
-void mcommexact(&univers monde, const &string str){
+	}
+	
+	//Fonction pour définir les commandes exactes qui appeleront le chaînon (manuel)
+	void mcommexact(univers& monde, const string& str){
 	int strnb = str.length();
-	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].e
-	int possyn = 0;			//Position des synonymes
 	int debmot = 0;			//Noter la position d'indexation du début du mot
 	for(int countstr=0; countstr<strnb; countstr++){
 		if(str[countstr]=='|') {
-			if(countstr-possyn>0){ 
-				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exact[possyn] = str.substr(debmot,countstr-1);
-			} else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exact[possyn] = ""; //Si deux ';' se suivent, mettre *RIEN* comme commande exacte possible
-			debmot = countstr + 1; possyn++;
+			if(countstr-debmot>0){ 
+				monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exact.ajout(strintervalle(str,debmot,countstr-1));
+			} else monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exact.ajout(""); //Si deux ';' se suivent, mettre *RIEN* comme commande exacte possible
+			debmot = countstr + 1;
 		}
 	}	
-	if(debmot!=strnb) monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exact[possyn] = str.substr(debmot,strnb);		//Entrer le dernier mot
-}
-
-//Fonction pour définir les conditions sous lesquelles le chaînon pourra être appelé
-void mcond(&univers monde, const &string str){
+	if(debmot!=strnb) monde.histoire.chainemanu[monde.chapitre][monde.posmanu].commandes.exact.ajout(strintervalle(str,debmot,strnb));		//Entrer le dernier mot
+	}
+	
+	//Fonction pour définir les conditions sous lesquelles le chaînon pourra être appelé (manuel)
+	void mcond(univers& monde, const string& str){
 	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].condition.set(str,monde.biblio);
-}
-
-//Fonction pour définir quels canaux seront vidés dès l'activation de ce chaînon
-void mover(&univers monde, bool bl){
+	}
+	
+	//Fonction pour définir quels canaux seront vidés dès l'activation de ce chaînon (manuel)
+	void mover(univers& monde, bool bl){
 	monde.histoire.chainemanu[monde.chapitre][monde.posmanu].override = bl;
-}				
-
+	}				
+	
 				
-/*		//EXEMPLE:
-	texte(histoire.chainemanu[chapitre][posmanu],"LaLaLaLaLa\nlala µ lulululu")       ici, ' µ ' sert de séparateur (pour l'exemple)
-	enchainement(histoire.chainemanu[chapitre][posmanu],"1-2;1;2")              '-' pour signifier un autre élément, ';' pour signifier un autre enchaînement 
-	probabilites(histoire.chainemanu[chapitre][posmanu],"comptes¶bobon*5;2;3")		';' pour signifier un autre enchaînement																	
-	commande(histoire.chainemanu[chapitre][posmanu],"(Bonjour|Hello|Salut & World|Monde) (Test)")	
-	condition(histoire.chainemanu[chapitre][posmanu],"comptes¶bonbon<=3")
-	override(histoire.chainemanu[chapitre][posmanu],1)
-*/	
+	/*		//EXEMPLE:
+			mtitre(monde,"Je suis confortable");
+			mtexte(monde,"Bien.§p6000§ µParfait.§p6000§ µ\n\n                   Désirez-vous vous divertir§p1000§...?");
+			mordre(monde,"1-3;1-2");
+			mprob(monde,"1;1");
+			mcomm(monde,"(Je|J' & suis|reste & confortable|bien installé|bien installée|bien installé.e [ne suis pas|jamais]) (Ça va|Correct)");
+			mcond(monde,"Laure¶debut&!Laure¶confo");
+			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§§v0.8§");
+			mfin(monde,"§bLaure¶actif=0§")
+	*/	
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //6) Fonction LireCanal()
-void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, memoire& mem) {
+void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, memoire& mem, bibliotheque& biblio) {
 	//Updater le "next time"
 	canaux[canpos].nxtt += canaux[canpos].delay;
 	//Interpréter les "codes spéciaux" (§...§)
@@ -1172,24 +1132,31 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				
 				
 				int genreactuel = 0; 
-				int posdebut = 3; int posfin = CoeSpecialLongueur - 1;		//Valeurs par défauts
+				int posdebut = 3; int posfin = CodeSpecialLong - 1;		//Valeurs par défauts
 				for(int posSpecial=3;posSpecial<CodeSpecialLong; posSpecial++) {				 //Délimiter le bon accord				
 					if(canaux[canpos].txt[posSpecial]==';') {
 						genreactuel++;
 						if(genreactuel==genreselect) posdebut = posSpecial + 1; else if(genreactuel==genreselect-1) posfin = posSpecial - 1;
 					}
 				}
-				StaticVect<char,5000> tempcan;										//Ajouter le bon accord à la suite du code spécial (devient: Code spécial - accord - reste du canal
-				tempcan.ajout(canaux[canpos].txt.intervalle(0,CodeSpecialLong)); tempcan.ajout(canaux[canpos].txt.intervalle(posdebut,posfin)); tempcan.ajout(canaux[canpos].txt.intervalle(CodeSpecialLong,canaux[canpos].txt.longueur));				
-				canaux[canpos].txt.remplacement(tempcan);
+				string temptxt;										//Ajouter le bon accord à la suite du code spécial (devient: Code spécial - accord - reste du canal
+				temptxt  += strintervalle(canaux[canpos].txt,0,CodeSpecialLong); temptxt += strintervalle(canaux[canpos].txt,posdebut,posfin); temptxt += strintervalle(canaux[canpos].txt,CodeSpecialLong,canaux[canpos].txt.length());				
+				canaux[canpos].txt = temptxt;
 				canaux[canpos].nxtt -= canaux[canpos].delay;									//Ajuster le "next time" pour supprimer le délai entre l'interprétation du code et la lecture de l'accord
-			}								
+			} else if(canaux[canpos].txt[1]=='b'){		//'b' pour "biblio" -> modifier la bibliothèque
+				string nomrayon; string nomlivre; string val;
+				int posSpecial = 3;
+				while(canaux[canpos].txt[posSpecial] != '¶') nomrayon += canaux[canpos].txt[posSpecial++];
+				while(canaux[canpos].txt[posSpecial] != '=') nomlivre += canaux[canpos].txt[posSpecial++];
+				while(canaux[canpos].txt[posSpecial] != '§') val += canaux[canpos].txt[posSpecial++];				
+				biblio.modif(nomrayon,nomlivre,stoi(val));
+			}							
 														
 		
 		
 														
 														
-			}  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
+			  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
 			
 			
 				//AJOUTER AUSSI UN CODE SPÉCIAL POUR OVERLOADER DES CANAUX
@@ -1200,7 +1167,7 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				
 			
 		//Effacer le code spécial du canal
-		canaux[canpos].txt.suppression(CodeSpecialLong);
+		canaux[canpos].txt = strintervalle(canaux[canpos].txt,CodeSpecialLong,canaux[canpos].txt.length());
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
@@ -1242,9 +1209,9 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 			curspos(canaux[canpos].posx,canaux[canpos].posy-base.consy) ; out(canaux[canpos].txt[0]);     //Inscrire dans la console
 			mem.souvenir[canaux[canpos].posx][canaux[canpos].posy] = canaux[canpos].txt[0];   //Inscrire dans la mémoire			
 		}	
-		canaux[canpos].txt.suppression(1);       //Effacer le caractère du canal     	   
+		canaux[canpos].txt = strintervalle(canaux[canpos].txt,1,canaux[canpos].txt.length());       //Effacer le caractère du canal     	   
 	}
-	if(canaux[canpos].txt.debut==canaux[canpos].txt.fin) canaux[canpos].actif = false;			//Vérifier s'il reste toujours du texte à passer dans le canal
+	if(canaux[canpos].txt.length()==0) canaux[canpos].actif = false;			//Vérifier s'il reste toujours du texte à passer dans le canal
 }	
 					
           
@@ -1502,31 +1469,81 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 	}
 }     
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+//9) Fonction jouer();
+void jouer(univers& monde, fen& base, memoire& mem){
+	int currentt;
+	while(true){				//À faire tout le temps:
+		currentt = timems();
+		for(int canpos=0; canpos<=monde.canaux.longueur; canpos++) {if(monde.canaux[canpos].actif&&monde.canaux[canpos].nxtt<currentt) LireCanal(monde.canaux,canpos,base,mem,monde.biblio);}  //Lire chaque canal, s'il est prêt
+		if(monde.inpecho.nxtt<currentt) UserInputEcho(monde.inp,monde.inpecho,base);
+		UserInput(monde.inp,monde.inpecho,base,monde.biblio,monde.canaux,monde.histoire,mem);	//Interpréter la touche jouée
+	}
+}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//9) Aire de tests
+//10) Aire de tests
 							
 int main(void) {
 
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
 	//x, y, width, height,
 	fen base(600,30,500,500);                                           //Crée également l'objet dans lequel ces paramètres sont définis       
+	memoire mem(base.limtxtx);
 
-	//Faire une boucle pour que les canaux s'expriment!
-	bool gogogo = true;
-	int currentt;
-	while(gogogo){
-			currentt = timems();
-			if(canaux[0].actif&canaux[0].nxtt<currentt) LireCanal(canaux,0,base,mem);
-			if(canaux[1].actif&canaux[1].nxtt<currentt) LireCanal(canaux,1,base,mem);
-			UserInput(entree,entreeecho,base,biblio,canaux,histoire,mem);                   //Reste à créer ces objets!!!!
-			
-			if(entreeecho.actif&entreeecho.nxtt<currentt) {UserInputEcho(entree,entreeecho,base);}
-			
-			//if(!canaux[0].actif&!canaux[1].actif) gogogo = false;
-		}		
+	//Créer l'objet où tout est initié
+	univers monde;
 		
-	curspos(0,13);
+		//Créer une bibliothèque
+		nvrayon(monde,"Laure");
+			nvlivre(monde,"actif");
+			nvlivre(monde,"debut");
+			nvlivre(monde,"confo");
+			nvlivre(monde,"divertir");
+				
+		//Créer un canal
+		nvcanal(monde,"narration");
+		
+		//Débuter un chapitre
+		nvchapt(monde);
+		
+			//Créer un maillon
+			mtitre(monde,"Commencer le jeu");
+			mtexte(monde,"Bienvenue dans mon ordinateur.\nµÇa fait plaisir de vous recevoir, vraiment.\nµJ'espère que vous êtes bien installé.es.\nµÊtes-vous bien installé.es?µÊtes-vous confortable?");	
+			mordre(monde,"1-4;1-5;2-4;2-5;3-4;4-5");
+			mprob(monde,"1;1;1;1;1;1");
+			mcomm(monde,"(Start|start|Débuter|débuter|Commencer|commencer)");
+			mcond(monde,"!Laure¶debut");	
+			mdeb(monde,"§bLaure¶actif=1§§bLaure¶debut=1§");
+			mfin(monde,"§bLaure¶actif=0§");
+			mover(monde,0);	
+	
+			//Créer un maillon
+			mtitre(monde,"Je suis confortable");
+			mtexte(monde,"Bien.§p6000§ µParfait.§p6000§ µ\n\n                   Désirez-vous vous divertir§p1000§...?");
+			mordre(monde,"1-3;1-2");
+			mprob(monde,"1;1");
+			mcomm(monde,"(Je|J' & suis|reste & confortable|bien installé|bien installée|bien installé.e [ne suis pas|jamais]) (Ça va|Correct)");
+			mcond(monde,"Laure¶debut&!Laure¶confo");
+			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§§v0.8§");
+			mfin(monde,"§bLaure¶actif=0§");
+			
+			//Créer un maillon
+			mtitre(monde,"Je veux me divertir");
+			mtexte(monde,"\n\n\n\nZut§p2000§;§p2000§ \n\n\n            J'ai bien peur que vous ne soyez pas à la bonne place.µ§v0.3§\n\n         §p4000§Too fucking bad.");		
+			mordre(monde,"1;2");
+			mprob(monde,"1;1");
+			mcomm(monde,"(Oui|oui|évidemment|certainement|volontier|pourquoi pas|why not|d'accord) (veux|voudrais & cela|ça|bien)");
+			mdeb(monde,"§bLaure¶actif=1§§bLaure¶divertir=1§§p1100§");
+			mfin(monde,"§bLaure¶actif=0§");
+		
+	//Faire une boucle pour que les canaux s'expriment!
+	jouer(monde,base,mem);		
+		
+	curspos(0,13);			//Mettre le curseur dans un bel endroit à la fin
 
 
-}								
+}							
+
+
+	
