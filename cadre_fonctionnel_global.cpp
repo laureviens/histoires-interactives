@@ -67,16 +67,50 @@
 												Le problème qui semble se poser est que l'opérateur '!' ne semble pas reconnu lorsqu'il n'est pas placé en tête de string.
 													Les valeurs sensées être '!' sont évaluées comme "==TRUE" et leur valeur est aléatoire -> comme quand la mémoire n'a pas été assignée.
 														
+														Bon... là j'ai réglé un problème avec '!', qui devrait maintenant fonctionner comme du monde.
+															J'ai pas checké si ça avait réglé le problème plus grand, par contre.	
 								
+												Bon, j'ai fait une touche spéciale CTRL + b pour voir la biblio dans son entièreté...
+													Et... c'est officiel, les livres n'ont pas été modifiés. Fait chier.
+													Pourquoi....? Quand je fait jouer le code spécial de modification,
+														je m'assure de faire vérifier à l'extérieur même de la fonction que la valeur a bien été enregistrée...
+														Mais elle ne l'est tout de même pas...?
+									
+												GREAT.
+												Maintenant, j'ai la confirmation que deux modifications différentes (soit "§bLaure¶debut=1§" au début du chaînon "commencer le jeu" et "§bLaure¶actif=0§" à sa fin)
+												enregistrent bien leur valeur respectives, mais les deux À LA MÊME PLACE.
+													À la position (1,0) (posrayon, poslivre).
+														Ce qui est troublant, car je ne suis pas supposée avoir de rayon #1 ? (il n'y a qu'un seul rayon, le #0).
+																Il se peut alors que le problème soit avec la fonction qui associe le nom du rayon à sa position? (ça va être à investiguer plus tard, là j'suis fatiguée)												
+					
+												Donc. Le problème était bien là, à la fonction "ColNameFind()". La fonction retournait n'importe quoi si elle ne trouvait pas le mot voulu.
+																	J'ai mis un failsafe (abort + message d'erreur clair) pour éviter cette situation.
+												
+												Le problème que j'ai maintenant se situe dans la création des conditions: les strings qui se passent d'objet en objet (les RH seulement)
+													gagnent un espace " ", probablement à chaque fois. Je cherche donc "debut  " au lieu de "debut" (et ne le trouve pas).
+												
+												C'est à cause de ma fonction "strintervalle()"; je pense que la définition de mes arguments (deb et fin, les positions inclusives du string
+													que l'on veut) ne cadre pas avec la manière dont j'ai écrit mes arguments dans les opérateurs binaires?
+																C'est là où je suis rendue.	
+												J'ai corrigé tous les arguments. Ça devrait maintenant marcher, en théorie.
+												
+												Faut maintenant seulement enlever tous les "abort()" que j'ai placé en prévention + observation pour le vérifier, par contre!
+															Yé! Ça a marché!
 								
 								
 								
 									Also, c'est étrange, le clignotement des mauvaises commandes finit sans effacer la commande, contrairement à la version précédente...?
+										Ça, c'est encore un problème. Pourquoi donc?
+										Pour une raison encore inexpliquée, la fonction semble davantage AJOUTER une itération de la commande que d'enlever un "effacement".
+									
+									
+									
 									
 									
 									Ah, autre chose également, une bordée d'espaces (" ") suit la première commande;
 													C'est pour cette raison que la deuxième itération suit avec beaucoup de décalage.
 												Pourquoi y-a-t-il tant d'espaces?
+										Oh! Ça doit être l'oeuvre de la fonction strintervalle()? Parce que maintenant tout fonctionne bien.
 									
 									
 					-Créer un équivalent de la fonction pour les mailles automatiques
@@ -117,14 +151,6 @@
 							//Juste à l'écrire comme ça, j'ai beaucoup mieux a).
 */
 
-/*
-	2019-10-22:
-				Eurggghhh. 
-				La fonction "substr()" n'agit vraiment pas comme je le pensais (j'ai simplement mal lu).
-				Je pensais qu'elle agissait comme ma fonction "intervalle()": prendre le début et la fin comme arguments.
-				À la place, elle prend le début, puis le nombre de caractères à inclure.
-				Il faudra donc que je remplace toutes les "substr()" par une fonction maison que je coderai moi-même. Beurgh.
-*/
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -350,6 +376,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(strpos==stringlength) return(pos);
 			}
 		}
+		//Failsafe: Si aucune itération de "str" n'a été trouvée
+		curspos(4,4); out("Aucune itération de \""); out(str); out("\" n'a été trouvée dans {");
+		for(int poscol = 0; poscol<col.longueur; poscol++) {out("\""); out(col[poscol]); out("\""); out(" ; ");} out("}"); abort();
 	}
 	
 	//ix Fonction : stop ; arrête manuellement l'exécution d'un programme. À utiliser seulement dans un menu!
@@ -366,14 +395,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	//xi Fonction : strintervalle ; retourne un string
 	string strintervalle(string str, int deb, int fin) {
 		string nwstr;
-		for(int pos=deb;pos<=fin;pos++) nwstr+=str[pos];
+		for(int pos=deb;pos<=fin;pos++) nwstr+=str[pos];          
 		return(nwstr);
 	}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //3) Classes-contenantes spécialisées (canaux et autres)
 
-	//DEBUGGG                  //But no longer debug??
 	const int taillecanal = 2;
 	const int taillegroupes = 5;
 									//2019-08-18: Ouin, ça se peut que cette méthode soit permanente, puisque je n'arrive pas à bien inclure ces nombres
@@ -531,11 +559,50 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//Fonction de modification : modif ; modifie la valeur à certaines positions
 		void modif(int posrayon, int poslivre, int value) {rayon[posrayon][poslivre] = value;}
 		void modif(string rayonstr, string livrestr, int value) {
-			int posrayon = ColNameFind(rayonstr,nomrayon);
+			int posrayon = ColNameFind(rayonstr,nomrayon); 
+			
+			/*
+							//DEBUGGGG
+								curspos(2,26); out("Dans : "); 
+								for(int countray =0; countray<nomrayon.longueur; countray++) {
+									out(nomrayon[countray]); out(" - ");
+								}
+								curspos(2,27); out(rayonstr); out(" est en "); out(posrayon); out("e position.");
+			*/
+							
 			int poslivre = ColNameFind(livrestr,nomlivre[posrayon]);
+			
+			/*
+							//DEBUGGGG
+								curspos(2,28); out("Dans : "); 
+								for(int countli =0; countli<nomlivre[posrayon].longueur; countli++) {
+									out(nomlivre[posrayon][countli]); out(" - ");
+								}
+								curspos(2,29); out(livrestr); out(" est en "); out(poslivre); out("e position.");			
+			
+			
+							//Faaait que: 
+										// 1ere erreur:
+													//Le "rayonstr" ressort comme "aure" à la place de "Laure".
+										// 2e erreur:
+													//La fonction ColNameFind() retourne la longueur du StaticVect si elle n'a rien trouvé????!!!!
+													
+			*/										
+			
+			
+			
 			rayon[posrayon][poslivre] = value;
 			
-			out("Ceci est la valeur voulue: "); out(value); out(".   Ceci est la valeur enregistrée: "); out(rayon[posrayon][poslivre]);  out("Ceci est leur position: ("); out(posrayon); out(","); out(poslivre); out(")");      //DEBUG
+			/*
+			curspos(3,30);
+			out("Ceci est la valeur voulue: "); out(value); 
+			curspos(3,31);
+			out("Ceci est la valeur enregistrée: "); out(rayon[posrayon][poslivre]);  
+			curspos(3,32);
+			out("Ceci est leur position: ("); out(posrayon); out(","); out(poslivre); out(")");      //DEBUG
+			curspos(3,33);
+			*/
+			
 		}
 	};
 
@@ -604,7 +671,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[pos]==')') {if(nbPAR==0) {posPAR = pos; trouvPAR = true;} else nbPAR--;}
 					pos++;
 				} if(!trouvPAR) out("\n\nLa parenthèse n'est pas refermée dans: "+str); abort();
-				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-1); trouvPAR = false; pos = 0;   //Supprimer la parenthèse et remettre les compteurs à 0, pour continuer		
+				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-2); trouvPAR = false; pos = 0;   //Supprimer la parenthèse et remettre les compteurs à 0, pour continuer		
 				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient au minimum une parenthèse), et continuer à partir d'après la parenthèse
 			} else { 							
 			//Cas général : on cherche '+' ou '-', car '*' et '/' ont la priorité d'opération
@@ -615,14 +682,14 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}
 				if(trouvAD) {
 					operateur = str[posAD]; 					
-					LH = strintervalle(str,0,posAD);					//Définir les limites de l'expression à gauche						
-					RH = strintervalle(str,posAD+1,strnb);		//Définir les limites de l'expression à droite						
+					LH = strintervalle(str,0,posAD-1);					//Définir les limites de l'expression à gauche						
+					RH = strintervalle(str,posAD+1,strnb-1);		//Définir les limites de l'expression à droite						
 					if(trouvMU) Lcompos = true; //(car '*''/' ont la priorité d'opération sur '+''-')
 					while(!Rcompos&&pos<strnb) {if(str[pos]=='+'||str[pos]=='-'||str[pos]=='*'||str[pos]=='/') Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite
 				} else if(trouvMU) {
 					operateur = str[posMU];  
-					LH = strintervalle(str,0,posMU);					//Définir les limites de l'expression à gauche						
-					RH = strintervalle(str,posMU+1,strnb);		//Définir les limites de l'expression à droite
+					LH = strintervalle(str,0,posMU-1);					//Définir les limites de l'expression à gauche						
+					RH = strintervalle(str,posMU+1,strnb-1);		//Définir les limites de l'expression à droite
 					pos = posMU + 1; while(!Rcompos&&pos<strnb) {if(str[pos]=='*'||str[pos]=='/') Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite				
 				} else {
 					operateur = ' '; LH = str;   //Aucune opération, seulement une évaluation				
@@ -718,36 +785,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					pos++;
 			}
 			if(trouvEX) {
-				if(posEX==0) {constbool = true; boolval = false; comparateur = '=';	poscomparateur = strnb; //Cas spécial réchappé de la fonction précédente (si jamais elle en laisse passer un)
-				
-						//ÉCRIT COMME CELÀ, ÇA NE MARCHE PAS, CAR ÇA N'EFFACE PAS LE '!' (À LA FIN, LH EST DÉFINI COMME [0, strnb])
-				
-				
-				curspos(2,20); out("CACACACACACACACACACACACACACACA"); abort();
-									//Bon. C'est officiel, "la fonction précédente laisse échapper des cas comme ça".
-												//Faire soit que ça n'arrive pas, soit qu'ils soient normalisés et bien écrits.
-														//Genre que le LH soit 			LH->set(strintervalle(str,1,poscomparateur),biblio);
-				
-											//Mais je préférerais savoir pourquoi ça arrive et éliminer cette fuite.
-											
-												//Oh, tiens, la réponse est simple. Mettons dans:
-																//  0 == 1 & ! 3 == 4
-																//Le comparateur va être '&', et LH et RH vont être simples, séparés entre "0 == 1" et "! 3 == 4"
-											
-														//Ici, le '!' est clairement un compositeur. Il permet de modifier l'expression de la comparaison "3 == 4".
-																//Il faudrait donc le traiter comme tel.
-																
-																	//a) Que L'ÉCRITURE soit obligatoirement " 0 == 1 & !( 3 == 4 ) ",   //(boooooohhhhhh)
-																	
-																	//b) Intégrer '!X' où X est n'importe quoi sauf '=' comme vrai compositeur (pas comme exception)
-																			//b) est bien entendu l'option à choisir.
-																			
-																				//Et si b) est sélectionné... Techniquement, y'aura plus de "cas réchappés".
-																	
-																	
-											
-				
-				
+				if(posEX==0) { //Cas spécial réchappé de la fonction précédente (si jamais elle en laisse passer un)
+					constbool = true; boolval = false; comparateur = '=';	poscomparateur = strnb;  //ÉCRIT COMME CELA, ÇA NE MARCHE PAS, CAR ÇA N'EFFACE PAS LE '!' (À LA FIN, LH EST DÉFINI COMME [0, strnb])
+					curspos(2,20); out("Le string \""); out(str); out("\" a été passé à la fonction boolcompar(), le compositeur '!' n'ayant pas été détecté par la fonction boolcompos. Cette partie du code n'est donc pas bonne.''"); abort();			
 				} else {poscomparateur = posEX;	comparateur = '!'; if(trouvEG&&posEG!=posEX+1) erreur = true;}		//!=
 			} else if(trouvPE) {poscomparateur = posPE; if(trouvEG&&posEG==posPE+1) {comparateur = '«';    			//<=
 				} else if(!trouvEG) comparateur = '<'; else erreur = true;											//<	
@@ -758,10 +798,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Message d'erreur
 			if(erreur) {out("\n\nL'opérateur n'est pas complet dans: "+str); abort();}
 			//Créer les objets intoper
-			LH = new intoper; LH->set(strintervalle(str,0,poscomparateur),biblio);
+			LH = new intoper; LH->set(strintervalle(str,0,poscomparateur-1),biblio);
 			if(!constbool){
 				RH = new intoper;
-				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH->set(strintervalle(str,poscomparateur+2,strnb),biblio); else RH->set(strintervalle(str,poscomparateur+1,strnb),biblio);	
+				if(comparateur=='='||comparateur=='!'||comparateur=='«'||comparateur=='»') RH->set(strintervalle(str,poscomparateur+2,strnb-1),biblio); else RH->set(strintervalle(str,poscomparateur+1,strnb-1),biblio);	
 			}			
 		}
 		//Fonction d'accès : eval
@@ -814,32 +854,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int posEX; bool trouvEX = false;
 			int pos = 0;
 			bool general = true;
-			
-			
-			/*
-						//Toute la section du cas spécial "!" est fausse et mal écrite!
-						
-								//Effectivement, une expression telle que !0 == 1 & 3 == 4 devrait être lue comme "!(0 == 1) & (3 == 4)", plutôt que "!(0 == 1 & 3 == 4)"
-									//Il faudrait simplement traiter le compositeur '!' au même titre que les autres compositeurs, c'est-à-dire lui donner un "trouvEX" et un "posEX".
-									//Le point d'exclammation aurait alors la plus XXXXX priorité d'opération. (plus grande? parce qu'on doit le régler dans les petits bouts avant de passer aux grands bouts?)
-										//Donc, il se chercherait à la fin, quand il n'y a plus de | ni de &.
-									
-						
-	        if(str[0]=='!') {  
-			//Cas spécial : compositeur '!'
-	       		compositeur = '!'; 							//le (opérateur + RH) deviennent : "==false" : régler ce cas particulier tout de suite
-				while(!trouvOU&&pos<strnb) {
-					if(!trouvET&&str[pos]=='&') {posET = pos; trouvET = true;}
-					if(!trouvOU&&str[pos]=='|') {posOU = pos; trouvOU = true;}		
-					pos++;		
-				}
-				LH = strintervalle(str,1,strnb);		//Définir les limites de l'expression à gauche					
-				if(trouvET||trouvOU) Lcompos = true;     //Définir si LH est composite
-		    } else 
-			*/
-			
-			
-			
 			if(str[0]=='(') {  
 			//Cas spécial: l'expression commence par une parenthèse (ex: "( 0==4 | 5<2 )"  ou  "(3>=5) & 3==7" ) 			
 				while(!trouvPAR&&pos<strnb) {
@@ -847,7 +861,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[pos]==')') {if(nbPAR==0) {posPAR = pos; trouvPAR = true;} else nbPAR--;}
 					pos++;
 				} if(!trouvPAR) {out("\n\nLa parenthèse n'est pas refermée dans: "); out(str); abort();}
-				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-1); trouvPAR = false; pos = 0;   //L'expression entière est entre parenthèse : Supprimer celles-ci et remettre les compteurs à 0, pour continuer au cas général
+				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-2); trouvPAR = false; pos = 0;   //L'expression entière est entre parenthèse : Supprimer celles-ci et remettre les compteurs à 0, pour continuer au cas général
 				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient au minimum une parenthèse), et continuer au cas général à partir d'après la parenthèse
 			} else if(str[0]=='!'&&str[1]=='(') {  
 			//Cas spécial: l'expression commence par "le contraire" d'une parenthèse (ex: "!( 6<2 | 4==4 )"  ou  "!( 6>3 | 5<6) & 1==3" )			
@@ -856,7 +870,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[pos]==')') {if(nbPAR==0) {posPAR = pos; trouvPAR = true;} else nbPAR--;}
 					pos++;
 				} if(!trouvPAR) {out("\n\nLa parenthèse n'est pas refermée dans: "); out(str); abort();}
-				if(trouvPAR&&pos==strnb) {compositeur = '!'; LH = strintervalle(str,2,strnb-1); Lcompos = true; general = false;   //L'expression entière est "contraire" : passer le cas général		
+				if(trouvPAR&&pos==strnb) {compositeur = '!'; LH = strintervalle(str,2,strnb-2); Lcompos = true; general = false;   //L'expression entière est "contraire" : passer le cas général		
 				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient un "contraire"), et continuer au cas général à partir d'après la parenthèse	
 			}
 			if(general) {
@@ -869,18 +883,40 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}
 				if(trouvOU) {
 					compositeur = '|';
-					LH = strintervalle(str,0,posOU);					//Définir les limites de l'expression à gauche						
-					RH = strintervalle(str,posOU+1,strnb);		//Définir les limites de l'expression à droite						
+					LH = strintervalle(str,0,posOU-1);					//Définir les limites de l'expression à gauche	
+					
+					
+								//DEBUGGGG
+								//curspos(5,1); out("Ce qui est à gauche du '|' est: \""); out(LH); out("\""); abort();
+								
+					
+					
+										
+					RH = strintervalle(str,posOU+1,strnb-1);		//Définir les limites de l'expression à droite						
 					if(trouvEX|trouvET) Lcompos = true; //(car '!' et '&' ont la priorité d'opération sur '|')
 					while(!Rcompos&&pos<strnb) {if(str[pos]=='|'||str[pos]=='&'||(str[pos]=='!'&&pos+1<strnb&&str[pos+1]!='=')) Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite
 				} else if(trouvET) {  
 					compositeur = '&';
-					LH = strintervalle(str,0,posET);					//Définir les limites de l'expression à gauche						
-					RH = strintervalle(str,posET+1,strnb);		//Définir les limites de l'expression à droite
+					LH = strintervalle(str,0,posET-1);					//Définir les limites de l'expression à gauche		
+					
+					
+					
+					
+					
+								//DEBUGGGG
+								//curspos(5,1); out("Ce qui est à gauche du '&' est: \""); out(LH); out("\""); abort();
+								
+					
+										
+					
+					
+					
+									
+					RH = strintervalle(str,posET+1,strnb-1);		//Définir les limites de l'expression à droite
 					pos = posET + 1; while(!Rcompos&&pos<strnb) {if(str[pos]=='&'||(str[pos]=='!'&&pos+1<strnb&&str[pos+1]!='=')) Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite				
 				} else if(trouvEX&&posEX==0) {
 					compositeur = '!';
-					LH = strintervalle(str,1,strnb);					//Définir les limites de l'expression à gauche	
+					LH = strintervalle(str,1,strnb-1);					//Définir les limites de l'expression à gauche	
 																//Il n'y a pas d'expression à droite
 				} else {
 					compositeur = ' '; LH = str;   //Aucune comparaison, seulement une évaluation (et il n'y a pas d'expression à droite)				
@@ -926,7 +962,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	//DEBUGGG	
 		void test(bibliotheque& biblio) {
 			if(compositeur==' '||compositeur=='!'){
-				out(compositeur); out(compositeur); out(compositeur); if(Lcompos) LHcompos->test(biblio); else LHsimple->test(biblio);
+				out(compositeur); if(Lcompos) LHcompos->test(biblio); else LHsimple->test(biblio);
 			} else {
 				if(Lcompos){
 					LHcompos->test(biblio); out(compositeur); 
@@ -1048,7 +1084,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		if(inpecho.clignote[0]>0){
 			curspos(inp.commande.longueur,base.limtxty); for(int pos=inp.commande.longueur; pos < inpecho.commande.fin; pos++) out(inpecho.commande[pos]);
 		} else {
-			curspos(inp.commande.longueur,base.limtxty); for(int pos=inp.commande.longueur; pos < inpecho.commande.fin; pos++) out(' ');			
+			curspos(inp.commande.longueur,base.limtxty); for(int pos=inp.commande.longueur; pos < inpecho.commande.fin; pos++) out(' ');		
 		}
 		chgcol(base.couleur);                       //Revenir à la couleur de base	
 		inpecho.nxtt += abs(inpecho.clignote[0]);        //Updater le "next time"
@@ -1149,7 +1185,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	//Fonction pour créer un nouveau livre et le nommer
 	void nvlivre(univers& monde, const string& str) {
 		monde.biblio.rayon[monde.biblio.rayon.longueur-1].ajoutvide();		//Passer au prochain livre
-		monde.biblio.nomlivre.ajout(str); monde.biblio.modif(monde.biblio.rayon.longueur-1,monde.biblio.rayon[monde.biblio.rayon.longueur-1].longueur-1,0);		//Mettre 0 comme valeur par défaut (par défaut, tous les livres = FALSE)
+		monde.biblio.nomlivre[monde.biblio.rayon.longueur-1].ajout(str); monde.biblio.modif(monde.biblio.rayon.longueur-1,monde.biblio.rayon[monde.biblio.rayon.longueur-1].longueur-1,0);		//Mettre 0 comme valeur par défaut (par défaut, tous les livres = FALSE)
 	}
 	
 	//Fonction pour créer un nouveau canal et le nommer
@@ -1201,7 +1237,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				debmaille = countstr+1;		//if(...) : évite les intervalles [1,0] (à la place de [0,1]), et skippe seulement la maille si la maille est vide (ex: "µµ")
 			}
 		}
-		monde.histoire.chainemanu[poschap][poschai].maille.ajout(strintervalle(str,debmaille,strnb));		//Entrer la dernière maille
+		monde.histoire.chainemanu[poschap][poschai].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
 	}																						//AJOUTER PAR DÉFAUT UN SEUL ENCHAÎNEMENT LISANT TOUTES LES MAILLES DANS L'ORDRE + SA PROBABILITÉ DE 1; (sera overridé par la prochaine commande)
 	
 	//Fonction pour définir les enchaînements possibles (manuel)
@@ -1221,7 +1257,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				debnombre = countstr+1;
 			}
 		}
-		monde.histoire.chainemanu[poschap][poschai].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb))-1);		//Entrer le dernier chiffre
+		monde.histoire.chainemanu[poschap][poschai].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb-1))-1);		//Entrer le dernier chiffre
 		
 		
 		/*
@@ -1257,7 +1293,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 		}
 		if(debench!=strnb) {		//Entrer le dernier chiffre
-		monde.histoire.chainemanu[poschap][poschai].enchaineprob[countench].set(strintervalle(str,debench,strnb),monde.biblio);
+		monde.histoire.chainemanu[poschap][poschai].enchaineprob[countench].set(strintervalle(str,debench,strnb-1),monde.biblio);
 		monde.histoire.chainemanu[poschap][poschai].enchaineprob.ajoutvide();
 		}
 	}
@@ -1302,8 +1338,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(str[countstr]=='|'||str[countstr]=='&'||str[countstr]==')'||str[countstr]==']'){
 					if(mot.length()>0&&!(mot.length()==1&&mot[0]==' ')) {		//Si un mot d'au moins une lettre et qui n'est pas seulement un espace a été sauvegardé				
 						//Enregistrer le mot comme commande
-						if(mot[0]==' ') mot = strintervalle(mot,1,mot.length());		//Enlever les espaces en début et en fin de mot; permet d'espacer l'écriture des commandes au besoin
-						if(mot[mot.length()]==' ') mot = strintervalle(mot,0,mot.length()-1);
+						if(mot[0]==' ') mot = strintervalle(mot,1,mot.length()-1);		//Enlever les espaces en début et en fin de mot; permet d'espacer l'écriture des commandes au besoin
+						if(mot[mot.length()]==' ') mot = strintervalle(mot,0,mot.length()-2);
 						if(exclus) {monde.histoire.chainemanu[poschap][poschai].commandes.exclus[posfac].ajout(mot);		//Enregistrer le mot
 						} else {
 							if(monde.histoire.chainemanu[poschap][poschai].commandes.inclus[posfac].longueur==0) monde.histoire.chainemanu[poschap][poschai].commandes.inclus[posfac].ajoutvide();	//Noter qu'un nouveau groupe de mots commence
@@ -1336,7 +1372,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				debmot = countstr + 1;
 			}
 		}	
-		if(debmot!=strnb) monde.histoire.chainemanu[poschap][poschai].commandes.exact.ajout(strintervalle(str,debmot,strnb));		//Entrer le dernier mot
+		if(debmot!=strnb) monde.histoire.chainemanu[poschap][poschai].commandes.exact.ajout(strintervalle(str,debmot,strnb-1));		//Entrer le dernier mot
 	}
 	
 	//Fonction pour définir les conditions sous lesquelles le chaînon pourra être appelé (manuel)
@@ -1399,12 +1435,12 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 					}
 				}
 				string temptxt;										//Ajouter le bon accord à la suite du code spécial (devient: Code spécial - accord - reste du canal
-				temptxt  += strintervalle(canaux[canpos].txt,0,CodeSpecialLong); temptxt += strintervalle(canaux[canpos].txt,posdebut,posfin); temptxt += strintervalle(canaux[canpos].txt,CodeSpecialLong,canaux[canpos].txt.length());				
+				temptxt  += strintervalle(canaux[canpos].txt,0,CodeSpecialLong); temptxt += strintervalle(canaux[canpos].txt,posdebut,posfin); temptxt += strintervalle(canaux[canpos].txt,CodeSpecialLong,canaux[canpos].txt.length()-1);				
 				canaux[canpos].txt = temptxt;
 				canaux[canpos].nxtt -= canaux[canpos].delay;									//Ajuster le "next time" pour supprimer le délai entre l'interprétation du code et la lecture de l'accord
 			} else if(canaux[canpos].txt[1]=='b'){		//'b' pour "biblio" -> modifier la bibliothèque
 				string nomrayon; string nomlivre; string val;
-				int posSpecial = 3;
+				int posSpecial = 2;
 				while(canaux[canpos].txt[posSpecial] != '¶') nomrayon += canaux[canpos].txt[posSpecial++]; 
 				posSpecial++; while(canaux[canpos].txt[posSpecial] != '=') nomlivre += canaux[canpos].txt[posSpecial++];
 				posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') val += canaux[canpos].txt[posSpecial++];							
@@ -1412,7 +1448,9 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				
 				
 				//DEBUGGGG
-				out("        Ceci est la valeur enregistrée dans LireCanal(): "); out(biblio.acces(ColNameFind(nomrayon,biblio.nomrayon),ColNameFind(nomlivre,biblio.nomlivre[ColNameFind(nomrayon,biblio.nomrayon)])));
+				//out("Ceci est la valeur enregistrée dans LireCanal(): "); out(biblio.acces(ColNameFind(nomrayon,biblio.nomrayon),ColNameFind(nomlivre,biblio.nomlivre[ColNameFind(nomrayon,biblio.nomrayon)])));
+				//abort();
+				
 				
 			}
 		
@@ -1428,7 +1466,7 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				
 			
 		//Effacer le code spécial du canal
-		canaux[canpos].txt = strintervalle(canaux[canpos].txt,CodeSpecialLong+1,canaux[canpos].txt.length());
+		canaux[canpos].txt = strintervalle(canaux[canpos].txt,CodeSpecialLong+1,canaux[canpos].txt.length()-1);
 	} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 		//Dealer avec la situation où on a à sauter une ligne (créer les lignes supplémentaires et updater les diverses positions)
 			bool jump = false;
@@ -1470,7 +1508,7 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 			curspos(canaux[canpos].posx,canaux[canpos].posy-base.consy) ; out(canaux[canpos].txt[0]);     //Inscrire dans la console
 			mem.souvenir[canaux[canpos].posx][canaux[canpos].posy] = canaux[canpos].txt[0];   //Inscrire dans la mémoire			
 		}	
-		canaux[canpos].txt = strintervalle(canaux[canpos].txt,1,canaux[canpos].txt.length());       //Effacer le caractère du canal     	   
+		canaux[canpos].txt = strintervalle(canaux[canpos].txt,1,canaux[canpos].txt.length()-1);       //Effacer le caractère du canal     	   
 	}
 	if(canaux[canpos].txt.length()==0) canaux[canpos].actif = false;			//Vérifier s'il reste toujours du texte à passer dans le canal
 }	
@@ -1505,7 +1543,7 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				
 				
 				//DEBUGGG
-				curspos(1,chainonpos+13); out("Le chainon \""); out(histoire.chainemanu[chapitrepos][chainonpos].commandes.exact[0]); out("\" a sa condition remplie.");
+				//curspos(1,chainonpos+13); out("Le chainon \""); out(histoire.chainemanu[chapitrepos][chainonpos].commandes.exact[0]); out("\" a sa condition remplie.");
 				
 				
 				
@@ -1670,7 +1708,7 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 						inp.inputpos++;		
 					}			//Remettre en gris la position précédente
 				} 
-				else if (intkey == 72)  ;  											 //Flèche du haut   ... Rien ne se passe?g
+				else if (intkey == 72)  ;  											 //Flèche du haut   ... Rien ne se passe?
 				else if (intkey == 80)  ;  											 //Flèche du bas    ... Rien ne se passe?
 				else if (intkey == 83) {                                                //Delete : supprimer un caractère de la commande actuelle
 					if(inp.inputpos!=inp.commande.longueur) {
@@ -1699,11 +1737,25 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 				
 				
 				//DEBUGGG	
-				} else if(intkey==20) {														//Ctrl + T : Donne le status des conditions de chaque chainon
-					curspos(2,10); out("Voici les conditions des chaînons:");
+				} else if(intkey==20) {														//Ctrl + t : Donne le status des conditions de chaque chainon
+					curspos(2,8); out("Voici les conditions des chaînons:");
 					for(int poschai=0; poschai<histoire.chainemanu[0].longueur; poschai++) {
-						curspos(2,11+poschai); out("     Chaînon "); out(poschai); out("  :     ");
+						curspos(2,9+poschai); out("     Chaînon "); out(poschai); out("  :     ");
 						histoire.chainemanu[0][poschai].condition.test(biblio);
+					}
+					//abort();
+
+
+				//DEBUGGG	
+				} else if(intkey==2) {														//Ctrl + b : Donne la valeur de chaque livre de la bibliothèque
+					curspos(2,18); out("Voici les valeurs stockées dans la bibliothèque:");
+					int nombrelivres = 0;
+					for(int posrayon=0; posrayon<biblio.nomrayon.longueur; posrayon++) {
+						curspos(2,19+posrayon+nombrelivres); out("    "); out(biblio.nomrayon[posrayon]); out(" :   ("); out(biblio.nomlivre[posrayon].longueur); out(" rayons)");
+						for(int poslivre=0; poslivre<biblio.nomlivre[posrayon].longueur; poslivre++) {
+							nombrelivres++;
+							curspos(2,19+posrayon+nombrelivres); out("                      "); out(biblio.nomlivre[posrayon][poslivre]); out(" : "); out(biblio.acces(posrayon,poslivre));
+						}
 					}
 					//abort();
 					
@@ -1749,7 +1801,7 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 					int clignarr [6] {500,-500,500,-500,500,-1};
 					inpecho.clignote.remplacement(clignarr, 6);
 				}                				
-			} else{						//Faire clignoter le texte, en rouge foncé, pendant quelques secondes.
+			} else{						//Faire clignoter le texte, en rouge foncé, pendant quelques secondes.    
 				inpecho.couleur = "rouge sombre";
 				int clignarr [8] {500,-500,500,-500,500,-500,500,-1};				
 				inpecho.clignote.remplacement(clignarr,8);	
@@ -1768,7 +1820,7 @@ void jouer(univers& monde, fen& base, memoire& mem){
 	while(true){				//À faire tout le temps:
 		currentt = timems();		
 		for(int canpos=0; canpos<=monde.canaux.longueur; canpos++) {if(monde.canaux[canpos].actif&&monde.canaux[canpos].nxtt<currentt) LireCanal(monde.canaux,canpos,base,mem,monde.biblio);}  //Lire chaque canal, s'il est prêt	
-		if(monde.inpecho.nxtt<currentt) UserInputEcho(monde.inp,monde.inpecho,base);
+		if(monde.inpecho.actif&&monde.inpecho.nxtt<currentt) UserInputEcho(monde.inp,monde.inpecho,base);
 		UserInput(monde.inp,monde.inpecho,base,monde.biblio,monde.canaux,monde.histoire,mem);	//Interpréter la touche jouée		
 	}
 }
@@ -1802,7 +1854,7 @@ int main(void) {
 	
 			//Créer un maillon
 			mtitre(monde,"Commencer le jeu");		
-			mtexte(monde,"Bienvenue dans mon ordinateur.\nµÇa fait plaisir de vous recevoir, vraiment.\nµJ'espère que vous êtes bien installé.es.\nµÊtes-vous bien installé.es?µÊtes-vous confortable?");				
+			mtexte(monde,"Bienvenue dans mon ordinateur.\nµÇa fait plaisir de vous recevoir, vraiment.\nµJ'espère que vous êtes bien installé.es.\nµÊtes-vous bien installé.es?µ Êtes-vous confortable?");				
 			mordre(monde,"1-4;1-5;2-4;2-5;3-4;4-5");
 			mprob(monde,"1;1;1;1;1;1");
 			mcomm(monde,"(Start|start|Débuter|débuter|Commencer|commencer)");
@@ -1813,8 +1865,8 @@ int main(void) {
 
 			//Créer un maillon
 			mtitre(monde,"Je suis confortable");
-			mtexte(monde,"Bien.§p6000§ µParfait.§p6000§ µ\n\n                   Désirez-vous vous divertir§p1000§...?");
-			mordre(monde,"1-3;1-2");
+			mtexte(monde,"\nBien.§p6000§ µParfait.§p600§ µ\n\n                   Désirez-vous vous divertir§p1000§...?");
+			mordre(monde,"1-3;1-2-3");
 			mprob(monde,"1;1");
 			mcomm(monde,"(Je|J' & suis|reste & confortable|bien installé [ne suis pas|jamais]) (Ça va|Correct) (Oui)");		//BTW, ici, installé inclut aussi installée et installé.e (pas besoin de répéter)
 			mcond(monde,"Laure¶debut&!Laure¶confo");
