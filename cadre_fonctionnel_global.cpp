@@ -33,7 +33,7 @@
 	2019-07-05:
 				Dans les fonctions integration() et UserInputInterpret(),
 				j'utilise beaucoup d'indexation. Ça devient difficile à lire.
-				Je pense que ça n'alourdirait pas trop l'exécution de créer un objet temporaire pour chaque chainon (rendrait le tout plus clair).
+				Je pense que ça n'alourdirait pas trop l'exécution de créer un objet temporaire pour chaque motif (rendrait le tout plus clair).
 				J'ai par contre peur que ça fuck avec les pointeurs, que les objets soient modifiés (sont tous par & référence), etc.
 					Je conserve donc cette idée quand j'aurai minimalement une version testée, qui fonctionne.
 */
@@ -42,81 +42,57 @@
 	2019-07-13:
 				Ce qu'il me reste à faire:
 					-Tester, avec des vraies mailles (manuelles), si le UserInputInterpret agit comme il le devrait.
-								-Tout marche comme il le faudrait; presque.
-								
-								
-								Aussi, je n'arrive pas à lire le deuxième maillon. Est-il actif?
-											Ça, c'est parce que les codes spéciaux ne s'update pas. Est-ce parce que la biblio n'est pas "par référence?" (bibliotheque&)
-								Nope. La biblio semble travailler sans encombre. Ça doit être... que l'évaluation de la condition?
-										Comment voir à l'intérieur de cette évaluation?
-										Comment la rendre transparente? Partir de la base?
-								
-								
-											Ce qui serait bien, ce serait de faire un double de la fonction "eval" (dans tous les objets .eval), qui a une verbose.
-											Et que je place seulement à l'endroit précis où je veux savoir ce qui se passe.
-											
-											Ou bien. Je crée une touche spéciale (genre CTRL+I) qui m'évalue en détail les conditions de chaque chapitre?
-													Oui, j'aime mieux ça.
-								
-												Je viens de faire un double de eval(), test(), qui fait une verbose du processus.
-												Il ne reste qu'à le faire activer par la touche spéciale.
-												Genre la touche spéciale fait seulement,
-													pour le premier chapitre (0), tester la condition de chaque maillon; puis out(\n);
-															Prendre genre Ctrl + t, mettons. C'est fait.
-																
-												Le problème qui semble se poser est que l'opérateur '!' ne semble pas reconnu lorsqu'il n'est pas placé en tête de string.
-													Les valeurs sensées être '!' sont évaluées comme "==TRUE" et leur valeur est aléatoire -> comme quand la mémoire n'a pas été assignée.
-														
-														Bon... là j'ai réglé un problème avec '!', qui devrait maintenant fonctionner comme du monde.
-															J'ai pas checké si ça avait réglé le problème plus grand, par contre.	
-								
-												Bon, j'ai fait une touche spéciale CTRL + b pour voir la biblio dans son entièreté...
-													Et... c'est officiel, les livres n'ont pas été modifiés. Fait chier.
-													Pourquoi....? Quand je fait jouer le code spécial de modification,
-														je m'assure de faire vérifier à l'extérieur même de la fonction que la valeur a bien été enregistrée...
-														Mais elle ne l'est tout de même pas...?
-									
-												GREAT.
-												Maintenant, j'ai la confirmation que deux modifications différentes (soit "§bLaure¶debut=1§" au début du chaînon "commencer le jeu" et "§bLaure¶actif=0§" à sa fin)
-												enregistrent bien leur valeur respectives, mais les deux À LA MÊME PLACE.
-													À la position (1,0) (posrayon, poslivre).
-														Ce qui est troublant, car je ne suis pas supposée avoir de rayon #1 ? (il n'y a qu'un seul rayon, le #0).
-																Il se peut alors que le problème soit avec la fonction qui associe le nom du rayon à sa position? (ça va être à investiguer plus tard, là j'suis fatiguée)												
-					
-												Donc. Le problème était bien là, à la fonction "ColNameFind()". La fonction retournait n'importe quoi si elle ne trouvait pas le mot voulu.
-																	J'ai mis un failsafe (abort + message d'erreur clair) pour éviter cette situation.
-												
-												Le problème que j'ai maintenant se situe dans la création des conditions: les strings qui se passent d'objet en objet (les RH seulement)
-													gagnent un espace " ", probablement à chaque fois. Je cherche donc "debut  " au lieu de "debut" (et ne le trouve pas).
-												
-												C'est à cause de ma fonction "strintervalle()"; je pense que la définition de mes arguments (deb et fin, les positions inclusives du string
-													que l'on veut) ne cadre pas avec la manière dont j'ai écrit mes arguments dans les opérateurs binaires?
-																C'est là où je suis rendue.	
-												J'ai corrigé tous les arguments. Ça devrait maintenant marcher, en théorie.
-												
-												Faut maintenant seulement enlever tous les "abort()" que j'ai placé en prévention + observation pour le vérifier, par contre!
-															Yé! Ça a marché!
-								
-								
-								
-									Also, c'est étrange, le clignotement des mauvaises commandes finit sans effacer la commande, contrairement à la version précédente...?
-										Ça, c'est encore un problème. Pourquoi donc?
-										Pour une raison encore inexpliquée, la fonction semble davantage AJOUTER une itération de la commande que d'enlever un "effacement".
-									
-									
-									
-									
-									
-									Ah, autre chose également, une bordée d'espaces (" ") suit la première commande;
-													C'est pour cette raison que la deuxième itération suit avec beaucoup de décalage.
-												Pourquoi y-a-t-il tant d'espaces?
-										Oh! Ça doit être l'oeuvre de la fonction strintervalle()? Parce que maintenant tout fonctionne bien.
-									
-									
+								-Tout marche comme il le faudrait.				
 					-Créer un équivalent de la fonction pour les mailles automatiques
+									-LÀ, on a tout de même plusieurs choix:
+									
+										-Soit on évalue les conditions simplement TOUT LE TEMPS
+										-Soit on évalue les conditions à un intervalle de temps fixe, disons 10 ou 100 millisecondes
+										-Soit on se fie UNIQUEMENT aux valeurs de la bibliothèque pour enclencher les motifs auto, donc on évalue à chaque fois que la biblio est modifiée.
+												-Bien entendu, ce dernier est préféré, car plus parsimonious (moins de charge pour l'ordinateur).
+												
+						-Bon, j'ai techniquement terminé de coder cette partie... Reste à tester.
+					
+							-Bon.
+									La maille automatique apparaît à l'écran, ce qui est bien.
+									
+									Sauf qu'à la fin, ça lance un message en mot "égrenage", comme si c'était dans le canal,
+									"eur n'est pas complet dans : "  
+												Pis ça c'est weird, parce que la seule place où j'ai quelque chose de marqué qui ressemble à ça,
+													c'est dans genre interoper, où c'est "out()", la fonction, et non "ajouter à un canal()".
+													
+										En fait, j'ai checké, et c'est vraiment dans le canal.
+											Donc probablement que la dernière ligne où j'suis sensée ajouter le code spécial "§m...;...§ ne marche pas,
+													et met à la place ce message vraiment bizarre?
+														À revoir plus tard...
+																//BTW, c'est à la fonction Integrationauto() (ou quelque chose comme ça) que ça se trouve, ces lignes
+								-Bon, j'ai changé la manière d'intégrer le code spécial spécial à la fin, et là ça marche. Mon écriture originelle était un peu random, crammant ensemble strings, char et integer.									
+					
+					
 					-Intégrer dans l'interprétation de l'input la première (ou toutes?) majuscule optionnelle
+								-Fait, pour la première lettre seulement.
 					-Peut-être changer la mémoire de "long terme, finie" à "court terme, infinie" en sauvant moins de lignes mais en écrivant par-dessus?
 					-Je ne sais pas si j'ai fait tous les "checks" de (dés)activation des canaux... À la fois quand le canal s'épuise, et quand il est overridé!
+								-J'ai ajouté la désactivation dans la fonction d'overridecanal(), et la fonction lirecanal() a déjà un check de ça à sa toute fin. C'est beau!
+								-Intégration, techniquement la seule chose qui peut ajouter du texte à un canal (?), a aussi un check qui active à la fin. C'est donc beau.
+					-Ajouter un menu
+					-Définir des premiers rayons de la bibliothèque comme {"Menu","Accords", etc...}
+					-Présentement, les commandes tapées évaluent les mots des motifs DANS L'ORDRE. Décider si je garde ça, ou si j'accepte le désordre.
+								-J'pense ça enlève quelques ambiguités possibles si je garde ça dans l'ordre.. Genre mettre le biscuit sur la table VS mettre la table sur le biscuit.
+					-Urgh. J'pense que j'ai foiré avec "prendre les titres comme des commandes exactes". 
+							-Parce que y'a pas d'équivalent pour les motifs automatiques, j'ai fini par créer un membre "titre" aux motifs auto... 
+								-Et me semble que ça serait simplement plus logique si les motifs manu disposaient eux aussi d'un titre?
+									-Fait que j'veux redonner (éventuellement) le rôle unique de titre aux titres (qui serviront quand même si plusieurs motifs sont appelés par une seule commande),
+										et laisserai leur job aux commandes exactes.	
+									-Eh, euhm, j'ai kinda réglé cette question? 
+										-Mais le bout où y'a des commmandes ambigües est louche, 
+											même si on ne mentionne pas le fait que j'utilise "pause()" là-dedans... Yrkh.
+												J'vais retravailler tout ce bout quand j'vais faire les menus, ok?
+					-Retravailler le "menu" de quand la commande est ambigüe, pour la mettre plus en ligne avec le reste des menus
+							(à la limite, j'pense sérieusement à simplement avoir une sélection de "peser sur ENTER entre des icônes" pour éviter les erreurs connes de frappe)
+							(genre, c'est supposé NE PAS ARRIVER, les ambiguité, si l'histoire est si mal écrite que ça, j'pense que ça va pas déranger de perdre un peu) 
+							( d' "immersion"  en sélectionnant un bouton à la place de recopier lettre à lettre un mot. Also, c'est plus facile à coder pour moi.)
+											
 */					
 
 /*
@@ -124,7 +100,7 @@
 				Liste des séparateurs maison:
 					'§' sert à séparer les codes spéciaux du reste dans le texte à lire
 					';' sert à séparer les genres (féminin;non binaire/neutre;masculin)
-					'µ' sert à séparer les segments de texte (mailles) dans la construction d'un chaînon
+					'µ' sert à séparer les segments de texte (mailles) dans la construction d'un motif
 					';' sert à séparer les différents enchaînements
 					'-' sert à séparer les chiffres d'un même enchaînement
 					';' sert à séparer les différentes probabilités d'enchaînement (pratique mais ± logique; considérer un changement?)
@@ -335,8 +311,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			out(phrase[pos]);
 		}
 	}
-	void out(int chiffre) {std::wcout << chiffre;}
-	void out(double chiffre) {std::wcout << chiffre;}
+	//void out(int chiffre) {std::wcout << to_string(chiffre);}      //Nope. Ça marche pas, car la conversion en wchar ne se fait pas bien...
+	//void out(double chiffre) {std::wcout << to_string(chiffre);}
 
 
 	//vi) Fonction : chgcol ; change la couleur du texte à entrer
@@ -398,6 +374,25 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		for(int pos=deb;pos<=fin;pos++) nwstr+=str[pos];          
 		return(nwstr);
 	}
+	
+	//xii Fonction : majuscule ; retourne le char, mais en majuscule
+	char majuscule(char chr) {
+		if(chr=='a') return('A'); else if(chr=='à') return('À'); else if(chr=='â') return('Â'); else if(chr=='ä') return('Ä'); else{
+		} if(chr=='b') return('B'); else if(chr=='c') return('C'); else if(chr=='ç') return('Ç'); else if(chr=='d') return('D'); else{
+		} if(chr=='e') return('E'); else if(chr=='é') return('É'); else if(chr=='è') return('È'); else if(chr=='ê') return('Ê'); else if(chr=='ë') return('Ê'); else{
+		} if(chr=='f') return('F'); else if(chr=='g') return('G'); else if(chr=='h') return('H'); else if(chr=='i') return('I'); else if(chr=='ì') return('Ì'); else if(chr=='î') return('Î'); else if(chr=='ï') return('Ï'); else {
+		} if(chr=='j') return('J'); else if(chr=='k') return('K'); else if(chr=='l') return('L'); else if(chr=='m') return('M'); else{
+		} if(chr=='n') return('N'); else if(chr=='o') return('O'); else if(chr=='ò') return('Ò'); else if(chr=='ô') return('Ô'); else if(chr=='ö') return('Ö'); else{	
+		} if(chr=='p') return('P'); else if(chr=='q') return('Q'); else if(chr=='r') return('R'); else if(chr=='s') return('S'); else{
+		} if(chr=='t') return('T'); else if(chr=='u') return('U'); else if(chr=='ù') return('Ù'); else if(chr=='û') return('Û'); else if(chr=='ü') return('Ü'); else{		
+		} if(chr=='v') return('V'); else if(chr=='w') return('W'); else if(chr=='x') return('X'); else if(chr=='y') return('Y'); else{
+		} if(chr=='z') return('Z'); else return(chr);
+	}
+
+	//xiii Fonction : randomnb ; retourne un integer entre un min et un max (les valeurs sont comprises; "inclusivement")
+	int randomnb(int min, int max) {
+		return(rand() % (max+1) + min);
+	}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //3) Classes-contenantes spécialisées (canaux et autres)
@@ -438,7 +433,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				souvenir = new char* [nbcol];   //Créer un premier array contenant des pointers
 				//Créer les lignes pour chaque colonne, et les remplir d'espace
 				for(int col=0; col<nbcol; col++) {souvenir[col] = new char [nbligne]; for(int ligne=0; ligne<nbligne; ligne++) souvenir[col][ligne] = ' ';}
-			}			//Destructeur
+			}			
+			//Destructeur
 			~memoire() {
 				for(int col=0; col<nbcol ; col++) delete[] souvenir[col] ; delete[] souvenir;   //Bien déconstruire tout proprement
 			}
@@ -560,49 +556,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		void modif(int posrayon, int poslivre, int value) {rayon[posrayon][poslivre] = value;}
 		void modif(string rayonstr, string livrestr, int value) {
 			int posrayon = ColNameFind(rayonstr,nomrayon); 
-			
-			/*
-							//DEBUGGGG
-								curspos(2,26); out("Dans : "); 
-								for(int countray =0; countray<nomrayon.longueur; countray++) {
-									out(nomrayon[countray]); out(" - ");
-								}
-								curspos(2,27); out(rayonstr); out(" est en "); out(posrayon); out("e position.");
-			*/
-							
 			int poslivre = ColNameFind(livrestr,nomlivre[posrayon]);
-			
-			/*
-							//DEBUGGGG
-								curspos(2,28); out("Dans : "); 
-								for(int countli =0; countli<nomlivre[posrayon].longueur; countli++) {
-									out(nomlivre[posrayon][countli]); out(" - ");
-								}
-								curspos(2,29); out(livrestr); out(" est en "); out(poslivre); out("e position.");			
-			
-			
-							//Faaait que: 
-										// 1ere erreur:
-													//Le "rayonstr" ressort comme "aure" à la place de "Laure".
-										// 2e erreur:
-													//La fonction ColNameFind() retourne la longueur du StaticVect si elle n'a rien trouvé????!!!!
-													
-			*/										
-			
-			
-			
 			rayon[posrayon][poslivre] = value;
-			
-			/*
-			curspos(3,30);
-			out("Ceci est la valeur voulue: "); out(value); 
-			curspos(3,31);
-			out("Ceci est la valeur enregistrée: "); out(rayon[posrayon][poslivre]);  
-			curspos(3,32);
-			out("Ceci est leur position: ("); out(posrayon); out(","); out(poslivre); out(")");      //DEBUG
-			curspos(3,33);
-			*/
-			
 		}
 	};
 
@@ -615,7 +570,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int boolval; int intval;
 			int constbool; int constint;      //TRUE si les valeurs sont booléennes ou int, à la place d'évaluées.
 		//Constructeur
-		inteval ()  : constbool(false), constint(false) {}; //Constructeur par défaut : vide. 
+		inteval ()  : constbool(0), constint(0) {}; //Constructeur par défaut : vide. 
+		//Fonction de modification : clean() ; permet de remettre l'objet à l'état initial, dans le but de le "set()" de nouveau
+		void clean(void) {
+			rayonpos = -1; livrepos = -1;
+			boolval = 0; intval = 0;
+			constbool = 0; constint = 0;
+		}
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression
 		void set(string str, bibliotheque& biblio) {
 			int strnb = str.length();
@@ -656,6 +617,17 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool Lcompos; bool Rcompos;				//TRUE si les valeurs sont composites
 		//Constructeur
 		intoper ()  : Lcompos(false), Rcompos(false) {}; //Constructeur par défaut : vide. 
+		//Destructeur
+		~intoper(){
+			if(Lcompos) delete LHcompos; else delete LHsimple;
+			if(Rcompos) delete RHcompos; else delete RHsimple;
+		}		
+		//Fonction de modification : clean() ; permet de remettre l'objet à l'état initial, dans le but de le "set()" de nouveau
+		void clean(void) {
+			if(Lcompos) delete LHcompos; else delete LHsimple;
+			if(Rcompos) delete RHcompos; else delete RHsimple;
+			Lcompos = false; Rcompos = false; operateur = ' ';
+		}
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression
 		void set(string str, bibliotheque& biblio){
 			int strnb = str.length();
@@ -765,6 +737,17 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool boolval;		
 		//Constructeur ;
 		boolcompar () : constbool(false), boolval(0) {}; //Constructeur par défaut : vide. 
+		//Destructeur
+		~boolcompar(){
+			delete LH;
+			if(!constbool) delete RH;
+		}		
+		//Fonction de modification : clean() ; permet de remettre l'objet à l'état initial, dans le but de le "set()" de nouveau
+		void clean(void) {
+			delete LH;
+			if(!constbool) delete RH;
+			constbool = false; boolval = 0; comparateur = ' ';
+		}
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression
 		void set(string str, bibliotheque& biblio) {
 			int strnb = str.length();
@@ -843,6 +826,17 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool Lcompos; bool Rcompos;	
 		//Constructeur
 		boolcompos () : Lcompos(false), Rcompos(false)	{}; //Constructeur par défaut : vide. 
+		//Destructeur
+		~boolcompos(){
+			if(Lcompos) delete LHcompos; else delete LHsimple;
+			if(Rcompos) delete RHcompos; else delete RHsimple;
+		}
+		//Fonction de modification : clean() ; permet de remettre l'objet à l'état initial, dans le but de le "set()" de nouveau
+		void clean(void) {
+			if(Lcompos) delete LHcompos; else delete LHsimple;
+			if(Rcompos) delete RHcompos; else delete RHsimple;
+			Lcompos = false; Rcompos = false; compositeur = ' ';
+		}
 		//Fonction de modification : set() ; permet de construire l'objet avec une expression		
 		void set(string str, bibliotheque& biblio) {    //false : valeurs par défaut qui pourront changer à l'intérieur du constructeur
 			int strnb = str.length();
@@ -884,34 +878,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(trouvOU) {
 					compositeur = '|';
 					LH = strintervalle(str,0,posOU-1);					//Définir les limites de l'expression à gauche	
-					
-					
-								//DEBUGGGG
-								//curspos(5,1); out("Ce qui est à gauche du '|' est: \""); out(LH); out("\""); abort();
-								
-					
-					
-										
 					RH = strintervalle(str,posOU+1,strnb-1);		//Définir les limites de l'expression à droite						
 					if(trouvEX|trouvET) Lcompos = true; //(car '!' et '&' ont la priorité d'opération sur '|')
 					while(!Rcompos&&pos<strnb) {if(str[pos]=='|'||str[pos]=='&'||(str[pos]=='!'&&pos+1<strnb&&str[pos+1]!='=')) Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite
 				} else if(trouvET) {  
 					compositeur = '&';
 					LH = strintervalle(str,0,posET-1);					//Définir les limites de l'expression à gauche		
-					
-					
-					
-					
-					
-								//DEBUGGGG
-								//curspos(5,1); out("Ce qui est à gauche du '&' est: \""); out(LH); out("\""); abort();
-								
-					
-										
-					
-					
-					
-									
 					RH = strintervalle(str,posET+1,strnb-1);		//Définir les limites de l'expression à droite
 					pos = posET + 1; while(!Rcompos&&pos<strnb) {if(str[pos]=='&'||(str[pos]=='!'&&pos+1<strnb&&str[pos+1]!='=')) Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite				
 				} else if(trouvEX&&posEX==0) {
@@ -1003,8 +975,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	};		
 	
 	
-	//xii) classe : chainonauto ; permet le stockage du texte et des conditions d'apparition (automatique)
-	class chainonauto {
+	//xii) classe : motifauto ; permet le stockage du texte et des conditions d'apparition (automatique)
+	class motifauto {
 		//Membres
 		public:
 			StaticVect<string,10> maille;						//Texte à lire
@@ -1013,14 +985,16 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			boolcompos condition;								//Conditions à respecter pour l'ajout au canal sans UserInput 
 			string codespeciauxdebut;
 			string codespeciauxfin;
-			bool override;										//TRUE si l'activation de chaînon vide instantannément le canal utilisé
+			bool override;										//TRUE si l'activation de motif vide instantannément le canal utilisé
+			bool encours;										//Va changer dynamiquement, permet de ne pas dédoubler le même motif (± un temps d'attente obligatoire)
 			int canal;											//Position du canal dans lequel écrire le texte
+			string titre;										//Ne sert qu'à identifier le motif; n'apparaît jamais à l'écran
 		//Constructeur
-		chainonauto() : override(false) {};
+		motifauto() : override(false), encours(false) {};
 	};
 	
-	//xii) classe : chainonmanu ; permet le stockage du texte et des conditions d'apparition (manuelle)
-	class chainonmanu {
+	//xii) classe : motifmanu ; permet le stockage du texte et des conditions d'apparition (manuelle)
+	class motifmanu {
 		//Membres
 		public:
 			StaticVect<string,10> maille;						//Texte à lire
@@ -1029,22 +1003,23 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			boolcompos condition;								//Conditions à respecter pour l'ajout au canal avec UserInput				
 			string codespeciauxdebut;
 			string codespeciauxfin;
-			bool override;										//TRUE si l'activation de chaînon vide instantannément le canal utilisé
+			bool override;										//TRUE si l'activation de motif vide instantannément le canal utilisé
 			int canal;											//Position du canal dans lequel écrire le texte
 			commande commandes;                					//Mots à rechercher pour l'ajout au canal à partir du UserInput			
-			bool getbusy;                                       //TRUE si le UserInput devient bloqué après que ce chaînon ait été appelé
+			bool getbusy;                                       //TRUE si le UserInput devient bloqué après que ce motif ait été appelé
+			string titre;										//Sert à identifier le motif + à savoir quel motif est appelé en cas d'ambiguité de la commande
 		//Constructeur
-		chainonmanu() : getbusy(true), override(false) {};	
+		motifmanu() : getbusy(true), override(false) {};	
 	};
 	
-	//xiii) classe : fil ; permet de stocker toutes les textes + commandes selon des catégories (ex: chapitres), pour faciliter la recherche
-	class fil {
+	//xiii) classe : ouvrage ; permet de stocker toutes les textes + commandes selon des catégories (ex: chapitres), pour faciliter la recherche
+	class ouvrage {
 		//Membres
 		public:
 			static const int taille = 1;												//Nombre de "chapitre" actuellement disponibles
 			static const int taillechapitre = 40;
-			StaticVect<StaticVect<chainonmanu,taillechapitre>,taille> chainemanu;		//Groupes de textes + commandes ("chapitres") pour activation manuelle
-			StaticVect<StaticVect<chainonauto,taillechapitre>,taille> chaineauto;		//Groupes de textes + commandes ("chapitres") pour activation automatique
+			StaticVect<StaticVect<motifmanu,taillechapitre>,taille> filmanu;		//Groupes de textes + commandes ("chapitres") pour activation manuelle
+			StaticVect<StaticVect<motifauto,taillechapitre>,taille> filauto;		//Groupes de textes + commandes ("chapitres") pour activation automatique
 			StaticVect<boolcompar,taille> cadenas;										//Conditions d'activation des "chapitres"
 	};
 
@@ -1102,62 +1077,78 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		for(int poscan=0; poscan<canaux.longueur; poscan++) canaux[poscan].nxtt = currentt + canaux[poscan].pausedt + canaux[poscan].delay * 5;					
 	}
 	
-	//vi) Fonction : integration ; ajoute un chainon à un canal
-	void integrationmanu(int chapitrepos, int chainonpos, StaticVect<canal,taillecanal>& canaux, fil& histoire, bibliotheque& biblio) {
+	//v) Fonction : overridecanal() ; vide le canal, en appliquant cependant les codes spéciaux sélectionnés qui s'y trouvent
+	void overridecanal(StaticVect<canal,taillecanal>& canaux, int canpos, ouvrage& histoire, bibliotheque& biblio) {
+		int strnb = canaux[canpos].txt.length(); bool cdsp = false;
+		for(int txtpos=0; txtpos<strnb; txtpos++) { 
+			if(cdsp) {		//Si l'on est dans un code spécial
+				if(canaux[canpos].txt[txtpos]=='m'){		//'m' pour "motif" -> marquer le motif automatique comme n'étant plus en cours
+					string poschap; string posmotif; 
+					txtpos++; while(canaux[canpos].txt[txtpos] != ';') poschap += canaux[canpos].txt[txtpos++]; 
+					txtpos++; while(canaux[canpos].txt[txtpos] != '§') posmotif += canaux[canpos].txt[txtpos++];
+					histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
+				} else while(canaux[canpos].txt[txtpos] != '§') txtpos++;
+				txtpos++; cdsp = false;      //Terminer le code spécial actuel
+			} else if(canaux[canpos].txt[txtpos]=='§') cdsp = true;          //Si l'on n'est pas dans un code spécial
+		}
+		canaux[canpos].txt = "";      //Vider le canal
+		canaux[canpos].actif = false;           //Désactiver le canal
+	}
+	
+	//vi) Fonction : integration ; ajoute un motif à un canal
+	void integrationmanu(int chapitrepos, int motifpos, StaticVect<canal,taillecanal>& canaux, ouvrage& histoire, bibliotheque& biblio) {
 		int currentt = timems();	
 		//Overloader le canal si nécessaire
-		if(histoire.chainemanu[chapitrepos][chainonpos].override) canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt = "";
+		if(histoire.filmanu[chapitrepos][motifpos].override) overridecanal(canaux, histoire.filmanu[chapitrepos][motifpos].canal, histoire, biblio);
 		//Choisir l'enchaînement à insérer dans le canal
 		int sumprob = 0; StaticVect<int,10> vectprob;
-		for(int posprob=0; posprob<histoire.chainemanu[chapitrepos][chainonpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
-			sumprob += histoire.chainemanu[chapitrepos][chainonpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
+		for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
+			sumprob += histoire.filmanu[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
 		}
-		int randval = rand() % sumprob;  //Obtenir une valeur aléatoire entre [0,sumprob[			
+		int randval = randomnb(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
 		int choix; 
-		for(int posprob=0; posprob<histoire.chainemanu[chapitrepos][chainonpos].enchaineprob.longueur; posprob++) {
+		for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
 			if(randval<vectprob[posprob]) {choix = posprob; break;}
 		}	
-		
-		/*
-		
-		
-			//DEBUG:::
-			curspos(2,4); out("L'enchaînement voulu est :");
-		for(int posench=0; posench<histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix].longueur; posench++) {
-			out(histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix][posench]); out("-");
-		}	
-		
-			curspos(2,9); out("Le texte voulu est :");
-		for(int posench=0; posench<histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix].longueur; posench++) {
-			out(histoire.chainemanu[chapitrepos][chainonpos].maille[histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix][posench]]); out("µ");
-		}	
-		
-		
-			out("\nFait que c'est weird, parce que ... Oh shit. C'est cave. C'est juste que les positions que j'ai mis, c'est les positions normales. -1 en C++");
-		
-		
-			curspos(2,13); out("Pis le nombre de mailles est: "); out(histoire.chainemanu[chapitrepos][chainonpos].maille.longueur);
-			curspos(2,15); out("Pis toutes les mailles bout à bout ressemblent à: ");
-		for(int posm=0; posm<histoire.chainemanu[chapitrepos][chainonpos].maille.longueur; posm++) {
-			out(histoire.chainemanu[chapitrepos][chainonpos].maille[posm]);
-		}
-		
-		
-		
-		*/
-		
 		//Ajouter le texte au canal
-		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt += histoire.chainemanu[chapitrepos][chainonpos].codespeciauxdebut;   //Code spéciaux début
-		for(int posench=0; posench<histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix].longueur; posench++) {
-			canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt += histoire.chainemanu[chapitrepos][chainonpos].maille[histoire.chainemanu[chapitrepos][chainonpos].enchainement[choix][posench]];
+		canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt += histoire.filmanu[chapitrepos][motifpos].codespeciauxdebut;   //Codes spéciaux début
+		for(int posench=0; posench<histoire.filmanu[chapitrepos][motifpos].enchainement[choix].longueur; posench++) {
+			canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt += histoire.filmanu[chapitrepos][motifpos].maille[histoire.filmanu[chapitrepos][motifpos].enchainement[choix][posench]];
 		}		
-		canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt += histoire.chainemanu[chapitrepos][chainonpos].codespeciauxfin;		//Code spéciaux fin	
-		//Updater le nxtt pour qu'il commence à l'intégration
-		if(!canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].actif) canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].nxtt = timems();
+		canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt += histoire.filmanu[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin	
+		//Updater le nxtt pour qu'il commence à partir de l'intégration
+		if(!canaux[histoire.filmanu[chapitrepos][motifpos].canal].actif) canaux[histoire.filmanu[chapitrepos][motifpos].canal].nxtt = timems();
 		//Marquer le canal comme actif
-		if(canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].txt.length()>0) canaux[histoire.chainemanu[chapitrepos][chainonpos].canal].actif = true;
+		if(canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt.length()>0) canaux[histoire.filmanu[chapitrepos][motifpos].canal].actif = true;
 	}
-
+	void integrationauto(int chapitrepos, int motifpos, StaticVect<canal,taillecanal>& canaux, ouvrage& histoire, bibliotheque& biblio) {
+		int currentt = timems();	
+		//Overloader le canal si nécessaire
+		if(histoire.filauto[chapitrepos][motifpos].override) overridecanal(canaux, histoire.filauto[chapitrepos][motifpos].canal, histoire, biblio);
+		//Choisir l'enchaînement à insérer dans le canal
+		int sumprob = 0; StaticVect<int,10> vectprob;
+		for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
+			sumprob += histoire.filauto[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
+		}
+		int randval = randomnb(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
+		int choix; 
+		for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
+			if(randval<vectprob[posprob]) {choix = posprob; break;}
+		}	
+		//Ajouter le texte au canal
+		canaux[histoire.filauto[chapitrepos][motifpos].canal].txt += histoire.filauto[chapitrepos][motifpos].codespeciauxdebut;   //Codes spéciaux début
+		for(int posench=0; posench<histoire.filauto[chapitrepos][motifpos].enchainement[choix].longueur; posench++) {
+			canaux[histoire.filauto[chapitrepos][motifpos].canal].txt += histoire.filauto[chapitrepos][motifpos].maille[histoire.filauto[chapitrepos][motifpos].enchainement[choix][posench]];
+		}		
+		canaux[histoire.filauto[chapitrepos][motifpos].canal].txt += histoire.filauto[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin
+		canaux[histoire.filauto[chapitrepos][motifpos].canal].txt += "§m" + to_string(chapitrepos) + ';' + to_string(motifpos) +'§';		//Code spécial permettant d'enlever le status en cours du motif     //Faut convertir les int en string...
+		//Updater le nxtt pour qu'il commence à partir de l'intégration
+		if(!canaux[histoire.filauto[chapitrepos][motifpos].canal].actif) canaux[histoire.filauto[chapitrepos][motifpos].canal].nxtt = timems();
+		//Marquer le canal comme actif
+		if(canaux[histoire.filauto[chapitrepos][motifpos].canal].txt.length()>0) canaux[histoire.filauto[chapitrepos][motifpos].canal].actif = true;
+		//Marquer le motif comme "en cours"
+		histoire.filauto[chapitrepos][motifpos].encours = true;     
+	}
 	
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //5) Fonctions de remplissage aisé des objets utilisés
@@ -1166,12 +1157,11 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	class univers {
 	//Membres
 	public:
-		fil histoire;
+		ouvrage histoire;
 		bibliotheque biblio;
 		StaticVect<canal,taillecanal> canaux;
 		input inp;
 		inputecho inpecho;
-		
 	//Constructeur
 		univers() {};
 	}; 
@@ -1206,118 +1196,222 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	
 	//Fonction pour créer un nouveau chapitre
 	void nvchapt(univers& monde) {
-		monde.histoire.chaineauto.ajoutvide();
-		monde.histoire.chainemanu.ajoutvide();
+		monde.histoire.filauto.ajoutvide();											//ATTENTION! ICI, LES CHAPITRES SONT THÉORIQUEMENT SÉPARÉS ENTRE MANUELS ET AUTOMATIQUES,
+		monde.histoire.filmanu.ajoutvide();												//MAIS LE CODE LES TRAITE EN TOUT TEMPS COMME LA MÊME ENTITÉ! LE GARDER EN TÊTE!
 	}
 	
 	//Fonction pour définir les conditions d'activation du chapitre
 	void ccond(univers& monde, const string& str) {
-		monde.histoire.cadenas[monde.histoire.chainemanu.longueur-1].set(str,monde.biblio);
+		monde.histoire.cadenas[monde.histoire.filmanu.longueur-1].set(str,monde.biblio);
 	}
 
-	//Fonction pour "créer" un nouveau chaînon et le nommer (manuel)
+	//Fonction pour "créer" un nouveau motif et le nommer (manuel)
 	void mtitre(univers& monde, const string& str) {		
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		monde.histoire.chainemanu[poschap].ajoutvide();			//Passer au prochain chaînon
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;		
-		monde.histoire.chainemanu[poschap][poschai].commandes.exact.ajout(str);     //Conserver le titre comme "commande exacte"
+		int poschap = monde.histoire.filmanu.longueur-1;
+		monde.histoire.filmanu[poschap].ajoutvide();			//Passer au prochain motif
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
+		monde.histoire.filmanu[poschap][posmotif].titre = str;     //Conserver le titre, pour y référer au cas où une même commande appelerait plusieurs motifs.
 	} 
+	//Fonction pour "créer" un nouveau motif et le nommer (automatique)
+	void atitre(univers& monde, const string& str) {		
+		int poschap = monde.histoire.filauto.longueur-1;
+		monde.histoire.filauto[poschap].ajoutvide();			//Passer au prochain motif
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
+		monde.histoire.filauto[poschap][posmotif].titre = str;     //Conserver le titre, simplement parce que ça me tente.
+	}
 	
-	//Fonction pour écire le texte ("mailles") du chaînon (manuel)
+	//Fonction pour écire le texte ("mailles") du motif (manuel)
 	void mtexte(univers& monde, const string& str) {
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;			
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;			
 		int strnb = str.length();		//Aller chercher la taille du string
 		int debmaille = 0;				//Créer un compteur pour le début de la maille actuelle
 		for(int countstr=0; countstr<strnb; countstr++){
 			if(str[countstr]=='µ') {										
 				if(countstr-debmaille>0) {
-					monde.histoire.chainemanu[poschap][poschai].maille.ajout(strintervalle(str,debmaille,countstr-1));
-				} else monde.histoire.chainemanu[poschap][poschai].maille.ajout("");   
+					monde.histoire.filmanu[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,countstr-1));
+				} else monde.histoire.filmanu[poschap][posmotif].maille.ajout("");   
 				debmaille = countstr+1;		//if(...) : évite les intervalles [1,0] (à la place de [0,1]), et skippe seulement la maille si la maille est vide (ex: "µµ")
 			}
 		}
-		monde.histoire.chainemanu[poschap][poschai].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
-	}																						//AJOUTER PAR DÉFAUT UN SEUL ENCHAÎNEMENT LISANT TOUTES LES MAILLES DANS L'ORDRE + SA PROBABILITÉ DE 1; (sera overridé par la prochaine commande)
+		monde.histoire.filmanu[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
+		//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre, avec une probabilité de 1 (peut alors être écrasé par les commandes suivantes)
+		monde.histoire.filmanu[poschap][posmotif].enchainement.ajoutvide();      //Créer le premier enchaînement
+		for(int countmaille = 0; countmaille<monde.histoire.filmanu[poschap][posmotif].maille.longueur; countmaille++){
+			monde.histoire.filmanu[poschap][posmotif].enchainement[0].ajout(countmaille);	
+		}
+		monde.histoire.filmanu[poschap][posmotif].enchaineprob.ajoutvide();      //Créer la première probabilité
+		monde.histoire.filmanu[poschap][posmotif].enchaineprob[0].set("1",monde.biblio);	
+	}																						
+	//Fonction pour écire le texte ("mailles") du motif (automatique)
+	void atexte(univers& monde, const string& str) {
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;			
+		int strnb = str.length();		//Aller chercher la taille du string
+		int debmaille = 0;				//Créer un compteur pour le début de la maille actuelle
+		for(int countstr=0; countstr<strnb; countstr++){
+			if(str[countstr]=='µ') {										
+				if(countstr-debmaille>0) {
+					monde.histoire.filauto[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,countstr-1));
+				} else monde.histoire.filauto[poschap][posmotif].maille.ajout("");   
+				debmaille = countstr+1;		//if(...) : évite les intervalles [1,0] (à la place de [0,1]), et skippe seulement la maille si la maille est vide (ex: "µµ")
+			}
+		}
+		monde.histoire.filauto[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
+		//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre, avec une probabilité de 1 (peut alors être écrasé par les commandes suivantes)
+		monde.histoire.filauto[poschap][posmotif].enchainement.ajoutvide();      //Créer le premier enchaînement
+		for(int countmaille = 0; countmaille<monde.histoire.filauto[poschap][posmotif].maille.longueur; countmaille++){
+			monde.histoire.filauto[poschap][posmotif].enchainement[0].ajout(countmaille);	
+		}
+		monde.histoire.filauto[poschap][posmotif].enchaineprob.ajoutvide();      //Créer la première probabilité
+		monde.histoire.filauto[poschap][posmotif].enchaineprob[0].set("1",monde.biblio);	
+	}		
 	
+		
 	//Fonction pour définir les enchaînements possibles (manuel)
 	void mordre(univers& monde, const string& str) {
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;		
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
 		int strnb = str.length();		//Aller chercher la taille du string
 		int countordre = 0;				//Créer un compteur pour l'ordre
 		int debnombre = 0;				//Créer un compteur d'indexation pour le début du nombre
+		//Effacer les enchaînements déjà existants (celles par défaut)
+		monde.histoire.filmanu[poschap][posmotif].enchainement[0].vide();        //Conserve quand même le fait qu'un premier enchaînement a été créé
+		monde.histoire.filmanu[poschap][posmotif].enchaineprob[0].clean();        //Conserve quand même le fait qu'une première probabilité a été créée    
+		//Ajouter les enchaînements inscrits
 		for(int countstr=0; countstr<strnb; countstr++){
 			if(str[countstr]=='-'||str[countstr]==';') {
 				if(countstr-debnombre>0) {
-					monde.histoire.chainemanu[poschap][poschai].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
+					monde.histoire.filmanu[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
 				} else {out("L'enchaînement \""); out(str); out("\" contient une valeur vide qui fait planter le parsing à la position "); out(countstr); out(". Changer ça svp."); abort();}			
 				if(str[countstr]=='-') {}
-				if(str[countstr]==';') {countordre++; monde.histoire.chainemanu[poschap][poschai].enchainement.ajoutvide();}
+				if(str[countstr]==';') {countordre++; monde.histoire.filmanu[poschap][posmotif].enchainement.ajoutvide();}
 				debnombre = countstr+1;
 			}
 		}
-		monde.histoire.chainemanu[poschap][poschai].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb-1))-1);		//Entrer le dernier chiffre
-		
-		
-		/*
-		//DEBUGGG			
-		curspos(2,6); out("La longueur des enchaînements est: "); out(monde.histoire.chainemanu[poschap][poschai].enchainement.longueur);
-				//Maintenant, que contient le maillon?
-		curspos(2,8); out("Les enchaînements enregistrés sont:");
-		for(int countench = 0; countench<monde.histoire.chainemanu[poschap][poschai].enchainement.longueur; countench++){
-			for(int countordre = 0; countordre<monde.histoire.chainemanu[poschap][poschai].enchainement[countench].longueur; countordre++){
-				out(monde.histoire.chainemanu[poschap][poschai].enchainement[countench][countordre]); out("-");
-			}
-			
-			out(";");
+		monde.histoire.filmanu[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb-1))-1);		//Entrer le dernier chiffre	
+		//Ajouter par défaut une probabilité de 1 pour tous les enchaînements inscrits (peut alors être écrasé par la commande suivante)
+		for(int countench = 0; countench<monde.histoire.filmanu[poschap][posmotif].enchainement.longueur; countench++){
+			monde.histoire.filmanu[poschap][posmotif].enchaineprob[countench].set("1",monde.biblio);	
 		}		
-		abort();
-		*/
-		
-	}																						//AJOUTER PAR DÉFAUT UNE PROBABILITÉ DE 1 POUR TOUS LES ENCHAÎNEMENTS; (sera overridé par la prochaine commande)
+	}																						
+	//Fonction pour définir les enchaînements possibles (automatique)
+	void aordre(univers& monde, const string& str) {
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
+		int strnb = str.length();		//Aller chercher la taille du string
+		int countordre = 0;				//Créer un compteur pour l'ordre
+		int debnombre = 0;				//Créer un compteur d'indexation pour le début du nombre
+		//Effacer les enchaînements déjà existants (celles par défaut)
+		monde.histoire.filauto[poschap][posmotif].enchainement[0].vide();        //Conserve quand même le fait qu'un premier enchaînement a été créé
+		monde.histoire.filauto[poschap][posmotif].enchaineprob[0].clean();        //Conserve quand même le fait qu'une première probabilité a été créée    
+		//Ajouter les enchaînements inscrits
+		for(int countstr=0; countstr<strnb; countstr++){
+			if(str[countstr]=='-'||str[countstr]==';') {
+				if(countstr-debnombre>0) {
+					monde.histoire.filauto[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
+				} else {out("L'enchaînement \""); out(str); out("\" contient une valeur vide qui fait planter le parsing à la position "); out(countstr); out(". Changer ça svp."); abort();}			
+				if(str[countstr]=='-') {}
+				if(str[countstr]==';') {countordre++; monde.histoire.filauto[poschap][posmotif].enchainement.ajoutvide();}
+				debnombre = countstr+1;
+			}
+		}
+		monde.histoire.filauto[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb-1))-1);		//Entrer le dernier chiffre	
+		//Ajouter par défaut une probabilité de 1 pour tous les enchaînements inscrits (peut alors être écrasé par la commande suivante)
+		for(int countench = 0; countench<monde.histoire.filauto[poschap][posmotif].enchainement.longueur; countench++){
+			monde.histoire.filauto[poschap][posmotif].enchaineprob[countench].set("1",monde.biblio);	
+		}		
+	}			
+	
 	
 	//Fonction pour définir les probabilités associées avec chaque enchaînement (manuel)
 	void mprob(univers& monde, const string& str){
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;		
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
 		int strnb = str.length();		//Aller chercher la taille du string
 		int debench = 0;				//Noter la position d'indexation du début de l'enchaînement
 		int countench = 0;				//Position de l'enchaînement visé
+		//Effacer les probabilités déjà existantes (celles par défaut)
+		for(int countench = 0; countench<monde.histoire.filmanu[poschap][posmotif].enchainement.longueur; countench++){
+			monde.histoire.filmanu[poschap][posmotif].enchaineprob[countench].clean();				//Conserve le fait que les probabilités ont été créées en nombre égal au nombre d'enchaînements
+		}				
+		//Ajouter les probabilités inscrites
 		for(int countstr=0; countstr<strnb; countstr++){
 			if(str[countstr]==';') {
 				if(countstr-debench>0){
-					monde.histoire.chainemanu[poschap][poschai].enchaineprob[countench].set(strintervalle(str,debench,countstr-1),monde.biblio);
-				} else monde.histoire.chainemanu[poschap][poschai].enchaineprob[countench].set("0",monde.biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 0. Ça lui apprendra.
-				debench = countstr + 1; countench++; monde.histoire.chainemanu[poschap][poschai].enchaineprob.ajoutvide();
+					monde.histoire.filmanu[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,countstr-1),monde.biblio);
+				} else monde.histoire.filmanu[poschap][posmotif].enchaineprob[countench].set("0",monde.biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 0. Ça lui apprendra.
+				debench = countstr + 1; countench++;
 			}
 		}
 		if(debench!=strnb) {		//Entrer le dernier chiffre
-		monde.histoire.chainemanu[poschap][poschai].enchaineprob[countench].set(strintervalle(str,debench,strnb-1),monde.biblio);
-		monde.histoire.chainemanu[poschap][poschai].enchaineprob.ajoutvide();
+		monde.histoire.filmanu[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,strnb-1),monde.biblio);
+		}
+		while(countench++<monde.histoire.filmanu[poschap][posmotif].enchainement.longueur-1){             //Si moins de probabilités ont été inscrites qu'il n'y a d'enchaînements
+			monde.histoire.filmanu[poschap][posmotif].enchaineprob[countench].set("0",monde.biblio);
+		}
+	}
+	//Fonction pour définir les probabilités associées avec chaque enchaînement (automatique)
+	void aprob(univers& monde, const string& str){
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
+		int strnb = str.length();		//Aller chercher la taille du string
+		int debench = 0;				//Noter la position d'indexation du début de l'enchaînement
+		int countench = 0;				//Position de l'enchaînement visé
+		//Effacer les probabilités déjà existantes (celles par défaut)
+		for(int countench = 0; countench<monde.histoire.filauto[poschap][posmotif].enchainement.longueur; countench++){
+			monde.histoire.filauto[poschap][posmotif].enchaineprob[countench].clean();				//Conserve le fait que les probabilités ont été créées en nombre égal au nombre d'enchaînements
+		}				
+		//Ajouter les probabilités inscrites
+		for(int countstr=0; countstr<strnb; countstr++){
+			if(str[countstr]==';') {
+				if(countstr-debench>0){
+					monde.histoire.filauto[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,countstr-1),monde.biblio);
+				} else monde.histoire.filauto[poschap][posmotif].enchaineprob[countench].set("0",monde.biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 0. Ça lui apprendra.
+				debench = countstr + 1; countench++;
+			}
+		}
+		if(debench!=strnb) {		//Entrer le dernier chiffre
+		monde.histoire.filauto[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,strnb-1),monde.biblio);
+		}
+		while(countench++<monde.histoire.filauto[poschap][posmotif].enchainement.longueur-1){             //Si moins de probabilités ont été inscrites qu'il n'y a d'enchaînements
+			monde.histoire.filauto[poschap][posmotif].enchaineprob[countench].set("0",monde.biblio);
 		}
 	}
 	
-	//Fonction pour définir les codes spéciaux appelés au début du chaînon (manuel)
+	//Fonction pour définir les codes spéciaux appelés au début du motif (manuel)
 	void mdeb(univers& monde, const string& str){
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;		
-		monde.histoire.chainemanu[poschap][poschai].codespeciauxdebut = str;
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
+		monde.histoire.filmanu[poschap][posmotif].codespeciauxdebut = str;
+	}
+	//Fonction pour définir les codes spéciaux appelés au début du motif (automatique)
+	void adeb(univers& monde, const string& str){
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
+		monde.histoire.filauto[poschap][posmotif].codespeciauxdebut = str;
 	}
 	
-	//Fonction pour définir les codes spéciaux appelés au début du chaînon (manuel)
+	//Fonction pour définir les codes spéciaux appelés à la fin du motif (manuel)
 	void mfin(univers& monde, const string& str){
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;
-		monde.histoire.chainemanu[poschap][poschai].codespeciauxfin = str;
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;
+		monde.histoire.filmanu[poschap][posmotif].codespeciauxfin = str;
+	}
+	//Fonction pour définir les codes spéciaux appelés à la fin du motif (automatique)
+	void afin(univers& monde, const string& str){
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;
+		monde.histoire.filauto[poschap][posmotif].codespeciauxfin = str;
 	}
 	
+		
 		//ICI, '|' SÉPARE LES SYNONYMES, '&' SÉPARE LES GROUPES DE MOTS NÉCESSAIRES, "[]" DÉNOTE LES MOTS À EXCLURE ET "()" SÉPARENT LES DIFFÉRENTES FAÇONS DE LE DIRE
 			//NOTE: LES MOTS À EXCLURE N'ONT PAS DE GROUPES DE MOTS, ILS N'ONT QUE DES SYNONYMES!
-	//Fonction pour définir les combinaisons de mots qui appeleront le chaînon (manuel)
+	//Fonction pour définir les combinaisons de mots qui appeleront le motif (manuel)
 	void mcomm(univers& monde, const string& str){
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;
 		int strnb = str.length();
 		int posfac = 0;			//Position des différentes façons de dire la commande
 		int posgr = 0;          //Position des groupes de mots nécessaires
@@ -1327,28 +1421,28 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		for(int countstr=0; countstr<strnb; countstr++){
 			if(str[countstr]=='('|str[countstr]=='[') {		
 				if(str[countstr]=='(') {
-					monde.histoire.chainemanu[poschap][poschai].commandes.inclus.ajoutvide();         //Noter qu'une nouvelle façon de dire la commande commence
-					monde.histoire.chainemanu[poschap][poschai].commandes.exclus.ajoutvide();	
+					monde.histoire.filmanu[poschap][posmotif].commandes.inclus.ajoutvide();         //Noter qu'une nouvelle façon de dire la commande commence
+					monde.histoire.filmanu[poschap][posmotif].commandes.exclus.ajoutvide();	
 				} else if(str[countstr]=='[') exclus = true;
 			}else {
 				if(countstr==0) {
-					monde.histoire.chainemanu[poschap][poschai].commandes.inclus.ajoutvide();         //Noter qu'une nouvelle façon de dire la commande commence
-					monde.histoire.chainemanu[poschap][poschai].commandes.exclus.ajoutvide();								//Si la première parenthèse est omise (par ex, lorsqu'il y a une seule façon de le dire)					
+					monde.histoire.filmanu[poschap][posmotif].commandes.inclus.ajoutvide();         //Noter qu'une nouvelle façon de dire la commande commence
+					monde.histoire.filmanu[poschap][posmotif].commandes.exclus.ajoutvide();								//Si la première parenthèse est omise (par ex, lorsqu'il y a une seule façon de le dire)					
 				}
 				if(str[countstr]=='|'||str[countstr]=='&'||str[countstr]==')'||str[countstr]==']'){
 					if(mot.length()>0&&!(mot.length()==1&&mot[0]==' ')) {		//Si un mot d'au moins une lettre et qui n'est pas seulement un espace a été sauvegardé				
 						//Enregistrer le mot comme commande
 						if(mot[0]==' ') mot = strintervalle(mot,1,mot.length()-1);		//Enlever les espaces en début et en fin de mot; permet d'espacer l'écriture des commandes au besoin
 						if(mot[mot.length()]==' ') mot = strintervalle(mot,0,mot.length()-2);
-						if(exclus) {monde.histoire.chainemanu[poschap][poschai].commandes.exclus[posfac].ajout(mot);		//Enregistrer le mot
+						if(exclus) {monde.histoire.filmanu[poschap][posmotif].commandes.exclus[posfac].ajout(mot);		//Enregistrer le mot
 						} else {
-							if(monde.histoire.chainemanu[poschap][poschai].commandes.inclus[posfac].longueur==0) monde.histoire.chainemanu[poschap][poschai].commandes.inclus[posfac].ajoutvide();	//Noter qu'un nouveau groupe de mots commence
-							monde.histoire.chainemanu[poschap][poschai].commandes.inclus[posfac][posgr].ajout(mot);
+							if(monde.histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].longueur==0) monde.histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].ajoutvide();	//Noter qu'un nouveau groupe de mots commence
+							monde.histoire.filmanu[poschap][posmotif].commandes.inclus[posfac][posgr].ajout(mot);
 						}
 						mot.clear();			//Vider le string de stockage temporaire
 						//Interpréter le caractère exact
 						if(str[countstr]=='|') {						//Ne rien faire
-						}else if(str[countstr]=='&') {posgr++; monde.histoire.chainemanu[poschap][poschai].commandes.inclus[posfac].ajoutvide();
+						}else if(str[countstr]=='&') {posgr++; monde.histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].ajoutvide();
 						} else if(str[countstr]==')') {posgr=0; posfac++;
 						} else if(str[countstr]==']') {exclus = false;
 						}
@@ -1358,37 +1452,48 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		}
 	}
 	
-	//Fonction pour définir les commandes exactes qui appeleront le chaînon (manuel)
+	//Fonction pour définir les commandes exactes qui appeleront le motif (manuel)
 	void mcommexact(univers& monde, const string& str){
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;		
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
 		int strnb = str.length();
 		int debmot = 0;			//Noter la position d'indexation du début du mot
 		for(int countstr=0; countstr<strnb; countstr++){
 			if(str[countstr]=='|') {
 				if(countstr-debmot>0){ 
-					monde.histoire.chainemanu[poschap][poschai].commandes.exact.ajout(strintervalle(str,debmot,countstr-1));
-				} else monde.histoire.chainemanu[poschap][poschai].commandes.exact.ajout(""); //Si deux ';' se suivent, mettre *RIEN* comme commande exacte possible
+					monde.histoire.filmanu[poschap][posmotif].commandes.exact.ajout(strintervalle(str,debmot,countstr-1));
+				} else monde.histoire.filmanu[poschap][posmotif].commandes.exact.ajout(""); //Si deux ';' se suivent, mettre *RIEN* comme commande exacte possible
 				debmot = countstr + 1;
 			}
 		}	
-		if(debmot!=strnb) monde.histoire.chainemanu[poschap][poschai].commandes.exact.ajout(strintervalle(str,debmot,strnb-1));		//Entrer le dernier mot
+		if(debmot!=strnb) monde.histoire.filmanu[poschap][posmotif].commandes.exact.ajout(strintervalle(str,debmot,strnb-1));		//Entrer le dernier mot
 	}
 	
-	//Fonction pour définir les conditions sous lesquelles le chaînon pourra être appelé (manuel)
+	//Fonction pour définir les conditions sous lesquelles le motif pourra être appelé (manuel)
 	void mcond(univers& monde, const string& str){
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;		
-		monde.histoire.chainemanu[poschap][poschai].condition.set(str,monde.biblio);
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
+		monde.histoire.filmanu[poschap][posmotif].condition.set(str,monde.biblio);
 	}
-	
-	//Fonction pour définir si le canal sera vidé dès l'activation de ce chaînon (manuel)
+	//Fonction pour définir les conditions sous lesquelles le motif pourra être appelé (automatique)
+	void acond(univers& monde, const string& str){
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
+		monde.histoire.filauto[poschap][posmotif].condition.set(str,monde.biblio);
+	}
+		
+	//Fonction pour définir si le canal sera vidé dès l'activation de ce motif (manuel)
 	void mover(univers& monde, bool bl){
-		int poschap = monde.histoire.chainemanu.longueur-1;
-		int poschai = monde.histoire.chainemanu[monde.histoire.chainemanu.longueur-1].longueur-1;		
-		monde.histoire.chainemanu[poschap][poschai].override = bl;
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
+		monde.histoire.filmanu[poschap][posmotif].override = bl;
 	}				
-	
+	//Fonction pour définir si le canal sera vidé dès l'activation de ce motif (automatique)
+	void aover(univers& monde, bool bl){
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
+		monde.histoire.filauto[poschap][posmotif].override = bl;
+	}					
 				
 	/*		//EXEMPLE:
 			mtitre(monde,"Je suis confortable");
@@ -1399,11 +1504,43 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			mcond(monde,"Laure¶debut&!Laure¶confo");
 			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§§v0.8§");
 			mfin(monde,"§bLaure¶actif=0§")
-	*/	
+	*/	 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//6) Fonction LireCanal()
-void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, memoire& mem, bibliotheque& biblio) {
+//6) Fonction AutoInterpret()
+void AutoInterpret(StaticVect<canal,taillecanal>& canaux, bibliotheque& biblio, ouvrage& histoire, const fen& base, input& inp, memoire& mem) {
+	
+	//ATTENTION! 
+				//ICI, Y'A QUELQUE CHOSE DONT JE NE SUIS PAS SÛRE:
+	/*
+		C'est que: Si j'évalue à CHAQUE FOIS qu'un code spécial se fait lire, j'ai une chance d'intégrer le même motif deux fois de suite, si le prochain code spécial lu
+		n'est pas exactement celui qui empêche le motif. 
+			-Une première solution serait de "disable" les motifs automatiques dès leur lecture: ils seraient donc à usage unique.
+			-Une deuxième solution serait d'utiliser un rayon de la bibliothèque pour "disable" (automatiquement) les motifs automatiques... et d'ensuite s'assurer que le
+				message pour rétablir leur fonctionnement soit lu: 
+					soit en le mettant dans un autre canal que celui qui est utilisé (mais alors, il faudrait autant de canaux qu'il y a de motifs),
+					soit en le mettant comme code spécial automatique à la fin du canal, mais QUI EST "LU" MÊME SI LE CANAL EST CLEARÉ.
+						En fait, ça semble être overall une bonne pratique de conserver des "codes spéciaux" arounds, qui sont lu même si le canal est overridé.	 
+	
+				Deuxième solution, donc, celle de gérer tout cet automatisme simplement par un rayon de la bibliothèque dont les noms sont automatiquement générés, 
+					et dont l'activation se trouve en dehors même du système habituel de codes spéciaux.
+					En fait... Je ne pense pas que j'aie réellement besoin d'un rayon de la bibliothèque.
+					Ce serait beaucoup plus simple si l'information était simplement conservée dans un booléen À MÊME LE MOTIF AUTOMATIQUE, non?
+												C'est cette deuxième solution qui a été implémentée.
+	*/
+	//Pour chaque chapitre
+	for(int chapitrepos=0; chapitrepos<histoire.filmanu.longueur; chapitrepos++) { if(histoire.cadenas[chapitrepos].eval(biblio)) {			
+		//Pour chaque motif dans l'histoire
+		for(int motifpos=0; motifpos<histoire.filmanu[chapitrepos].longueur; motifpos++) {if(histoire.filauto[chapitrepos][motifpos].condition.eval(biblio)&&!histoire.filauto[chapitrepos][motifpos].encours) {
+			integrationauto(chapitrepos,motifpos,canaux,histoire,biblio);            //Intégrer tout de suite le motif dans le canal	
+		}}
+	}}
+}
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------
+//7) Fonction LireCanal()
+void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, memoire& mem, bibliotheque& biblio, ouvrage& histoire, input& inp) {
 	//Updater le "next time"
 	canaux[canpos].nxtt += canaux[canpos].delay;
 	//Interpréter les "codes spéciaux" (§...§)
@@ -1444,14 +1581,14 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				while(canaux[canpos].txt[posSpecial] != '¶') nomrayon += canaux[canpos].txt[posSpecial++]; 
 				posSpecial++; while(canaux[canpos].txt[posSpecial] != '=') nomlivre += canaux[canpos].txt[posSpecial++];
 				posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') val += canaux[canpos].txt[posSpecial++];							
-				biblio.modif(nomrayon,nomlivre,stoi(val));
-				
-				
-				//DEBUGGGG
-				//out("Ceci est la valeur enregistrée dans LireCanal(): "); out(biblio.acces(ColNameFind(nomrayon,biblio.nomrayon),ColNameFind(nomlivre,biblio.nomlivre[ColNameFind(nomrayon,biblio.nomrayon)])));
-				//abort();
-				
-				
+				biblio.modif(nomrayon,nomlivre,stoi(val));	
+				AutoInterpret(canaux, biblio, histoire, base, inp, mem);      //Vérifier si un motif automatique doit être intégré aux canaux		
+			} else if(canaux[canpos].txt[1]=='m'){		//'m' pour "motif" -> marquer le motif automatique comme n'étant plus en cours			
+				string poschap; string posmotif;
+				int posSpecial = 2;
+				while(canaux[canpos].txt[posSpecial] != ';') poschap += canaux[canpos].txt[posSpecial++]; 
+				posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') posmotif += canaux[canpos].txt[posSpecial++];
+				histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
 			}
 		
 							
@@ -1516,83 +1653,72 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
           
          
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//7) Fonction : UserInputInterpret ; vérifie si la commande entrée correspond à une des actions actuellement autorisée
+//8) Fonction : UserInputInterpret ; vérifie si la commande entrée correspond à une des actions actuellement autorisée
 	template<int Taille>
-	void UserInputInterpret(StaticVect<char,Taille>& command, StaticVect<canal,taillecanal>& canaux, bibliotheque& biblio, fil& histoire, const fen& base, input& inp, memoire& mem) {
-		//
-
-			//IDÉE:
-			//		PEUT-ÊTRE INCLURE DIRECTEMENT DANS L'ÉVALUATION LA MISE EN MAJUSCULE AUTOMATIQUE DU PREMIER MOT?
-			//		
-			
-					//CE N'EST PAS ENCORE FAIT!!! IL SERAIT IMPORTANT DE L'INTÉGRER!!!
-			
-			
-			
+	void UserInputInterpret(StaticVect<char,Taille>& command, StaticVect<canal,taillecanal>& canaux, bibliotheque& biblio, ouvrage& histoire, const fen& base, input& inp, memoire& mem) {
 		//Créer des compteurs
-		StaticVect<int,20> bonchapitre;	  //Créer des StaticVect pour noter la position des chainons qui correspondent à la commande
-		StaticVect<int,20> bonchainon;											//Taille arbitraire de 20; j'espère qu'aucune commande n'appelera simultannément 20 maillons
+		StaticVect<int,20> bonchapitre;	  //Créer des StaticVect pour noter la position des motifs qui correspondent à la commande
+		StaticVect<int,20> bonmotif;											//Taille arbitraire de 20; j'espère qu'aucune commande n'appelera simultannément 20 maillons
 		StaticVect<bool,taillegroupes> groupebon; 	   	 //Créer un StaticVect pour noter si chaque groupe de mot est bon
 		int diffpos; bool exactbon; int commpos; bool exactmauvais; 	//Créer les compteurs pour les expressions exactes
 		int groupepos; int synpos; int motpos; int precedpos; bool inclusbon; bool exclusbon;	//Créer les compteurs pour les mots à inclure/exclure	
 
 		//Pour chaque chapitre
-		for(int chapitrepos=0; chapitrepos<histoire.chainemanu.longueur; chapitrepos++) { if(histoire.cadenas[chapitrepos].eval(biblio)) {			
-			//Pour chaque chainon dans l'histoire
-			for(int chainonpos=0; chainonpos<histoire.chainemanu[chapitrepos].longueur; chainonpos++) {if(histoire.chainemanu[chapitrepos][chainonpos].condition.eval(biblio)) {
-				
-				
-				//DEBUGGG
-				//curspos(1,chainonpos+13); out("Le chainon \""); out(histoire.chainemanu[chapitrepos][chainonpos].commandes.exact[0]); out("\" a sa condition remplie.");
-				
-				
-				
-				
-				if(histoire.chainemanu[chapitrepos][chainonpos].commandes.ifexact) {	//Si une commande exacte est nécessaire
+		for(int chapitrepos=0; chapitrepos<histoire.filmanu.longueur; chapitrepos++) { if(histoire.cadenas[chapitrepos].eval(biblio)) {			
+			//Pour chaque motif dans l'histoire
+			for(int motifpos=0; motifpos<histoire.filmanu[chapitrepos].longueur; motifpos++) {if(histoire.filmanu[chapitrepos][motifpos].condition.eval(biblio)) {
+				if(histoire.filmanu[chapitrepos][motifpos].commandes.ifexact) {	//Si une commande exacte est nécessaire
 					diffpos = 0; exactbon = false;
-					while(diffpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.exact.longueur&&!exactbon) {
+					while(diffpos<histoire.filmanu[chapitrepos][motifpos].commandes.exact.longueur&&!exactbon) {
 						commpos = 0; exactmauvais = false;
-						while(!exactmauvais&&commpos<command.longueur) {if(command[commpos]!=histoire.chainemanu[chapitrepos][chainonpos].commandes.exact[diffpos][commpos]) exactmauvais = true; else commpos++;}	
+						while(!exactmauvais&&commpos<command.longueur) {if(command[commpos]!=histoire.filmanu[chapitrepos][motifpos].commandes.exact[diffpos][commpos]) exactmauvais = true; else commpos++;}	
 						if(exactmauvais==false) exactbon = true; else diffpos++;
 					}
-					if(exactbon)	{integrationmanu(chapitrepos,chainonpos,canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal					
+					if(exactbon)	{integrationmanu(chapitrepos,motifpos,canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon motif dans le canal					
 				} else {								//Si plusieurs mots clés doivent être présents
 					inclusbon = false; diffpos = 0;
 					//Pour chaque façon différente de dire la commande
-					while(diffpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus.longueur&&!(inclusbon&&exclusbon)) {
+					while(diffpos<histoire.filmanu[chapitrepos][motifpos].commandes.inclus.longueur&&!(inclusbon&&exclusbon)) {
 						//Vérifier si les mots à être inclus sont présents
 							groupepos = 0;  precedpos = 0;   														//Remettre tous les groupes de mots comme incorrects jusqu'à preuve du contraire
-							groupebon.remplacement(false); for(int clearpos=1; clearpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos].longueur; clearpos++) groupebon.ajout(false); 
+							groupebon.remplacement(false); for(int clearpos=1; clearpos<histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos].longueur; clearpos++) groupebon.ajout(false); 
 							//Pour chaque groupe de mots
-							while(groupepos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos].longueur) {    
+							while(groupepos<histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos].longueur) {    
 								synpos=0;
 								//Pour chaque synonyme
-								while(synpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][groupepos].longueur&&!groupebon[groupepos]) {		
+								while(synpos<histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos][groupepos].longueur&&!groupebon[groupepos]) {		
 									commpos = precedpos;
 									motpos = 0;
 									//Pour chaque lettre
-									while(commpos<command.longueur&&!groupebon[groupepos]) {						//DONC, ICI, L'ORDRE EST IMPORTANT DANS LA COMMANDE. PARCE QU'ON PART DE LA POSITION PRÉCÉDENTE. CHANGER ÇA? GARDER ÇA?															
-										if(command[commpos++]==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][groupepos][synpos][motpos++]) {
-											if(motpos==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][groupepos][synpos].length()) {groupebon[groupepos] = true; precedpos = commpos;}
-										} else motpos = 0;
+									while(commpos<command.longueur&&!groupebon[groupepos]) {						//DONC, ICI, L'ORDRE EST IMPORTANT DANS LA COMMANDE. PARCE QU'ON PART DE LA POSITION PRÉCÉDENTE. CHANGER ÇA? GARDER ÇA?	
+										//PUISQUE L'ORDRE EST IMPORTANT, LA CONVERSION EN MAJUSCULE NE SERA EFFECTUÉE QUE POUR LE PREMIER GROUPE DE MOT (ET POUR LA PREMIÈRE LETTRE DE LA COMMANDE)
+										if(commpos==0&&groupepos==0&&motpos==0)	{			//Première lettre de la commande
+											if(command[commpos]==histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos][groupepos][synpos][motpos]||command[commpos]==majuscule(histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos][groupepos][synpos][motpos])) {
+											commpos++; motpos++; if(motpos==histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos][groupepos][synpos].length()) {groupebon[groupepos] = true; precedpos = commpos;}	
+											} else {commpos++;}
+										} else {                 //Toutes autres lettres																	
+											if(command[commpos++]==histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos][groupepos][synpos][motpos++]) {
+												if(motpos==histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos][groupepos][synpos].length()) {groupebon[groupepos] = true; precedpos = commpos;}
+											} else motpos = 0;
+										}
 									}
 									synpos++;
 								}
 								groupepos++;					
 							}	
 							//Maintenant, on a l'information sur quel groupe de mots, dans l'intervalle [0,longueur_de_cette_differente_façon], a un membre qui est présent dans la commande.
-							groupepos=0 ; while(groupebon[groupepos++]) if(groupepos==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos].longueur) inclusbon = true;
+							groupepos=0 ; while(groupebon[groupepos++]) if(groupepos==histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos].longueur) inclusbon = true;
 						if(inclusbon) {
 						//Vérifier si les mots à être exclus sont absents
 							synpos=0; exclusbon = true;
 							//Pour chaque synonyme
-							while(synpos<histoire.chainemanu[chapitrepos][chainonpos].commandes.exclus[diffpos].longueur&&exclusbon) {
+							while(synpos<histoire.filmanu[chapitrepos][motifpos].commandes.exclus[diffpos].longueur&&exclusbon) {
 								commpos = 0;
 								motpos = 0;
 								//Pour chaque lettre
-								while(commpos<command.longueur&&exclusbon) {		//Si le mot est retrouvé, la commande ne correspond pas au chaînon																			
-									if(command[commpos++]==histoire.chainemanu[chapitrepos][chainonpos].commandes.exclus[diffpos][synpos][motpos++]) {
-										if(motpos==histoire.chainemanu[chapitrepos][chainonpos].commandes.inclus[diffpos][synpos].longueur) exclusbon = false; inclusbon = false;	
+								while(commpos<command.longueur&&exclusbon) {		//Si le mot est retrouvé, la commande ne correspond pas au motif																			
+									if(command[commpos++]==histoire.filmanu[chapitrepos][motifpos].commandes.exclus[diffpos][synpos][motpos++]) {
+										if(motpos==histoire.filmanu[chapitrepos][motifpos].commandes.inclus[diffpos][synpos].longueur) exclusbon = false; inclusbon = false;	
 									} else motpos = 0;
 								}
 								synpos++;
@@ -1600,27 +1726,27 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 						}
 						diffpos++;
 					}
-					if(inclusbon&&exclusbon) {bonchapitre.ajout(chapitrepos); bonchainon.ajout(chainonpos);}
+					if(inclusbon&&exclusbon) {bonchapitre.ajout(chapitrepos); bonmotif.ajout(motifpos);}
 				}		
 			}}
 		}}
-		//Maintenant, on a l'information sur quels chaînons correspondent (sans expression exacte) à la commande
-		if(bonchainon.longueur==0) {
+		//Maintenant, on a l'information sur quels motifs correspondent (sans expression exacte) à la commande
+		if(bonmotif.longueur==0) {
 			inp.accepted = false; 			
 			return;
-		} else if(bonchainon.longueur==1) {	
-			inp.accepted = true; if(histoire.chainemanu[bonchapitre[0]][bonchainon[0]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input					
-			integrationmanu(bonchapitre[0],bonchainon[0],canaux,histoire,biblio); return;            //Intégrer le bon chaînon dans le canal
+		} else if(bonmotif.longueur==1) {	
+			inp.accepted = true; if(histoire.filmanu[bonchapitre[0]][bonmotif[0]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input					
+			integrationmanu(bonchapitre[0],bonmotif[0],canaux,histoire,biblio); return;            //Intégrer le bon motif dans le canal
 		} else {
-			//Déterminer si la commande correspond à une expression exacte
+			//Déterminer si la commande correspond au titre d'un canal
 			int bonpos = 0; exactbon = false; 
-			while(bonpos<bonchainon.longueur&&!exactbon) {
+			while(bonpos<bonmotif.longueur&&!exactbon) {
 				exactmauvais = false; commpos = 0;
-					while(!exactmauvais&&commpos<command.longueur) {if(command[commpos]!=histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0][commpos]) exactmauvais = true; else commpos++;}	
+					while(!exactmauvais&&commpos<command.longueur) {if(command[commpos]!=histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].titre[commpos]) exactmauvais = true; else commpos++;}	
 					if(exactmauvais==false) {
 						exactbon = true; 	
-						inp.accepted = true; if(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].getbusy) inp.busy = true;							
-						integrationmanu(bonchapitre[bonpos],bonchainon[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal	
+						inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].getbusy) inp.busy = true;							
+						integrationmanu(bonchapitre[bonpos],bonmotif[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon motif dans le canal	
 			}	
 			//Si l'ambiguité demeure: mettre le jeu sur pause, et faire apparaître les options	
 			pause(canaux);
@@ -1630,18 +1756,18 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 			}			
 			chgcol("blanc"); curspos(5,3); int cursorposy = 3;
 			egrener("Vouliez-vous dire (recopiez la ligne qui correspond à votre choix) :",160);
-			for(int bonpos=0; bonpos<bonchainon.longueur; bonpos++) {
-				if(bonpos==bonchainon.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); egrener("ou",120);}}
-				cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy);; egrener(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0],120);}
-				if(bonpos==bonchainon.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); egrener("              ?",120);}}				
+			for(int bonpos=0; bonpos<bonmotif.longueur; bonpos++) {
+				if(bonpos==bonmotif.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); egrener("ou",120);}}
+				cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy);; egrener(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].titre,120);}
+				if(bonpos==bonmotif.longueur-1) {cursorposy+=2; if(cursorposy<base.limtxty) {curspos(2,cursorposy); egrener("              ?",120);}}				
 			}
 			string reformulation;
 			cin >> reformulation;
 				//Vérifier de nouveau
 				bonpos = 0; exactbon = false; 
-				while(bonpos<bonchainon.longueur&&!exactbon) {
+				while(bonpos<bonmotif.longueur&&!exactbon) {
 					exactmauvais = false; commpos = 0;
-						while(!exactmauvais&&commpos<reformulation.length()) {if(reformulation[commpos]!=histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0][commpos]) exactmauvais = true; else commpos++;}	
+						while(!exactmauvais&&commpos<reformulation.length()) {if(reformulation[commpos]!=histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].titre[commpos]) exactmauvais = true; else commpos++;}	
 						if(exactmauvais==false) {
 							exactbon = true; 
 							curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
@@ -1650,8 +1776,8 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 							stop(1500);
 							curspos(0,0); for(int county = base.consy ; county <= mem.frontline ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);}			
 							unpause(canaux);
-							inp.accepted = true; if(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input							
-							integrationmanu(bonchapitre[bonpos],bonchainon[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal	
+							inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input							
+							integrationmanu(bonchapitre[bonpos],bonmotif[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon motif dans le canal	
 				}				
 			//Si l'ambiguité persiste: le demander une dernière fois
 			curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
@@ -1659,9 +1785,9 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 			cin >> reformulation;	
 				//Vérifier de nouveau
 				bonpos = 0; exactbon = false; 
-				while(bonpos<bonchainon.longueur&&!exactbon) {
+				while(bonpos<bonmotif.longueur&&!exactbon) {
 					exactmauvais = false; commpos = 0;
-						while(!exactmauvais&&commpos<reformulation.length()) {if(reformulation[commpos]!=histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].commandes.exact[0][commpos]) exactmauvais = true; else commpos++;}	
+						while(!exactmauvais&&commpos<reformulation.length()) {if(reformulation[commpos]!=histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].titre[commpos]) exactmauvais = true; else commpos++;}	
 						if(exactmauvais==false) {
 							exactbon = true; 
 							curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
@@ -1670,8 +1796,8 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 							stop(1500);
 							curspos(0,0); for(int county = base.consy ; county <= mem.frontline ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);}			
 							unpause(canaux);
-							inp.accepted = true; if(histoire.chainemanu[bonchapitre[bonpos]][bonchainon[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input
-							integrationmanu(bonchapitre[bonpos],bonchainon[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon chaînon dans le canal	
+							inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input
+							integrationmanu(bonchapitre[bonpos],bonmotif[bonpos],canaux,histoire,biblio); return;}            //Intégrer tout de suite le bon motif dans le canal	
 				}				
 			//Si l'ambiguité est insolvable
 			curspos(3,0); chgcol("gris sombre"); for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][base.consy + 3]); chgcol("blanc");
@@ -1686,8 +1812,8 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//8) Fonction UserInput()
-void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& biblio, StaticVect<canal,taillecanal>& canaux, fil& histoire, memoire& mem) {
+//9) Fonction UserInput()
+void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& biblio, StaticVect<canal,taillecanal>& canaux, ouvrage& histoire, memoire& mem) {
 	if(_kbhit()){
 	//i) Capter la lettre tapée
 	bool enter = false;
@@ -1737,11 +1863,11 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 				
 				
 				//DEBUGGG	
-				} else if(intkey==20) {														//Ctrl + t : Donne le status des conditions de chaque chainon
+				} else if(intkey==20) {														//Ctrl + t : Donne le status des conditions de chaque motif
 					curspos(2,8); out("Voici les conditions des chaînons:");
-					for(int poschai=0; poschai<histoire.chainemanu[0].longueur; poschai++) {
-						curspos(2,9+poschai); out("     Chaînon "); out(poschai); out("  :     ");
-						histoire.chainemanu[0][poschai].condition.test(biblio);
+					for(int posmotif=0; posmotif<histoire.filmanu[0].longueur; posmotif++) {
+						curspos(2,9+posmotif); out("     Chaînon "); out(posmotif); out("  :     ");
+						histoire.filmanu[0][posmotif].condition.test(biblio);
 					}
 					//abort();
 
@@ -1760,7 +1886,13 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 					//abort();
 					
 				
-				
+				//DEBUGGG	
+				} else if(intkey==10) {														//Ctrl + j : Donne le texte inscrit dans le premier canal
+					curspos(2,28); out("Voici le texte restant dans le premier canal : \"");
+					out(canaux[0].txt); out("\"");
+					//abort();
+					
+									
 					
 				} else {							//Caractère non ASCII
 					if(intkey==183) charkey = 'À'; else if(intkey==133) charkey = 'à'; else if(intkey==128) charkey = 'Ç'; else if(intkey==135) {charkey = 'ç';
@@ -1813,20 +1945,20 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 }     
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//9) Fonction jouer();
+//10) Fonction jouer();
 void jouer(univers& monde, fen& base, memoire& mem){
 	int currentt;
 	srand(timems());										// "setseed" de la fonction rand, pour ne pas avoir la "seed" par défaut, qui est toujours la même
 	while(true){				//À faire tout le temps:
 		currentt = timems();		
-		for(int canpos=0; canpos<=monde.canaux.longueur; canpos++) {if(monde.canaux[canpos].actif&&monde.canaux[canpos].nxtt<currentt) LireCanal(monde.canaux,canpos,base,mem,monde.biblio);}  //Lire chaque canal, s'il est prêt	
+		for(int canpos=0; canpos<=monde.canaux.longueur; canpos++) {if(monde.canaux[canpos].actif&&monde.canaux[canpos].nxtt<currentt) LireCanal(monde.canaux,canpos,base,mem,monde.biblio,monde.histoire,monde.inp);}  //Lire chaque canal, s'il est prêt	
 		if(monde.inpecho.actif&&monde.inpecho.nxtt<currentt) UserInputEcho(monde.inp,monde.inpecho,base);
 		UserInput(monde.inp,monde.inpecho,base,monde.biblio,monde.canaux,monde.histoire,mem);	//Interpréter la touche jouée		
 	}
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//10) Aire de tests
+//11) Aire de tests
 							
 int main(void) {
 
@@ -1844,6 +1976,7 @@ int main(void) {
 			nvlivre(monde,"debut");
 			nvlivre(monde,"confo");
 			nvlivre(monde,"divertir");
+			nvlivre(monde,"long");
 				
 		//Créer un canal
 		nvcanal(monde,"narration");
@@ -1852,36 +1985,45 @@ int main(void) {
 		nvchapt(monde);
 			ccond(monde,"1");        //Rendre le premier chapitre accessible tout le temps
 	
-			//Créer un maillon
+			//Créer un maillon manuel
 			mtitre(monde,"Commencer le jeu");		
 			mtexte(monde,"Bienvenue dans mon ordinateur.\nµÇa fait plaisir de vous recevoir, vraiment.\nµJ'espère que vous êtes bien installé.es.\nµÊtes-vous bien installé.es?µ Êtes-vous confortable?");				
 			mordre(monde,"1-4;1-5;2-4;2-5;3-4;4-5");
 			mprob(monde,"1;1;1;1;1;1");
-			mcomm(monde,"(Start|start|Débuter|débuter|Commencer|commencer)");
+			mcomm(monde,"(start|débuter|commencer)");
 			mcond(monde,"!Laure¶debut");	
 			mdeb(monde,"§bLaure¶actif=1§§bLaure¶debut=1§");
-			mfin(monde,"§bLaure¶actif=0§");
+			mfin(monde,"§bLaure¶actif=0§§p10000§§bLaure¶long=1§");
 			mover(monde,0);	
 
-			//Créer un maillon
+			//Créer un maillon AUTOMATIQUE!!!!
+			atitre(monde,"C'est long.");
+			atexte(monde,"\n\n         Eh. Je t'ai parlé.e.§p2000§\n                   J'veux une réponse.");
+			acond(monde,"Laure¶long");
+			adeb(monde,"§bLaure¶actif=1§§bLaure¶long=0§§v0.9§");
+			afin(monde,"§bLaure¶actif=0§");
+
+			//Créer un maillon manuel
 			mtitre(monde,"Je suis confortable");
 			mtexte(monde,"\nBien.§p6000§ µParfait.§p600§ µ\n\n                   Désirez-vous vous divertir§p1000§...?");
 			mordre(monde,"1-3;1-2-3");
 			mprob(monde,"1;1");
-			mcomm(monde,"(Je|J' & suis|reste & confortable|bien installé [ne suis pas|jamais]) (Ça va|Correct) (Oui)");		//BTW, ici, installé inclut aussi installée et installé.e (pas besoin de répéter)
+			mcomm(monde,"(je|j' & suis|reste & confortable|bien installé [ne suis pas|jamais]) (ça va|correct) (oui)");		//BTW, ici, installé inclut aussi installée et installé.e (pas besoin de répéter)
 			mcond(monde,"Laure¶debut&!Laure¶confo");
 			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§§v0.8§");
-			mfin(monde,"§bLaure¶actif=0§");
+			mfin(monde,"§bLaure¶actif=0§§p10000§§bLaure¶long=1§");
+			mover(monde,1);
 			
-			//Créer un maillon
+			//Créer un maillon manuel
 			mtitre(monde,"Je veux me divertir");
 			mtexte(monde,"\n\n\n\nZut§p2000§;§p2000§ \n\n\n            J'ai bien peur que vous ne soyez pas à la bonne place.µ§v0.3§\n\n         §p4000§Too fucking bad.");		
 			mordre(monde,"1;2");
 			mprob(monde,"1;1");
-			mcomm(monde,"(Oui|oui|évidemment|certainement|volontier|pourquoi pas|why not|d'accord) (veux|voudrais & cela|ça|bien)");
+			mcomm(monde,"(oui|évidemment|certainement|volontier|pourquoi pas|why not|d'accord) (veux|voudrais|aimerais|désire & cela|ça|bien)");
 			mcond(monde,"Laure¶confo&!Laure¶divertir");
 			mdeb(monde,"§bLaure¶actif=1§§bLaure¶divertir=1§§p1100§");
 			mfin(monde,"§bLaure¶actif=0§");	
+			mover(monde,1);
 			
 		
 	//Faire une boucle pour que les canaux s'expriment!
@@ -1891,16 +2033,4 @@ int main(void) {
 
 
 }							
-
-
-	//DEBUG:::
-	
-				//Je crois que ce qui ne marche pas, c'est que la longueur des chapitres (le nombre de chaînons inclus) n'est jamais updatée;
-						//de même que la longueur de tous les StaticVect intermédiaires, au fond, je crois.
-							//Il faudrait... l'updater manuellement dans les fonctions où on ajoute le contenu?
-									//Ou bien mettre un compteur...? Genre créer des objets à part pour contenir les nombres de chaque choses?
-											//Nan...
-	
-	
-	
 	
