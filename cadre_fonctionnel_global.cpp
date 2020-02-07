@@ -28,6 +28,23 @@
 				qui est ma foi un peu patantée. Je ne sais pas pourquoi elle marche, mais c'est la seule qui marche. À revérifier plus tard.
 */
 
+/*
+	2020-01-23:
+				Maintenant que la démo marche, j'observe que créer une nouvelle ligne quand la console est pleine (ce qui implique de réécrire toute
+				la fenêtre au complet) prend un peu de temps et crée un "mini lag". Il serait peut-être bénéfique de revoir les interactions avec la console
+				au complet.
+				Puisque le code interne de la console semble n'avoir aucun problème avec le changement de ligne "en douceur", je pourrais peut-être simplement 
+				l'exploiter: laisser la console passer une ligne (avec '\n'), puis simplement ré-écrire la ligne de commandes.
+				Je pense que ça aurait également l'avantage de laisser explorer toute la mémoire, qui resterait écrire dans la console.
+				Rendant donc l'objet "mémoire" un peu obsolète (non, car si je veux ajouter des effets "bugs", je dois avoir une sauvegarde du texte)?
+					Bref, jouer AVEC la console par défaut, plutôt que contre.
+						Contre l'utilisation d'une mémoire (à long terme):
+							-Les effets "bugs" peuvent très bien enregistrer la lettre remplacée, déjà qu'ils enregistrent sa position et le remplacement
+							-Les interruptions (ajout d'une ligne en plein milieu) et les menus "pause" nécessitent de connaître le texte présent dans la console...
+								peut être soit une mémoire à court terme, soit une fonction pour "aller chercher" le texte de la console
+								(les deux sont assez rares et "interrompant" pour que le léger lag créer ne pose aucun problème)
+*/
+
 
 /*
 	2019-07-05:
@@ -41,53 +58,9 @@
 /*
 	2019-07-13:
 				Ce qu'il me reste à faire:
-					-Tester, avec des vraies mailles (manuelles), si le UserInputInterpret agit comme il le devrait.
-								-Tout marche comme il le faudrait.				
-					-Créer un équivalent de la fonction pour les mailles automatiques
-									-LÀ, on a tout de même plusieurs choix:
-									
-										-Soit on évalue les conditions simplement TOUT LE TEMPS
-										-Soit on évalue les conditions à un intervalle de temps fixe, disons 10 ou 100 millisecondes
-										-Soit on se fie UNIQUEMENT aux valeurs de la bibliothèque pour enclencher les motifs auto, donc on évalue à chaque fois que la biblio est modifiée.
-												-Bien entendu, ce dernier est préféré, car plus parsimonious (moins de charge pour l'ordinateur).
-												
-						-Bon, j'ai techniquement terminé de coder cette partie... Reste à tester.
-					
-							-Bon.
-									La maille automatique apparaît à l'écran, ce qui est bien.
-									
-									Sauf qu'à la fin, ça lance un message en mot "égrenage", comme si c'était dans le canal,
-									"eur n'est pas complet dans : "  
-												Pis ça c'est weird, parce que la seule place où j'ai quelque chose de marqué qui ressemble à ça,
-													c'est dans genre interoper, où c'est "out()", la fonction, et non "ajouter à un canal()".
-													
-										En fait, j'ai checké, et c'est vraiment dans le canal.
-											Donc probablement que la dernière ligne où j'suis sensée ajouter le code spécial "§m...;...§ ne marche pas,
-													et met à la place ce message vraiment bizarre?
-														À revoir plus tard...
-																//BTW, c'est à la fonction Integrationauto() (ou quelque chose comme ça) que ça se trouve, ces lignes
-								-Bon, j'ai changé la manière d'intégrer le code spécial spécial à la fin, et là ça marche. Mon écriture originelle était un peu random, crammant ensemble strings, char et integer.									
-					
-					
-					-Intégrer dans l'interprétation de l'input la première (ou toutes?) majuscule optionnelle
-								-Fait, pour la première lettre seulement.
 					-Peut-être changer la mémoire de "long terme, finie" à "court terme, infinie" en sauvant moins de lignes mais en écrivant par-dessus?
-					-Je ne sais pas si j'ai fait tous les "checks" de (dés)activation des canaux... À la fois quand le canal s'épuise, et quand il est overridé!
-								-J'ai ajouté la désactivation dans la fonction d'overridecanal(), et la fonction lirecanal() a déjà un check de ça à sa toute fin. C'est beau!
-								-Intégration, techniquement la seule chose qui peut ajouter du texte à un canal (?), a aussi un check qui active à la fin. C'est donc beau.
 					-Ajouter un menu
 					-Définir des premiers rayons de la bibliothèque comme {"Menu","Accords", etc...}
-					-Présentement, les commandes tapées évaluent les mots des motifs DANS L'ORDRE. Décider si je garde ça, ou si j'accepte le désordre.
-								-J'pense ça enlève quelques ambiguités possibles si je garde ça dans l'ordre.. Genre mettre le biscuit sur la table VS mettre la table sur le biscuit.
-					-Urgh. J'pense que j'ai foiré avec "prendre les titres comme des commandes exactes". 
-							-Parce que y'a pas d'équivalent pour les motifs automatiques, j'ai fini par créer un membre "titre" aux motifs auto... 
-								-Et me semble que ça serait simplement plus logique si les motifs manu disposaient eux aussi d'un titre?
-									-Fait que j'veux redonner (éventuellement) le rôle unique de titre aux titres (qui serviront quand même si plusieurs motifs sont appelés par une seule commande),
-										et laisserai leur job aux commandes exactes.	
-									-Eh, euhm, j'ai kinda réglé cette question? 
-										-Mais le bout où y'a des commmandes ambigües est louche, 
-											même si on ne mentionne pas le fait que j'utilise "pause()" là-dedans... Yrkh.
-												J'vais retravailler tout ce bout quand j'vais faire les menus, ok?
 					-Retravailler le "menu" de quand la commande est ambigüe, pour la mettre plus en ligne avec le reste des menus
 							(à la limite, j'pense sérieusement à simplement avoir une sélection de "peser sur ENTER entre des icônes" pour éviter les erreurs connes de frappe)
 							(genre, c'est supposé NE PAS ARRIVER, les ambiguité, si l'histoire est si mal écrite que ça, j'pense que ça va pas déranger de perdre un peu) 
@@ -144,17 +117,6 @@
 #include <io.h>				   //Nécessaire pour changer l'encodage-out pour l'unicode
 #include <fcntl.h>			   //Nécessaire pour décrypter les accents en unicode
 #include <stdlib.h>     	   //Nécessaire pour jouer avec des nombres aléatoires  /* srand, rand */
-
-/*
-	2019-07-05:
-A typical way to generate trivial pseudo-random numbers in a determined range using rand is to use the modulo of the returned value 
-		by the range span and add the initial value of the range:
-
-v1 = rand() % 100;         // v1 in the range 0 to 99
-v2 = rand() % 100 + 1;     // v2 in the range 1 to 100
-v3 = rand() % 30 + 1985;   // v3 in the range 1985-2014 
-*/
-
 
 using namespace std;           //Pour faciliter l'utilisation de cout, cin, string, etc. (sans spécifier ces fonctions proviennent de quel enviro)
 
@@ -311,8 +273,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			out(phrase[pos]);
 		}
 	}
-	//void out(int chiffre) {std::wcout << to_string(chiffre);}      //Nope. Ça marche pas, car la conversion en wchar ne se fait pas bien...
-	//void out(double chiffre) {std::wcout << to_string(chiffre);}
+	void out(int chiffre) {out(to_string(chiffre));}
+	void out(double chiffre) {out(to_string(chiffre));}
 
 
 	//vi) Fonction : chgcol ; change la couleur du texte à entrer
@@ -426,7 +388,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Constructeur pour avoir le bon nombre de colonnes
 			memoire(int ncol) {
 				nbcol = ncol;
-				frontline = 1;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
+				frontline = 0;                         //Ce qui suit semble être la seule manière de créer des arrays dynamiques
 				nbligne = TailleBase;            
 					try{souvenir = new char* [nbcol]; for(int col=0; col<nbcol ; col++) {souvenir[col] = new char [nbligne];}}  	//Tenter d'allouer l'espace
 					catch (std::bad_alloc & ba) {std::cerr << "bad_alloc caught in class memoire: " << ba.what();}    //Lire les messages d'erreur si la mémoire est saturée (exceptions)								
@@ -442,7 +404,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			char acces (int posx, int posy) { //Créer une fonction permettant d'aller chercher une valeur de l'array (une seule position)
 				return(souvenir[posx][posy]);
 			}
-			//Fonction de modification : newline ; ajouter une ligne à la suite de la position spécifiée (Opérateur +) 
+			//Fonction de modification : newline ; ajouter une ligne à la suite de la position spécifiée
 			void newline (int pos) {
 				if(frontline+1<nbligne) {
 					int emptypos = pos + 1;   //Calculer la position qui sera vide
@@ -479,12 +441,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int delay;          //Déclarer le délai de base entre chaque entrée
 			int posx, posy;		//Déclarer les coordonnées de la dernière entrée dans la mémoire (la précédente)   
 								//les positions de la consoles sont définies en décalant ces dernières
+			int alinea;         //Déclarer le nombre d'espace depuis la marge droite qui viendront s'ajouter à chaque nouvelle ligne					
 			string txt;   		//Déclarer le texte qui reste à lire  				
 			bool actif;			//Déclarer le compteur d'activité
-			double vit;         //Déclarer la vitesse actuelle de défilement et de pauses (toujours par rapport à la base, 1)
 			string nom;			//Déclarer le nom que porte le canal
 		//Constructeur
-		canal() : delay(150), posx(-1), posy(0), actif(false), vit(1) {nxtt = timems();}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
+		canal() : delay(150), posx(-1), posy(0), alinea(0), actif(false), nom("defaut") {nxtt = timems();}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 	};
 
 	//iii) Classe : fen ; permet de sauvegarder les paramètres relatifs aux caractéristiques de la fenêtre de sortie (console)
@@ -511,7 +473,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			limfenx = ScreenBufferInfo.srWindow.Right + 1; limfeny = ScreenBufferInfo.srWindow.Bottom + 1;     //Le srWindow est le seul membre qui donne les bonnes informations
 			limtxtx = limfenx; limtxty = limfeny - 1;
 		}                  //JE PROFITE DE CETTE FONCTION POUR ÉGALEMENT CHANGER LES PARAMÈTRES DE BASE! ATTENTION!
-		fen(int x, int y) {limtxtx = x; limtxty = y; consy = 0; refoule = false;}      //Constructeur permettant d'aligner manuellement les dimensions de la fenêtre avec la réalité	
+		fen(int x, int y) {limtxtx = x; limtxty = y; consy = 0; refoule = false; couleur = "gris";}      //Constructeur permettant d'aligner manuellement les dimensions de la fenêtre avec la réalité	
 	};
 		
 		
@@ -523,8 +485,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int inputpos;                   //Position d'indexation du prochain caractère    == StaticVect.fin? Non! Car ça peut bouger!
 			bool accepted;                  //Flag concernant la dernière commande; utile pour l'affichage visuel
 			bool busy;						//Flag concernant la dernière commande; utile pour l'affichage visuel
+			double vit;						//Multiplicateur de délais de défilement du texte, pour modifier la vitesse de lecture			
 		//Constructeur par défaut
-			input() : inputpos(0), accepted(false), busy(false) {}
+			input() : inputpos(0), accepted(false), busy(false), vit(1) {}
 	};							
 						
 	//v) classe : inputecho ; permet l'affichage résiduel des commandes (acceptées ou refusées)	
@@ -646,7 +609,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-2); trouvPAR = false; pos = 0;   //Supprimer la parenthèse et remettre les compteurs à 0, pour continuer		
 				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient au minimum une parenthèse), et continuer à partir d'après la parenthèse
 			} else { 							
-			//Cas général : on cherche '+' ou '-', car '*' et '/' ont la priorité d'opération
+			//Cas général : on cherche '+' ou '-', car '*' et '/' ont la priorité d'opération (s'appliquent d'abord à l'échelle locale)
 				while(!trouvAD&&pos<strnb) {
 					if(str[pos]=='+'||str[pos]=='-') {posAD = pos; trouvAD = true;}
 					if(!trouvMU&&(str[pos]=='*'||str[pos]=='/')) {posMU = pos; trouvMU = true;}
@@ -854,21 +817,21 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[pos]=='(') nbPAR++;	//Gère les parenthèses imbriquées 
 					if(str[pos]==')') {if(nbPAR==0) {posPAR = pos; trouvPAR = true;} else nbPAR--;}
 					pos++;
-				} if(!trouvPAR) {out("\n\nLa parenthèse n'est pas refermée dans: "); out(str); abort();}
-				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-2); trouvPAR = false; pos = 0;   //L'expression entière est entre parenthèse : Supprimer celles-ci et remettre les compteurs à 0, pour continuer au cas général
-				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient au minimum une parenthèse), et continuer au cas général à partir d'après la parenthèse
+				} if(!trouvPAR) {out("\n\nLa parenthèse n'est pas refermée dans : \""); out(str); out("\""); abort();}
+				if(trouvPAR&&pos==strnb) {str = strintervalle(str,1,strnb-2); trouvPAR = false; pos = 0;   //L'expression entière est entre parenthèses : Supprimer celles-ci et remettre les compteurs à 0, pour continuer au cas général
+				} else Lcompos = true;		//Noter l'expression à gauche comme composite (car elle contient au minimum une parenthèse), et continuer au cas général à partir d'après la parenthèse
 			} else if(str[0]=='!'&&str[1]=='(') {  
 			//Cas spécial: l'expression commence par "le contraire" d'une parenthèse (ex: "!( 6<2 | 4==4 )"  ou  "!( 6>3 | 5<6) & 1==3" )			
 				while(!trouvPAR&&pos<strnb) {
 					if(str[pos]=='(') nbPAR++;	//Gère les parenthèses imbriquées 
 					if(str[pos]==')') {if(nbPAR==0) {posPAR = pos; trouvPAR = true;} else nbPAR--;}
 					pos++;
-				} if(!trouvPAR) {out("\n\nLa parenthèse n'est pas refermée dans: "); out(str); abort();}
+				} if(!trouvPAR) {out("\n\nLa parenthèse n'est pas refermée dans : \""); out(str); out("\""); abort();}
 				if(trouvPAR&&pos==strnb) {compositeur = '!'; LH = strintervalle(str,2,strnb-2); Lcompos = true; general = false;   //L'expression entière est "contraire" : passer le cas général		
-				} else Lcompos = true;		//Noter l'expression à droite comme composite (car elle contient un "contraire"), et continuer au cas général à partir d'après la parenthèse	
+				} else Lcompos = true;		//Noter l'expression à gauche comme composite (car elle contient un "contraire"), et continuer au cas général à partir d'après la parenthèse	
 			}
 			if(general) {
-			//Cas général : on cherche '|', car '!' et '&' ont la priorité d'opération
+			//Cas général : on cherche '|', car '!' et '&' ont la priorité d'opération (s'appliquent d'abord à l'échelle locale)
 				while(!trouvOU&&pos<strnb) {
 					if(str[pos]=='|') {posOU = pos; trouvOU = true;}
 					if(!trouvET&&str[pos]=='&') {posET = pos; trouvET = true;}
@@ -879,19 +842,22 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					compositeur = '|';
 					LH = strintervalle(str,0,posOU-1);					//Définir les limites de l'expression à gauche	
 					RH = strintervalle(str,posOU+1,strnb-1);		//Définir les limites de l'expression à droite						
-					if(trouvEX|trouvET) Lcompos = true; //(car '!' et '&' ont la priorité d'opération sur '|')
+					if(trouvEX||trouvET) Lcompos = true; //(car '!' et '&' ont la priorité d'opération sur '|')
 					while(!Rcompos&&pos<strnb) {if(str[pos]=='|'||str[pos]=='&'||(str[pos]=='!'&&pos+1<strnb&&str[pos+1]!='=')) Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite
 				} else if(trouvET) {  
 					compositeur = '&';
 					LH = strintervalle(str,0,posET-1);					//Définir les limites de l'expression à gauche		
 					RH = strintervalle(str,posET+1,strnb-1);		//Définir les limites de l'expression à droite
+					if(trouvEX) Lcompos = true;   //(car '!' a la priorité d'opération sur '&')
 					pos = posET + 1; while(!Rcompos&&pos<strnb) {if(str[pos]=='&'||(str[pos]=='!'&&pos+1<strnb&&str[pos+1]!='=')) Rcompos = true; pos++;}	//Trouver si l'expression à droite est composite				
-				} else if(trouvEX&&posEX==0) {
-					compositeur = '!';
-					LH = strintervalle(str,1,strnb-1);					//Définir les limites de l'expression à gauche	
-																//Il n'y a pas d'expression à droite
+				} else if(trouvEX) {
+					if(posEX==0){						
+						compositeur = '!';
+						LH = strintervalle(str,1,strnb-1);					//Définir les limites de l'expression à gauche	
+																			//Il n'y a pas d'expression à droite
+					} else {out("\n\nLe symbole de contraire, '!', n'est pas en position [0] dans : \""); out(str); out("\", mais bien en position "); out(posEX); abort();}
 				} else {
-					compositeur = ' '; LH = str;   //Aucune comparaison, seulement une évaluation (et il n'y a pas d'expression à droite)				
+					compositeur = ' '; LH = str;   //Aucune comparaison, seulement une évaluation (et il n'y a pas d'expression à droite)						
 				}		
 			}			
 			//Assigner les valeurs aux membres
@@ -903,9 +869,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			if(Lcompos){
 				if(Rcompos) {
 					if(compositeur=='&') {return(LHcompos->eval(biblio)&&RHcompos->eval(biblio)); 
-					} else if(compositeur=='|') {return (LHcompos->eval(biblio)||RHcompos->eval(biblio));
-					} else if(compositeur=='!') {return(!LHcompos->eval(biblio));
-					} else if(compositeur==' ') return(LHcompos->eval(biblio));					
+					} else if(compositeur=='|') return (LHcompos->eval(biblio)||RHcompos->eval(biblio));
 				} else {
 					if(compositeur=='&') {return(LHcompos->eval(biblio)&&RHsimple->eval(biblio)); 
 					} else if(compositeur=='|') {return (LHcompos->eval(biblio)||RHsimple->eval(biblio));
@@ -915,9 +879,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			} else {
 				if(Rcompos) {
 					if(compositeur=='&') {return(LHsimple->eval(biblio)&&RHcompos->eval(biblio)); 
-					} else if(compositeur=='|') {return (LHsimple->eval(biblio)||RHcompos->eval(biblio));
-					} else if(compositeur=='!') {return(!LHsimple->eval(biblio));
-					} else if(compositeur==' ') return(LHsimple->eval(biblio));
+					} else if(compositeur=='|') return (LHsimple->eval(biblio)||RHcompos->eval(biblio));
 				} else {
 					if(compositeur=='&') {return(LHsimple->eval(biblio)&&RHsimple->eval(biblio)); 
 					} else if(compositeur=='|') {return (LHsimple->eval(biblio)||RHsimple->eval(biblio));
@@ -932,7 +894,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		
 		
 	//DEBUGGG	
-		void test(bibliotheque& biblio) {
+		void test(bibliotheque& biblio) {		
 			if(compositeur==' '||compositeur=='!'){
 				out(compositeur); if(Lcompos) LHcompos->test(biblio); else LHsimple->test(biblio);
 			} else {
@@ -988,7 +950,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			bool override;										//TRUE si l'activation de motif vide instantannément le canal utilisé
 			bool encours;										//Va changer dynamiquement, permet de ne pas dédoubler le même motif (± un temps d'attente obligatoire)
 			int canal;											//Position du canal dans lequel écrire le texte
-			string titre;										//Ne sert qu'à identifier le motif; n'apparaît jamais à l'écran
 		//Constructeur
 		motifauto() : override(false), encours(false) {};
 	};
@@ -1020,7 +981,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			static const int taillechapitre = 40;
 			StaticVect<StaticVect<motifmanu,taillechapitre>,taille> filmanu;		//Groupes de textes + commandes ("chapitres") pour activation manuelle
 			StaticVect<StaticVect<motifauto,taillechapitre>,taille> filauto;		//Groupes de textes + commandes ("chapitres") pour activation automatique
-			StaticVect<boolcompar,taille> cadenas;										//Conditions d'activation des "chapitres"
+			StaticVect<boolcompos,taille> cadenas;										//Conditions d'activation des "chapitres"
 	};
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1030,7 +991,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	int CodeSpecialLongueur(string str){
 		int longueur = 1;               //Initier l'objet à retourner
 		bool fini = false; int pos = 1;
-		while(!fini&&pos<str.length()) {
+		int strnb = str.length();
+		while(!fini&&pos<strnb) {
 			longueur++; pos++;
 			if(str[pos]=='§') fini = true;
 		}              
@@ -1040,15 +1002,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	//ii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
 	double CodeSpecialExtractDouble(string str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int longmax = longueur - 1;      //Le dernier caractère étant le '§'		
-		for(int pos=2; pos<longmax; pos++) nbonly += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
+		for(int pos=2; pos<longueur; pos++) nbonly += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
 		return(stod(nbonly));           //La fonction stod convertit les strings en doubles (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
 	}		
 	//ii) Fonction : CodeSpecialExtract ; extrait une valeur numérique d'une suite de caractères encadrés par '§' (pour extraire les codes spéciaux)
 	int CodeSpecialExtractInt(string str, int longueur){
 		string nbonly;                  //Initier un string, dans lequel insérer seulement les chiffres (2X'§' + 1 identifiant en char)
-		int longmax = longueur - 1;      //Le dernier caractère étant le '§'		
-		for(int pos=2; pos<longmax; pos++) nbonly += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
+		for(int pos=2; pos<longueur; pos++) nbonly += str[pos];    //Commencer à la position [2], le [0] étant occupé par '§' et le [1] par le type de valeur à extraire (identifiant en char)	
 		return(stoi(nbonly));           //La fonction stoi convertit les strings en int (https://stackoverflow.com/questions/4754011/c-string-to-double-conversion)
 	}			
 
@@ -1160,8 +1120,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		ouvrage histoire;
 		bibliotheque biblio;
 		StaticVect<canal,taillecanal> canaux;
+		StaticVect<string,taillecanal> nomcanaux;
 		input inp;
 		inputecho inpecho;
+		
 	//Constructeur
 		univers() {};
 	}; 
@@ -1179,19 +1141,20 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	}
 	
 	//Fonction pour créer un nouveau canal et le nommer
-	void nvcanal(univers& monde, const string& str) {
+	void nvcanal(univers& monde, const string& str) {                    
 		monde.canaux.ajoutvide();
 		monde.canaux[monde.canaux.longueur-1].nom = str;
+		monde.nomcanaux.ajout(str);
 	}
 	
-	//Fonction pour modifier le délai du canal
-	void canaldelai(univers& monde, int val) {
-		monde.canaux[monde.canaux.longueur-1].delay = val;
+	//Fonction pour modifier le délai du canal    
+	void canaldelai(univers& monde, int val) {				
+		monde.canaux[monde.canaux.longueur-1].delay = val;          
 	}
 	
-	//Fonction pour modifier la vitesse du canal
-	void canalvit(univers& monde, double val) {
-		monde.canaux[monde.canaux.longueur-1].vit = val;
+	//Fonction pour modifier l'alinéa du canal (l'indentation par défaut)
+	void canalalinea(univers& monde, int val) {
+		monde.canaux[monde.canaux.longueur-1].alinea = val;
 	}
 	
 	//Fonction pour créer un nouveau chapitre
@@ -1206,19 +1169,30 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	}
 
 	//Fonction pour "créer" un nouveau motif et le nommer (manuel)
-	void mtitre(univers& monde, const string& str) {		
+	void nvmanu(univers& monde, const string& str) {		
 		int poschap = monde.histoire.filmanu.longueur-1;
 		monde.histoire.filmanu[poschap].ajoutvide();			//Passer au prochain motif
 		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
 		monde.histoire.filmanu[poschap][posmotif].titre = str;     //Conserver le titre, pour y référer au cas où une même commande appelerait plusieurs motifs.
 	} 
 	//Fonction pour "créer" un nouveau motif et le nommer (automatique)
-	void atitre(univers& monde, const string& str) {		
+	void nvauto(univers& monde) {		
 		int poschap = monde.histoire.filauto.longueur-1;
 		monde.histoire.filauto[poschap].ajoutvide();			//Passer au prochain motif
-		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
-		monde.histoire.filauto[poschap][posmotif].titre = str;     //Conserver le titre, simplement parce que ça me tente.
 	}
+	
+	//Fonction pour définir le canal du motif (manuel)
+	void mcanal(univers& monde, string str) {		
+		int poschap = monde.histoire.filmanu.longueur-1;
+		int posmotif = monde.histoire.filmanu[monde.histoire.filmanu.longueur-1].longueur-1;		
+		monde.histoire.filmanu[poschap][posmotif].canal = ColNameFind(str,monde.nomcanaux);  
+	} 
+	//Fonction pour définir le canal du motif (automatique)
+	void acanal(univers& monde, string str) {		
+		int poschap = monde.histoire.filauto.longueur-1;
+		int posmotif = monde.histoire.filauto[monde.histoire.filauto.longueur-1].longueur-1;		
+		monde.histoire.filauto[poschap][posmotif].canal = ColNameFind(str,monde.nomcanaux);  
+	}	
 	
 	//Fonction pour écire le texte ("mailles") du motif (manuel)
 	void mtexte(univers& monde, const string& str) {
@@ -1266,7 +1240,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		monde.histoire.filauto[poschap][posmotif].enchaineprob.ajoutvide();      //Créer la première probabilité
 		monde.histoire.filauto[poschap][posmotif].enchaineprob[0].set("1",monde.biblio);	
 	}		
-	
 		
 	//Fonction pour définir les enchaînements possibles (manuel)
 	void mordre(univers& monde, const string& str) {
@@ -1502,36 +1475,17 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			mprob(monde,"1;1");
 			mcomm(monde,"(Je|J' & suis|reste & confortable|bien installé|bien installée|bien installé.e [ne suis pas|jamais]) (Ça va|Correct)");
 			mcond(monde,"Laure¶debut&!Laure¶confo");
-			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§§v0.8§");
+			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§§d100§");
 			mfin(monde,"§bLaure¶actif=0§")
 	*/	 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //6) Fonction AutoInterpret()
 void AutoInterpret(StaticVect<canal,taillecanal>& canaux, bibliotheque& biblio, ouvrage& histoire, const fen& base, input& inp, memoire& mem) {
-	
-	//ATTENTION! 
-				//ICI, Y'A QUELQUE CHOSE DONT JE NE SUIS PAS SÛRE:
-	/*
-		C'est que: Si j'évalue à CHAQUE FOIS qu'un code spécial se fait lire, j'ai une chance d'intégrer le même motif deux fois de suite, si le prochain code spécial lu
-		n'est pas exactement celui qui empêche le motif. 
-			-Une première solution serait de "disable" les motifs automatiques dès leur lecture: ils seraient donc à usage unique.
-			-Une deuxième solution serait d'utiliser un rayon de la bibliothèque pour "disable" (automatiquement) les motifs automatiques... et d'ensuite s'assurer que le
-				message pour rétablir leur fonctionnement soit lu: 
-					soit en le mettant dans un autre canal que celui qui est utilisé (mais alors, il faudrait autant de canaux qu'il y a de motifs),
-					soit en le mettant comme code spécial automatique à la fin du canal, mais QUI EST "LU" MÊME SI LE CANAL EST CLEARÉ.
-						En fait, ça semble être overall une bonne pratique de conserver des "codes spéciaux" arounds, qui sont lu même si le canal est overridé.	 
-	
-				Deuxième solution, donc, celle de gérer tout cet automatisme simplement par un rayon de la bibliothèque dont les noms sont automatiquement générés, 
-					et dont l'activation se trouve en dehors même du système habituel de codes spéciaux.
-					En fait... Je ne pense pas que j'aie réellement besoin d'un rayon de la bibliothèque.
-					Ce serait beaucoup plus simple si l'information était simplement conservée dans un booléen À MÊME LE MOTIF AUTOMATIQUE, non?
-												C'est cette deuxième solution qui a été implémentée.
-	*/
 	//Pour chaque chapitre
-	for(int chapitrepos=0; chapitrepos<histoire.filmanu.longueur; chapitrepos++) { if(histoire.cadenas[chapitrepos].eval(biblio)) {			
+	for(int chapitrepos=0; chapitrepos<histoire.filauto.longueur; chapitrepos++) { if(histoire.cadenas[chapitrepos].eval(biblio)) {			
 		//Pour chaque motif dans l'histoire
-		for(int motifpos=0; motifpos<histoire.filmanu[chapitrepos].longueur; motifpos++) {if(histoire.filauto[chapitrepos][motifpos].condition.eval(biblio)&&!histoire.filauto[chapitrepos][motifpos].encours) {
+		for(int motifpos=0; motifpos<histoire.filauto[chapitrepos].longueur; motifpos++) {if(histoire.filauto[chapitrepos][motifpos].condition.eval(biblio)&&!histoire.filauto[chapitrepos][motifpos].encours) {
 			integrationauto(chapitrepos,motifpos,canaux,histoire,biblio);            //Intégrer tout de suite le motif dans le canal	
 		}}
 	}}
@@ -1542,18 +1496,18 @@ void AutoInterpret(StaticVect<canal,taillecanal>& canaux, bibliotheque& biblio, 
 //7) Fonction LireCanal()
 void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, memoire& mem, bibliotheque& biblio, ouvrage& histoire, input& inp) {
 	//Updater le "next time"
-	canaux[canpos].nxtt += canaux[canpos].delay;
+	canaux[canpos].nxtt += round(canaux[canpos].delay * inp.vit);
 	//Interpréter les "codes spéciaux" (§...§)
 	if(canaux[canpos].txt[0]=='§'){		
 		//Déterminer la longueur du code spécial
 			int CodeSpecialLong = CodeSpecialLongueur(canaux[canpos].txt);			
 		//Lire le code spécial		
 			if(canaux[canpos].txt[1]=='p'){      //'p' pour "pause" -> ajouter une pause à la lecture		
-				double val = CodeSpecialExtractDouble(canaux[canpos].txt,CodeSpecialLong);       //Extraire le temps que durera la pause
-				canaux[canpos].nxtt += round(val * canaux[canpos].vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
-			} else if(canaux[canpos].txt[1]=='v'){      //'v' pour "vitesse" -> changer la vitesse de lecture
-				double val = CodeSpecialExtractDouble(canaux[canpos].txt,CodeSpecialLong);       //Extraire la nouvelle vitesse
-				canaux[canpos].vit = val;
+				double val = CodeSpecialExtractInt(canaux[canpos].txt,CodeSpecialLong);       //Extraire le temps que durera la pause
+				canaux[canpos].nxtt += round(val * inp.vit);                    //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
+			} else if(canaux[canpos].txt[1]=='d'){      //'d' pour "délai" -> changer le délai entre chaque lettre, donc la vitesse de lecture
+				int val = CodeSpecialExtractInt(canaux[canpos].txt,CodeSpecialLong);       //Extraire le temps entre les lettres		
+				canaux[canpos].delay = val;					
 			} else if(canaux[canpos].txt[1]=='g'){		//'g' pour "gender" -> choisir le bon accord
 																								 //Sélectionner le genre
 				int genreselect;
@@ -1582,18 +1536,54 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				posSpecial++; while(canaux[canpos].txt[posSpecial] != '=') nomlivre += canaux[canpos].txt[posSpecial++];
 				posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') val += canaux[canpos].txt[posSpecial++];							
 				biblio.modif(nomrayon,nomlivre,stoi(val));	
-				AutoInterpret(canaux, biblio, histoire, base, inp, mem);      //Vérifier si un motif automatique doit être intégré aux canaux		
+				AutoInterpret(canaux, biblio, histoire, base, inp, mem);      //Vérifier si un motif automatique doit être intégré aux canaux	
 			} else if(canaux[canpos].txt[1]=='m'){		//'m' pour "motif" -> marquer le motif automatique comme n'étant plus en cours			
 				string poschap; string posmotif;
 				int posSpecial = 2;
 				while(canaux[canpos].txt[posSpecial] != ';') poschap += canaux[canpos].txt[posSpecial++]; 
 				posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') posmotif += canaux[canpos].txt[posSpecial++];
 				histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
-			}
-		
-							
-			  //EN AJOUTER UN (code spécial) POUR PLACER LE CURSEUR À LA FIN DE LA CONSOLE	
-			
+			} else if(canaux[canpos].txt[1]=='s'){		//'s' pour "skip" -> descendre le canal dans la dernière ligne possible, sans couper le canal qui l'occupe.
+				//Crée une nouvelle ligne pour que le texte puisse vraiment descendre
+				mem.newline(mem.frontline);                   
+				//Updater le correctif de décalage de la console par rapport à la mémoire
+				if(base.refoule) base.consy++; else if(mem.frontline>=base.limtxty) {base.refoule = true; base.consy++;} 				
+				//Sauter une ligne dans la console
+				if(base.refoule) {                         //La console est saturée: on pousse le texte vers le haut!
+					//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
+						curspos(0,mem.frontline-base.consy); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
+					//Tout ré-écrire, mais une ligne plus haut
+    					curspos(0,0);   //Commencer en haut, puis descendre naturellement
+						for(int county = base.consy; county <= mem.frontline-1; county++){             //base.consy : facteur de décalage de la console
+							for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
+						}				                 
+				}	   	        
+				//Updater les positions dans le canal actuel
+				canaux[canpos].posx = -1;						//en x     //-1 est une position "impossible", pour signifier qu'on a changé de ligne, mais écrire le prochain à la bonne place
+				canaux[canpos].posy = mem.frontline;			//en y 	
+			} else if(canaux[canpos].txt[1]=='c'){		//'c' pour "cut" -> descendre le canal dans la dernière ligne possible, en coupant en deux le canal qui l'occupe.
+				//Crée deux nouvelles lignes, une pour le canal qui coupe et une pour le canal coupé
+				mem.newline(mem.frontline); mem.newline(mem.frontline);                   
+				//Updater le correctif de décalage de la console par rapport à la mémoire
+				if(base.refoule) base.consy++; else if(mem.frontline>=base.limtxty) {base.refoule = true; base.consy++;} 				
+				if(base.refoule) base.consy++; else if(mem.frontline>=base.limtxty) {base.refoule = true; base.consy++;} 				
+				//Sauter deux lignes dans la console
+				if(base.refoule) {                         //La console est saturée: on pousse le texte vers le haut!
+					//Effacer toute les deux lignes avec des espaces (en "reléguant ce qui y était déjà vers le haut")
+						curspos(0,mem.frontline-base.consy-1); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
+						curspos(0,mem.frontline-base.consy); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
+					//Tout ré-écrire, mais une ligne plus haut
+    					curspos(0,0);   //Commencer en haut, puis descendre naturellement
+						for(int county = base.consy; county <= mem.frontline-2; county++){             //base.consy : facteur de décalage de la console
+							for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
+						}				                 
+				}	   	        
+				//Updater les positions dans le canal actuel
+				canaux[canpos].posx = -1;						//en x    //-1 est une position "impossible", pour signifier qu'on a changé de ligne, mais écrire le prochain à la bonne place
+				canaux[canpos].posy = mem.frontline-1;			//en y 	
+				//Updater les positions dans l'ancien canal de frontline
+				for(int countcan = 0 ; countcan < canaux.fin ; countcan++) {if(canaux[countcan].posy == mem.frontline-2) canaux[countcan].posy+=2;}
+			}			
 			
 				//AJOUTER AUSSI UN CODE SPÉCIAL POUR OVERLOADER DES CANAUX
 			
@@ -1611,25 +1601,25 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 			if(jump) {	
 				mem.newline(canaux[canpos].posy);                     //Introduit une nouvelle ligne à la suite de la position qui lui est fournie	
 				//Updater le correctif de décalage de la console par rapport à la mémoire
-					if(base.refoule) base.consy++; else if(mem.frontline>base.limtxty) {base.refoule = true; base.consy++;} 						
+				if(base.refoule) base.consy++; else if(mem.frontline>=base.limtxty) {base.refoule = true; base.consy++;} 				
 				//Sauter une ligne dans la console
-					if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
-						if(canaux[canpos].posy!=mem.frontline-1) {                             //S'il y a d'autres lignes à repousser vers le bas
-							//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
-								curspos(0,canaux[canpos].posy+1);  //Mettre le curseur au début de la reconstruction
-								for(int county = canaux[canpos].posy + 1 ; county <= mem.frontline ; county++) {   
-									for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
-								}
-						}
-					} else {                         //La console est saturée: on pousse le texte vers le haut!
-						//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
-							curspos(0,canaux[canpos].posy-base.consy+1); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
-						//Tout ré-écrire, mais une ligne plus haut
-	    					curspos(0,0);   //Commencer en haut, puis descendre naturellement
-							for(int county = base.consy; county <= canaux[canpos].posy; county++){             //base.consy : facteur de décalage de la console
+				if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
+					if(canaux[canpos].posy<mem.frontline) {                             //S'il y a d'autres lignes à repousser vers le bas
+						//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
+							curspos(0,canaux[canpos].posy+1);  //Mettre le curseur au début de la reconstruction
+							for(int county = canaux[canpos].posy + 1 ; county <= mem.frontline ; county++) {   
 								for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
-							}				                 
-					}	
+							}
+					}
+				} else {                         //La console est saturée: on pousse le texte vers le haut!
+					//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
+						curspos(0,canaux[canpos].posy-base.consy+1); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
+					//Tout ré-écrire, mais une ligne plus haut
+    					curspos(0,0);   //Commencer en haut, puis descendre naturellement
+						for(int county = base.consy; county <= canaux[canpos].posy; county++){             //base.consy : facteur de décalage de la console
+							for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.souvenir[countx][county]);
+						}				                 
+				}	
 				//Updater les positions dans les autres canaux    //Parce que leur position dans la mémoire a bougé //la position dans la console est quant à elle gérée par base.consy
 				for(int countcan = 0 ; countcan < canaux.fin ; countcan++) {
 					if(countcan==canpos) continue;                                    //la mémoire refoule toujours vers le bas!
@@ -1637,13 +1627,20 @@ void LireCanal(StaticVect<canal,taillecanal>& canaux, int canpos, fen& base, mem
 				}       // == : Si deux canaux se situe sur la même ligne, le canal qui change de ligne va couper l'autre en deux, et le renvoyer après sa propre ligne.    	        
 				//Updater les positions dans le canal actuel
 				if(canaux[canpos].txt[0]=='\n') {canaux[canpos].posx = -1;} else canaux[canpos].posx = 0;			       //en x    
-									//Position "impossible", pour signifier qu'on a changé de ligne, mais écrire le prochain à la bonne place
+									//-1 est une position "impossible", pour signifier qu'on a changé de ligne, mais écrire le prochain à la bonne place
 				canaux[canpos].posy++;	  																					   //en y 		
 			} else {canaux[canpos].posx++;}       //Updater seulement posx s'il n'y a pas de mouvement vertical
-		//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du charactère actuel (dans la mémoire)!		
+		//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du charactère actuel (dans la mémoire)!
 		if(canaux[canpos].txt[0]!='\n') {
-			curspos(canaux[canpos].posx,canaux[canpos].posy-base.consy) ; out(canaux[canpos].txt[0]);     //Inscrire dans la console
-			mem.souvenir[canaux[canpos].posx][canaux[canpos].posy] = canaux[canpos].txt[0];   //Inscrire dans la mémoire			
+			if(canaux[canpos].posx==0){	if(canaux[canpos].alinea>0) {										//Mettre l'alinéa
+				for(int alinpos=0; alinpos<canaux[canpos].alinea; alinpos++){
+					curspos(alinpos,canaux[canpos].posy-base.consy) ; out(' ');
+					mem.souvenir[alinpos][canaux[canpos].posy] = ' '; 		
+					canaux[canpos].posx++;
+				}
+			}}
+			curspos(canaux[canpos].posx,canaux[canpos].posy-base.consy) ; out(canaux[canpos].txt[0]);     //Inscrire le caractère dans la console
+			mem.souvenir[canaux[canpos].posx][canaux[canpos].posy] = canaux[canpos].txt[0];   //Inscrire le caractère dans la mémoire			
 		}	
 		canaux[canpos].txt = strintervalle(canaux[canpos].txt,1,canaux[canpos].txt.length()-1);       //Effacer le caractère du canal     	   
 	}
@@ -1820,7 +1817,7 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 	char charkey; int intkey = _getch();                  		//Enregistrer quelle touche a été pressée
 			if (intkey == 0 || intkey == -32 || intkey == 224) {      //La valeur est spéciale: elle nécessite de la ré-examiner
 				intkey = _getch();                              //Examiner une deuxième valeur pour identifier
-				if(intkey == 75) {     								 				 //flèche gauche : reculer dans la commande tapée 
+				if(intkey == 75) {     								 				 	//flèche gauche : reculer dans la commande tapée 
 					if(inp.inputpos!=0) {
 						if(inp.inputpos!=inp.commande.longueur) {
 							curspos(inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]);	
@@ -1834,8 +1831,28 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 						inp.inputpos++;		
 					}			//Remettre en gris la position précédente
 				} 
-				else if (intkey == 72)  ;  											 //Flèche du haut   ... Rien ne se passe?
-				else if (intkey == 80)  ;  											 //Flèche du bas    ... Rien ne se passe?
+				else if (intkey == 72) {									  			 //Flèche du haut : accélérer la vitesse de défilement
+					if(inp.vit > 0.25) {
+						if(inp.vit >= 0.5) {
+							if(inp.vit >= 1) {
+								if(inp.vit >= 2) {
+									inp.vit -= 0.2; 
+								}else inp.vit -= 0.1;	
+							} else inp.vit -= 0.05;
+						} else inp.vit -= 0.025;						
+					}
+				}
+				else if (intkey == 80) {									  			 //Flèche du bas : rallentir la vitesse de défilement
+					if(inp.vit < 4) {
+						if(inp.vit < 2) {
+							if(inp.vit < 1) {
+								if(inp.vit < 0.5) {
+									inp.vit += 0.025;
+								} else inp.vit += 0.05; 									
+							} else inp.vit += 0.1; 
+						} else inp.vit += 0.2;	
+					}
+				}				 
 				else if (intkey == 83) {                                                //Delete : supprimer un caractère de la commande actuelle
 					if(inp.inputpos!=inp.commande.longueur) {
 						inp.commande.supprposition(inp.inputpos);    
@@ -1860,16 +1877,43 @@ void UserInput(input& inp, inputecho& inpecho, const fen& base, bibliotheque& bi
 					}
 				
 				
+				//DEBUGGG	
+				} else if(intkey==14) {														//Ctrl + n : Donne la vitesse actuelle
+					curspos(2,20); out("Voici la vitesse actuelle : "); out(inp.vit);
+					
+					
 				
 				
 				//DEBUGGG	
-				} else if(intkey==20) {														//Ctrl + t : Donne le status des conditions de chaque motif
-					curspos(2,8); out("Voici les conditions des chaînons:");
+				} else if(intkey==11) {														//Ctrl + k : Vérifie manuellement s'il y a des mailles automatiques à intégrer
+					AutoInterpret(canaux, biblio, histoire, base, inp, mem);   
+					
+					
+									
+				
+				//DEBUGGG	
+				} else if(intkey==20) {														//Ctrl + t : Donne le status des conditions de chaque motif manuel
+					curspos(2,8); out("Voici les conditions des "); out(histoire.filmanu[0].longueur); out(" chaînons manu :");
 					for(int posmotif=0; posmotif<histoire.filmanu[0].longueur; posmotif++) {
-						curspos(2,9+posmotif); out("     Chaînon "); out(posmotif); out("  :     ");
-						histoire.filmanu[0][posmotif].condition.test(biblio);
+						curspos(2,9+posmotif); out("     Chaînon "); out(posmotif); out(" : ");
+						histoire.filmanu[0][posmotif].condition.test(biblio); 
+						if(histoire.filmanu[0][posmotif].condition.eval(biblio)) out("  : TRUE"); else out("  : FALSE");
 					}
 					//abort();
+
+
+				
+				//DEBUGGG	
+				} else if(intkey==25) {														//Ctrl + y : Donne le status des conditions de chaque motif automatique
+					curspos(2,8); out("Voici les conditions des "); out(histoire.filauto[0].longueur); out(" chaînons auto :");
+					for(int posmotif=0; posmotif<histoire.filauto[0].longueur; posmotif++) {
+						curspos(2,9+posmotif); out("     Chaînon "); out(posmotif); out(" : ");
+						histoire.filauto[0][posmotif].condition.test(biblio); 
+						if(histoire.filauto[0][posmotif].condition.eval(biblio)) out("  : TRUE"); else out("  : FALSE");						
+						out("    ; en cours: "); if(histoire.filauto[0][posmotif].encours) out("TRUE"); else out("FALSE");
+					}
+					//abort();
+
 
 
 				//DEBUGGG	
@@ -1951,7 +1995,7 @@ void jouer(univers& monde, fen& base, memoire& mem){
 	srand(timems());										// "setseed" de la fonction rand, pour ne pas avoir la "seed" par défaut, qui est toujours la même
 	while(true){				//À faire tout le temps:
 		currentt = timems();		
-		for(int canpos=0; canpos<=monde.canaux.longueur; canpos++) {if(monde.canaux[canpos].actif&&monde.canaux[canpos].nxtt<currentt) LireCanal(monde.canaux,canpos,base,mem,monde.biblio,monde.histoire,monde.inp);}  //Lire chaque canal, s'il est prêt	
+		for(int canpos=0; canpos<monde.canaux.longueur; canpos++) {if(monde.canaux[canpos].actif&&monde.canaux[canpos].nxtt<currentt) LireCanal(monde.canaux,canpos,base,mem,monde.biblio,monde.histoire,monde.inp);}  //Lire chaque canal, s'il est prêt	
 		if(monde.inpecho.actif&&monde.inpecho.nxtt<currentt) UserInputEcho(monde.inp,monde.inpecho,base);
 		UserInput(monde.inp,monde.inpecho,base,monde.biblio,monde.canaux,monde.histoire,mem);	//Interpréter la touche jouée		
 	}
@@ -1959,7 +2003,8 @@ void jouer(univers& monde, fen& base, memoire& mem){
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //11) Aire de tests
-							
+
+/*						
 int main(void) {
 
 	//Changement de taille et de place de la console                     //Doit être défini à l'intérieur du main() pour fonctionner!
@@ -2000,7 +2045,7 @@ int main(void) {
 			atitre(monde,"C'est long.");
 			atexte(monde,"\n\n         Eh. Je t'ai parlé.e.§p2000§\n                   J'veux une réponse.");
 			acond(monde,"Laure¶long");
-			adeb(monde,"§bLaure¶actif=1§§bLaure¶long=0§§v0.9§");
+			adeb(monde,"§bLaure¶actif=1§§bLaure¶long=0§");
 			afin(monde,"§bLaure¶actif=0§");
 
 			//Créer un maillon manuel
@@ -2010,13 +2055,13 @@ int main(void) {
 			mprob(monde,"1;1");
 			mcomm(monde,"(je|j' & suis|reste & confortable|bien installé [ne suis pas|jamais]) (ça va|correct) (oui)");		//BTW, ici, installé inclut aussi installée et installé.e (pas besoin de répéter)
 			mcond(monde,"Laure¶debut&!Laure¶confo");
-			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§§v0.8§");
+			mdeb(monde,"§bLaure¶actif=1§§bLaure¶confo=1§");
 			mfin(monde,"§bLaure¶actif=0§§p10000§§bLaure¶long=1§");
 			mover(monde,1);
 			
 			//Créer un maillon manuel
 			mtitre(monde,"Je veux me divertir");
-			mtexte(monde,"\n\n\n\nZut§p2000§;§p2000§ \n\n\n            J'ai bien peur que vous ne soyez pas à la bonne place.µ§v0.3§\n\n         §p4000§Too fucking bad.");		
+			mtexte(monde,"\n\n\n\nZut§p2000§;§p2000§ \n\n\n            J'ai bien peur que vous ne soyez pas à la bonne place.µ\n\n         §p4000§Too fucking bad.");		
 			mordre(monde,"1;2");
 			mprob(monde,"1;1");
 			mcomm(monde,"(oui|évidemment|certainement|volontier|pourquoi pas|why not|d'accord) (veux|voudrais|aimerais|désire & cela|ça|bien)");
@@ -2033,4 +2078,4 @@ int main(void) {
 
 
 }							
-	
+*/
