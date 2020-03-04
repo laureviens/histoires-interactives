@@ -46,16 +46,6 @@
 								(les deux sont assez rares et "interrompant" pour que le léger lag créer ne pose aucun problème)
 */
 
-
-/*
-	2019-07-05:
-				Dans les fonctions integration() et UserInputInterpret(),
-				j'utilise beaucoup d'indexation. Ça devient difficile à lire.
-				Je pense que ça n'alourdirait pas trop l'exécution de créer un objet temporaire pour chaque motif (rendrait le tout plus clair).
-				J'ai par contre peur que ça fuck avec les pointeurs, que les objets soient modifiés (sont tous par & référence), etc.
-					Je conserve donc cette idée quand j'aurai minimalement une version testée, qui fonctionne.
-*/
-
 /*
 	2019-07-13:
 				Ce qu'il me reste à faire:
@@ -81,50 +71,6 @@
 */
 
 /*
-	2019-09-19:
-				Oh; il serait pertinent de changer la fonction pour changer de couleur, et de mettre au lieu des références
-				à la bibliothèque; genre avoir une fonction "changer couleur à" qui prend un string ou un numéro en argument;
-				genre "clignotement" ou quelque chose du genre...? Genre mettre catégories comme "clair", "obscur", "normal"...?
-							//Si je le mets dans la bibliothèque, faudra que ce soit en 'int': Donc séparer le back-ground et le texte?
-								//Et après, à chaque fois que je change de couleur, de faire la conversion?
-									//Et peut-être mettre des systèmes de vérifications à chaque fois que je dois changer la couleur;
-										: Est-ce que c'était déjà setté sur 'clair'?		
-*/
-
-/*
-	2020-02-22
-				Les msn marchent (du premier coup! Wouhou!), mais y'a une drôle de pause qui se fait en plein milieu de ma pause.
-				C'est assez mineur pour enregistrer sur Git sans le régler; je regarderai ça une autre fois (il se fait tard, et j'ai beaucoup codé).
-*/
-
-
-/*
-	2020-02-28:
-				J'avais un problème où le texte s'affichait instantannément, et j'avais de la difficulté à m'expliquer pourquoi.
-				pour le régler, j'ai fini par changer le temps, qui était exprimé en int, en unsigned.
-				Et là tout marche.
-				Je pense que le nombre est simplement devenu trop gros pour être exprimé par int? 
-						parce que c'est le temps DEPUIS une certaine date, et donc il continue de grandir.
-				Pour ne plus avoir ce problème, je ferais mieux de stocker le temps en unsigned, mais aussi de changer la fonction timems() pour qu'elle donne le temps depuis l'exécution du programme
-	
-
-*/
-
-/*
-	2020-02-15:
-				BTW: je relis les tutoriels de c++, et en exemple illes mettent seulement les fonction-membres les plus succintes à l'intérieur de la définition de la classe;
-				pour les fonctions membres un peu plus grandes, illes les définissent par après, en-dehors (cela semble être une norme de travail pour elleux).
-				Avec la synthaxe:       "void Rectangle::set_values (int x, int y) {}"             (et à l'intérieur de la classe, on retrouve "void set_values (int,int);")
-				
-				
-				BTW, je profite de cette plateforme pour rappeler une autre éthique de travail:
-							mettre la plupart des membres comme privés, et y accéder seulement à travers des fonctions-membres publiques.
-							Ça permet de mieux retracer les modifications aux valeurs membres, pour éviter les "fuites".
-							
-							Pis j'devrais écrire "overridecanal()" comme fonction membre, aussi, ça aurait peut-être plus de sens. 
-*/
-
-/*
 	2020-02-22:
 				J'ai retrouvé la légende pour la couleur:
 					FOREGROUND_BLUE 		Text color contains blue.
@@ -141,6 +87,13 @@
 					// to get red text on yellow use 4 + 14*16 = 228
 					// light red on yellow would be 12 + 14*16 = 236		
 	*/
+
+
+/*
+	2020-03-04:
+				FAUDRAIT VRAIMENT QUE J'METTE DES MESSAGES D'ERREUR DANS LES FONCTIONS DE REMPLISSAGE!!!
+					(GENRE Y'A JUSTE 'X' CHAPITRES, DONC TU PEUX PAS EN RAJOUTER PLUS)
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
@@ -543,20 +496,22 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				//Ajouter le rayon des couleurs			//Contient les différentes couleurs de la console
 				rayon.ajoutvide();	
 				nomrayon.ajout("couleur");
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("actutxt"); this->modif("couleur","actutxt",8);			//Gris foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("actubg"); this->modif("couleur","actubg",0);				//Noir				
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("cantxt"); this->modif("couleur","cantxt",8);				//Gris foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("canbg"); this->modif("couleur","canbg",0);				//Noir
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("msntxt"); this->modif("couleur","msntxt",7);				//Gris clair
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("msnbg"); this->modif("couleur","msnbg",0);				//Noir	
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbontxt"); this->modif("couleur","commbontxt",8);		//Gris foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbonbg"); this->modif("couleur","commbonbg",0);		//Noir
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("actutxt"); this->modif("couleur","actutxt",7);			//Blanc foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("actubg"); this->modif("couleur","actubg",0);				//Noir foncé			
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("cantxt"); this->modif("couleur","cantxt",7);				//Blanc foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("canbg"); this->modif("couleur","canbg",0);				//Noir foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("msntxt"); this->modif("couleur","msntxt",15);			//Blanc clair
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("msnbg"); this->modif("couleur","msnbg",0);				//Noir foncé	
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commtxt"); this->modif("couleur","commtxt",8);		//Gris clair
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbg"); this->modif("couleur","commbg",0);			//Noir foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbontxt"); this->modif("couleur","commbontxt",7);		//Blanc foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbonbg"); this->modif("couleur","commbonbg",0);		//Noir foncé
 					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbusytxt"); this->modif("couleur","commbusytxt",4);	//Rouge foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbusybg"); this->modif("couleur","commbusybg",0);		//Noir
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbusybg"); this->modif("couleur","commbusybg",0);		//Noir foncé
 					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commmauvtxt"); this->modif("couleur","commmauvtxt",12);	//Rouge clair
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commmauvbg"); this->modif("couleur","commmauvbg",0);		//Noir												
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commpostxt"); this->modif("couleur","commpostxt",15);	//Blanc
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commposbg"); this->modif("couleur","commposbg",0);		//Noir		
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commmauvbg"); this->modif("couleur","commmauvbg",0);		//Noir foncé												
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commpostxt"); this->modif("couleur","commpostxt",15);	//Blanc clair
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commposbg"); this->modif("couleur","commposbg",0);		//Noir foncé		
 				//Ajouter le rayon des genres			//Contient le genre de chaque personnage: 0 = féminin, 1 = non binaire, 2 = masculin
 				rayon.ajoutvide();
 				nomrayon.ajout("genre");
@@ -1199,9 +1154,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						//Niveau le plus extérieur: Différentes façon de dire la commande
 						//Niveau le plus intérieur: Différents mots qui ne doivent pas se retrouver dans la commande
 				StaticVect<string,taillegroupes> exact;										//Expressions qui doivent exactement être recopiées, sans faute (soit seule manière d'appeler, soit confirmation si ambiguité; voir UserInputInterpret())
-				bool ifexact;													//TRUE si une expression exacte est nécessairement recherchée
 			//Constructeur
-			commande() : ifexact(false) {};	
+			commande() {};	
 		};		
 				
 		//b) classe : motifauto ; permet le stockage du texte et des conditions d'apparition (automatique)
@@ -1246,7 +1200,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		class ouvrage {
 			//Membres
 			public:
-				static const int taille = 1;												//Nombre de "chapitre" actuellement disponibles
+				static const int taille = 2;												//Nombre de "chapitre" actuellement disponibles
 				static const int taillechapitre = 40;
 				StaticVect<StaticVect<motifmanu,taillechapitre>,taille> filmanu;		//Groupes de textes + commandes ("chapitres") pour activation manuelle
 				StaticVect<StaticVect<motifauto,taillechapitre>,taille> filauto;		//Groupes de textes + commandes ("chapitres") pour activation automatique
@@ -1297,7 +1251,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				void overridecanal(int canpos);
 				void ReecrireMemoire();
 				void ReecrireMsn(int msnpos); void EffacerMsn(int msnpos);
-				void chgcolcan(); void chgcolmsn();
+				void chgcolcan(); void chgcolmsn(); void chgcolcommande();
 			//Fonctions pour transférer le texte d'un motif vers un canal ou un msn	
 				void integrationmanu(int chapitrepos, int motifpos);
 				void integrationauto(int chapitrepos, int motifpos);
@@ -1318,6 +1272,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				void nvcanal(const string& str);
 				void canaldelai(int val);
 				void canalalinea(int val);
+				void canalterminaison(const string& str);
 			//Fonctions pour organiser les chapitres et les motifs (permettent l'activation des textes)	
 				void nvchapt();
 				void ccond(const string& str);
@@ -1448,7 +1403,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}		
 		}         
 
-		//h) Fonction chgcolcan/msn
+		//h) Fonction chgcolcan/msn/commande
 		void univers::chgcolcan(){
 			if(biblio.acces(biblio.poscouleur,"actutxt")!=biblio.acces(biblio.poscouleur,"cantxt")||biblio.acces(biblio.poscouleur,"actubg")!=biblio.acces(biblio.poscouleur,"canbg")) {
 				chgcol(cons,biblio.acces(biblio.poscouleur,"cantxt"),biblio.acces(biblio.poscouleur,"canbg"));		//Mettre la couleur des canaux
@@ -1461,7 +1416,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				biblio.modif(biblio.poscouleur,"actutxt",biblio.acces(biblio.poscouleur,"msntxt")); biblio.modif(biblio.poscouleur,"actubg",biblio.acces(biblio.poscouleur,"msnbg"));
 			}
 		}
-
+		void univers::chgcolcommande(){
+			if(biblio.acces(biblio.poscouleur,"actutxt")!=biblio.acces(biblio.poscouleur,"commtxt")||biblio.acces(biblio.poscouleur,"actubg")!=biblio.acces(biblio.poscouleur,"commbg")) {
+				chgcol(cons,biblio.acces(biblio.poscouleur,"commtxt"),biblio.acces(biblio.poscouleur,"commbg"));		//Mettre la couleur des commandes
+				biblio.modif(biblio.poscouleur,"actutxt",biblio.acces(biblio.poscouleur,"commtxt")); biblio.modif(biblio.poscouleur,"actubg",biblio.acces(biblio.poscouleur,"commbg"));
+			}
+		}
 
 	//ii) Fonctions pour transférer le texte d'un motif vers un canal ou un msn	----------------------------------------------------------------------		
 		
@@ -1471,6 +1431,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			if(histoire.filmanu[chapitrepos][motifpos].reserve&&!inp.reserve) {		//La fonction integrationmanu() ne sera jamais lancée si la réserve est pleine, hormis dans le cas du code spécial "§r§". Donc c'est safe.
 				inp.reservechap = chapitrepos; inp.reservemotif = motifpos; inp.reserve = true;
 			} else {
+				inp.reserve = false;
 				bool msnbool = histoire.filmanu[chapitrepos][motifpos].msn;
 				bool msnskip = false; 
 				int xpos; int ypos;
@@ -1580,7 +1541,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					txtmotif += histoire.filauto[chapitrepos][motifpos].maille[histoire.filauto[chapitrepos][motifpos].enchainement[choix][posench]];
 				}		
 				txtmotif += histoire.filauto[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin
-				txtmotif += "§m" + to_string(chapitrepos) + ';' + to_string(motifpos) +'§';		//Code spécial permettant d'enlever le status en cours du motif     //Faut convertir les int en string...
+				txtmotif += "§a" + to_string(chapitrepos) + ';' + to_string(motifpos) +'§';		//Code spécial permettant d'enlever le status en cours du motif     //Faut convertir les int en string...
 				//Marquer le motif comme "en cours"
 				histoire.filauto[chapitrepos][motifpos].encours = true;     
 				//Updater le canal/msn 
@@ -1663,16 +1624,31 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							string nomrayon; string nomlivre; string val;
 							int posSpecial = 2;
 							while(canaux[canpos].txt[posSpecial] != '¶') nomrayon += canaux[canpos].txt[posSpecial++]; 
-							posSpecial++; while(canaux[canpos].txt[posSpecial] != '=') nomlivre += canaux[canpos].txt[posSpecial++];
-							posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') val += canaux[canpos].txt[posSpecial++];							
+							posSpecial++; while(!(canaux[canpos].txt[posSpecial] == '~' && canaux[canpos].txt[posSpecial+1] == '>')) nomlivre += canaux[canpos].txt[posSpecial++];  //ex: "§bintro¶desuet~>1§"
+							posSpecial+=2; while(canaux[canpos].txt[posSpecial] != '§') val += canaux[canpos].txt[posSpecial++];							
 							biblio.modif(nomrayon,nomlivre,stoi(val));	
 							AutoInterpret();      //Vérifier si un motif automatique doit être intégré aux canaux/msn	
-						} else if(canaux[canpos].txt[1]=='m'){		//'m' pour "motif" -> marquer le motif automatique comme n'étant plus en cours			
-							string poschap; string posmotif;
-							int posSpecial = 2;
+						} else if(canaux[canpos].txt[1]=='a'){		//'a' pour "automatique" -> marquer le motif automatique comme n'étant plus en cours			
+							string poschap; string posmotif; int posSpecial = 2;
 							while(canaux[canpos].txt[posSpecial] != ';') poschap += canaux[canpos].txt[posSpecial++]; 
 							posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') posmotif += canaux[canpos].txt[posSpecial++];
 							histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en 
+						} else if(canaux[canpos].txt[1]=='m'){		//'m' pour "manuel" -> forcer l'intégration d'un motif manuel (quand ça fait trop longtemps qu'on attend pour une commande)
+							string titremotif; int posSpecial = 2;
+							while(canaux[canpos].txt[posSpecial] != '§') titremotif += canaux[canpos].txt[posSpecial++];
+							//Rechercher quel motif correspond à ce titre
+							bool exacttrouve = false; int chapitrepos=0; int motifpos=0;
+							bool exactmauvais = false; int titrepos = 0; int titrelong = titremotif.length();
+							while(exacttrouve&&chapitrepos<histoire.filmanu.longueur) if(histoire.cadenas[chapitrepos].eval(biblio)) {		//Pour chaque chapitre		
+								while(exacttrouve&&motifpos<histoire.filmanu[chapitrepos].longueur) if(histoire.filmanu[chapitrepos][motifpos].condition.eval(biblio)) {	//Pour chaque motif dans l'histoire					
+								exactmauvais = false; titrepos = 0;
+								while(!exactmauvais&&titrepos<titrelong) if(titremotif[titrepos]!=histoire.filmanu[chapitrepos][motifpos].titre[titrepos]) exactmauvais = true; else titrepos++;
+								if(titrepos==titrelong) exacttrouve = true; else motifpos++;
+								}		
+							if(!exacttrouve) chapitrepos++;
+							}
+							integrationmanu(chapitrepos,motifpos);			//Intégrer le motif
+							if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);			//Ré-intégrer, au cas où le motif entrait en réserve					
 						} else if(canaux[canpos].txt[1]=='r'){		//'r' pour "réserve" -> intégrer les motifs manuels qui attendent dans la réserve; sert à ne pas couper une phrase en deux
 							if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);		
 						} else if(canaux[canpos].txt[1]=='s'){		//'s' pour "skip" -> descendre le canal dans la dernière ligne possible, sans couper le canal qui l'occupe.
@@ -1735,7 +1711,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								for(int countmsn=0; countmsn<messagerie.longueur; countmsn++) unpausemsn(countmsn);
 							}
 						}
-						   //AUTRE CODE SPÉCIAL?
 					//Effacer le code spécial du canal
 					canaux[canpos].txt = strintervalle(canaux[canpos].txt,CodeSpecialLong,canaux[canpos].txt.length()-1);				//J'COMPRENDS PAS LE "+1" DANS "CodeSpecialLong+1"!!!!!!
 				} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
@@ -1855,16 +1830,32 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								string nomrayon; string nomlivre; string val;
 								int posSpecial = 2;
 								while(txtrc[posSpecial] != '¶') nomrayon += txtrc[posSpecial++]; 
-								posSpecial++; while(txtrc[posSpecial] != '=') nomlivre += txtrc[posSpecial++];
-								posSpecial++; while(txtrc[posSpecial] != '§') val += txtrc[posSpecial++];							
+								posSpecial++; while(!(txtrc[posSpecial] == '~' && txtrc[posSpecial+1] == '>')) nomlivre += txtrc[posSpecial++];
+								posSpecial+=2; while(txtrc[posSpecial] != '§') val += txtrc[posSpecial++];							
 								biblio.modif(nomrayon,nomlivre,stoi(val));	
 								AutoInterpret();      //Vérifier si un motif automatique doit être intégré aux canaux/msn	
-							} else if(txtrc[1]=='m'){		//'m' pour "motif" -> marquer le motif automatique comme n'étant plus en cours			
+							} else if(txtrc[1]=='a'){		//'a' pour "automatique" -> marquer le motif automatique comme n'étant plus en cours			
 								string poschap; string posmotif;
 								int posSpecial = 2;
 								while(txtrc[posSpecial] != ';') poschap += txtrc[posSpecial++]; 
 								posSpecial++; while(txtrc[posSpecial] != '§') posmotif += txtrc[posSpecial++];
 								histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
+							} else if(txtrc[1]=='m'){		//'m' pour "manuel" -> forcer l'intégration d'un motif manuel (quand ça fait trop longtemps qu'on attend pour une commande)
+								string titremotif; int posSpecial = 2;
+								while(txtrc[posSpecial] != '§') titremotif += txtrc[posSpecial++];
+								//Rechercher quel motif correspond à ce titre
+								bool exacttrouve = false; int chapitrepos=0; int motifpos=0;
+								bool exactmauvais = false; int titrepos = 0; int titrelong = titremotif.length();
+								while(exacttrouve&&chapitrepos<histoire.filmanu.longueur) if(histoire.cadenas[chapitrepos].eval(biblio)) {		//Pour chaque chapitre		
+									while(exacttrouve&&motifpos<histoire.filmanu[chapitrepos].longueur) if(histoire.filmanu[chapitrepos][motifpos].condition.eval(biblio)) {	//Pour chaque motif dans l'histoire					
+									exactmauvais = false; titrepos = 0;
+									while(!exactmauvais&&titrepos<titrelong) if(titremotif[titrepos]!=histoire.filmanu[chapitrepos][motifpos].titre[titrepos]) exactmauvais = true; else titrepos++;
+									if(titrepos==titrelong) exacttrouve = true; else motifpos++;
+									}		
+								if(!exacttrouve) chapitrepos++;
+								}
+								integrationmanu(chapitrepos,motifpos);			//Intégrer le motif
+								if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);			//Ré-intégrer, au cas où le motif entrait en réserve											
 							} else if(txtrc[1]=='r'){		//'r' pour "réserve" -> intégrer les motifs manuels qui attendent dans la réserve; sert à ne pas couper une phrase en deux
 								if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);									
 										//Pas de codes spéciaux 's' ou 'c', car les msn ne s'inscrivent pas dans la mémoire
@@ -1880,7 +1871,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 									for(int countmsn=0; countmsn<messagerie.longueur; countmsn++) if(countmsn!=msnpos) unpausemsn(countmsn);
 								}
 							}
-							   //AUTRE CODE SPÉCIAL?				
 						//Passer à la prochaine position du texte à lire
 						messagerie[msnpos].postxt += (CodeSpecialLong);
 					} else 	messagerie[msnpos].postxt -= CodeSpecialLongueurInv(strintervalle(messagerie[msnpos].txt,0,posrc));		//Si le msn est en déconstruction 			
@@ -1956,16 +1946,32 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 															string nomrayon; string nomlivre; string val;
 															int posSpecial = 2;
 															while(txtrc[posSpecial] != '¶') nomrayon += txtrc[posSpecial++]; 
-															posSpecial++; while(txtrc[posSpecial] != '=') nomlivre += txtrc[posSpecial++];
-															posSpecial++; while(txtrc[posSpecial] != '§') val += txtrc[posSpecial++];							
+															posSpecial++; while(!(txtrc[posSpecial] == '~' && txtrc[posSpecial+1] == '>')) nomlivre += txtrc[posSpecial++];
+															posSpecial+=2; while(txtrc[posSpecial] != '§') val += txtrc[posSpecial++];							
 															biblio.modif(nomrayon,nomlivre,stoi(val));	
 															AutoInterpret();      //Vérifier si un motif automatique doit être intégré aux canaux/msn	
-														} else if(txtrc[1]=='m'){		//'m' pour "motif" -> marquer le motif automatique comme n'étant plus en cours			
+														} else if(txtrc[1]=='a'){		//'a' pour "automatique" -> marquer le motif automatique comme n'étant plus en cours			
 															string poschap; string posmotif;
 															int posSpecial = 2;
 															while(txtrc[posSpecial] != ';') poschap += txtrc[posSpecial++]; 
 															posSpecial++; while(txtrc[posSpecial] != '§') posmotif += txtrc[posSpecial++];
 															histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
+														} else if(txtrc[1]=='m'){		//'m' pour "manuel" -> forcer l'intégration d'un motif manuel (quand ça fait trop longtemps qu'on attend pour une commande)
+															string titremotif; int posSpecial = 2;
+															while(txtrc[posSpecial] != '§') titremotif += txtrc[posSpecial++];
+															//Rechercher quel motif correspond à ce titre
+															bool exacttrouve = false; int chapitrepos=0; int motifpos=0;
+															bool exactmauvais = false; int titrepos = 0; int titrelong = titremotif.length();
+															while(exacttrouve&&chapitrepos<histoire.filmanu.longueur) if(histoire.cadenas[chapitrepos].eval(biblio)) {		//Pour chaque chapitre		
+																while(exacttrouve&&motifpos<histoire.filmanu[chapitrepos].longueur) if(histoire.filmanu[chapitrepos][motifpos].condition.eval(biblio)) {	//Pour chaque motif dans l'histoire					
+																exactmauvais = false; titrepos = 0;
+																while(!exactmauvais&&titrepos<titrelong) if(titremotif[titrepos]!=histoire.filmanu[chapitrepos][motifpos].titre[titrepos]) exactmauvais = true; else titrepos++;
+																if(titrepos==titrelong) exacttrouve = true; else motifpos++;
+																}		
+															if(!exacttrouve) chapitrepos++;
+															}
+															integrationmanu(chapitrepos,motifpos);			//Intégrer le motif
+															if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);			//Ré-intégrer, au cas où le motif entrait en réserve																
 														} else if(txtrc[1]=='r'){		//'r' pour "réserve" -> intégrer les motifs manuels qui attendent dans la réserve; sert à ne pas couper une phrase en deux
 															if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);																										
 														} else if(txtrc[1]=='o') {		//'o' pour "override" -> effacer le contenu du canal (ou msn) mentionné
@@ -2039,10 +2045,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				int diffpos; bool exactbon; int commpos; bool exactmauvais; 	//Créer les compteurs pour les expressions exactes
 				int groupepos; int synpos; int motpos; int precedpos; bool inclusbon; bool exclusbon;	//Créer les compteurs pour les mots à inclure/exclure	
 				//Pour chaque chapitre
-				for(int chapitrepos=0; chapitrepos<histoire.filmanu.longueur; chapitrepos++) { if(histoire.cadenas[chapitrepos].eval(biblio)) {			
+				for(int chapitrepos=0; chapitrepos<histoire.filmanu.longueur; chapitrepos++) if(histoire.cadenas[chapitrepos].eval(biblio)) {			
 					//Pour chaque motif dans l'histoire
-					for(int motifpos=0; motifpos<histoire.filmanu[chapitrepos].longueur; motifpos++) {if(histoire.filmanu[chapitrepos][motifpos].condition.eval(biblio)) {
-						if(histoire.filmanu[chapitrepos][motifpos].commandes.ifexact) {	//Si une commande exacte est nécessaire
+					for(int motifpos=0; motifpos<histoire.filmanu[chapitrepos].longueur; motifpos++) if(histoire.filmanu[chapitrepos][motifpos].condition.eval(biblio)) {
+						//Passer d'abord les commandes exactes, pour voir si elles correspondent
 							diffpos = 0; exactbon = false;
 							while(diffpos<histoire.filmanu[chapitrepos][motifpos].commandes.exact.longueur&&!exactbon) {
 								commpos = 0; exactmauvais = false;
@@ -2050,10 +2056,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								if(exactmauvais==false) exactbon = true; else diffpos++;
 							}
 							if(exactbon)	{         //Intégrer tout de suite le bon motif dans le canal					
-								inp.accepted = true; if(histoire.filmanu[bonchapitre[0]][bonmotif[0]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input					
+								inp.accepted = true;	//Envoyer le bon message au gestionnaire d'Input				
 								integrationmanu(chapitrepos,motifpos); return;            //Intégrer le bon motif dans le canal
 							}   
-						} else {								//Si plusieurs mots clés doivent être présents
+						//Passer maintenant aux mots-clés	
 							inclusbon = false; diffpos = 0;
 							//Pour chaque façon différente de dire la commande
 							while(diffpos<histoire.filmanu[chapitrepos][motifpos].commandes.inclus.longueur&&!(inclusbon&&exclusbon)) {
@@ -2105,15 +2111,14 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								diffpos++;
 							}
 							if(inclusbon&&exclusbon) {bonchapitre.ajout(chapitrepos); bonmotif.ajout(motifpos);}
-						}		
-					}}
-				}}
+					}
+				}
 				//Maintenant, on a l'information sur quels motifs correspondent (sans expression exacte) à la commande
 				if(bonmotif.longueur==0) {
 					inp.accepted = false; 			
 					return;
 				} else if(bonmotif.longueur==1) {	
-					inp.accepted = true; if(histoire.filmanu[bonchapitre[0]][bonmotif[0]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input					
+					inp.accepted = true;	//Envoyer le bon message au gestionnaire d'Input					
 					integrationmanu(bonchapitre[0],bonmotif[0]); return;            //Intégrer le bon motif dans le canal
 				} else {
 					//Déterminer si la commande correspond au titre d'un canal
@@ -2123,7 +2128,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							while(!exactmauvais&&commpos<inp.commande.longueur) {if(inp.commande[commpos]!=histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].titre[commpos]) exactmauvais = true; else commpos++;}	
 							if(exactmauvais==false) {
 								exactbon = true; 	
-								inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].reserve) inp.reserve = true;							
+								inp.accepted = true;							
 								integrationmanu(bonchapitre[bonpos],bonmotif[bonpos]); return;}            //Intégrer tout de suite le bon motif dans le canal	
 					}	
 					//Si l'ambiguité demeure: mettre le jeu sur pause, et faire apparaître les options	
@@ -2154,7 +2159,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 									clock.stop(1500);
 									curspos(cons,0,0); for(int county = base.consy ; county <= mem.accesfrontline() ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));}			
 									unpauseall();
-									inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input							
+									inp.accepted = true;	//Envoyer le bon message au gestionnaire d'Input							
 									integrationmanu(bonchapitre[bonpos],bonmotif[bonpos]); return;}            //Intégrer tout de suite le bon motif dans le canal	
 						}				
 					//Si l'ambiguité persiste: le demander une dernière fois
@@ -2174,7 +2179,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 									clock.stop(1500);
 									curspos(cons,0,0); for(int county = base.consy ; county <= mem.accesfrontline() ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));}			
 									unpauseall();
-									inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input
+									inp.accepted = true;		//Envoyer le bon message au gestionnaire d'Input
 									integrationmanu(bonchapitre[bonpos],bonmotif[bonpos]); return;}            //Intégrer tout de suite le bon motif dans le canal	
 						}				
 					//Si l'ambiguité est insolvable
@@ -2243,7 +2248,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					} else 	{                                        //La valeur est "normale"
 						//Touches-fonctions
 						if(intkey == 27) {														 //Escape : terminer le programme
-							curspos(cons,0,base.limtxty); out("Vous avez entré ESC, le programme se ferme donc."); abort(); 
+							curspos(cons,0,base.limtxty); out("Vous avez entré ESC, le programme se ferme donc."); clock.stop(2000); abort(); 
 						} else if(intkey == 13) {												 //Enter : envoyer la commande
 							enter = true;
 						} else if(intkey == 8) {                                                //Backspace : supprimer le caractère précédent
@@ -2274,7 +2279,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							//abort();
 			
 						//DEBUGGG	
-						} else if(intkey==25) {														//Ctrl + y : Donne le status des conditions de chaque motif automatique
+						} else if(intkey==25) {														//Ctrl + y : Donne le status des conditions de chaque motif automatique du premier chapitre
 							curspos(cons,2,8); out("Voici les conditions des "); out(histoire.filauto[0].longueur); out(" chaînons auto :");
 							for(int posmotif=0; posmotif<histoire.filauto[0].longueur; posmotif++) {
 								curspos(cons,2,9+posmotif); out("     Chaînon "); out(posmotif); out(" : ");
@@ -2283,6 +2288,25 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								out("    ; en cours: "); if(histoire.filauto[0][posmotif].encours) out("TRUE"); else out("FALSE");
 							}
 							//abort();
+
+			
+						//DEBUGGG	
+						} else if(intkey==26) {														//Ctrl + z : Donne le status des conditions de chaque motif manuel
+							int decal = 0;
+							for(int poschap=0; poschap<histoire.filmanu.longueur; poschap++){
+								curspos(cons,0,6+decal); out("Pour le chapitre "); out(poschap); out(" :");
+								curspos(cons,2,8+decal); out("Voici les conditions des "); out(histoire.filmanu[poschap].longueur); out(" chaînons manu :");
+								for(int posmotif=0; posmotif<histoire.filmanu[poschap].longueur; posmotif++) {
+									curspos(cons,2,9+decal); out("     Chaînon "); out(posmotif); out(" : ");
+									histoire.filmanu[poschap][posmotif].condition.test(biblio); 
+									if(histoire.filmanu[poschap][posmotif].condition.eval(biblio)) out("  : TRUE"); else out("  : FALSE");						
+									decal++;
+								}
+								decal++;
+							}
+								
+							//abort();
+
 		
 						//DEBUGGG	
 						} else if(intkey==2) {														//Ctrl + b : Donne la valeur de chaque livre de la bibliothèque
@@ -2315,6 +2339,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							if(inp.commande.longueur<base.limtxtx-1){
 								inp.commande.ajout(charkey,inp.inputpos);
 								inp.inputpos++;
+								chgcolcommande();	//Mettre la bonne couleur
 								curspos(cons,inp.inputpos-1,base.limtxty);	                    
 								for(int pos=inp.inputpos-1; pos<inp.commande.longueur; pos++) out(inp.commande[pos]);
 								if(inp.commande.longueur==inpecho.commande.fin) inpecho.actif = false;                   //Désactiver le canal d'écho si la commande actuelle le dépasse
@@ -2374,12 +2399,14 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 
 		//a) Fonction pour créer un nouveau rayon et le nommer
 		void univers::nvrayon(const string& str) {
+			if(biblio.rayon.longueur==biblio.rayon.taille) {out("Il manque de place pour construire le rayon \""); out(str); out("\"!\n\nAgrandissez la bibliothèque pour résoudre ce problème."); abort();}
 			biblio.rayon.ajoutvide();								//Passer au prochain rayon
 			biblio.nomrayon.ajout(str);
 		}
 		
 		//b) Fonction pour créer un nouveau livre et le nommer
 		void univers::nvlivre(const string& str) {
+			if(biblio.rayon[biblio.rayon.longueur-1].longueur==biblio.rayon[biblio.rayon.longueur-1].taille) {out("Il manque de place pour construire le livre \""); out(str); out("\"!\n\nAgrandissez la bibliothèque ou changez de rayon pour résoudre ce problème."); abort();}
 			biblio.rayon[biblio.rayon.longueur-1].ajoutvide();		//Passer au prochain livre
 			biblio.nomlivre[biblio.rayon.longueur-1].ajout(str); biblio.modif(biblio.rayon.longueur-1,biblio.rayon[biblio.rayon.longueur-1].longueur-1,0);		//Mettre 0 comme valeur par défaut (par défaut, tous les livres = FALSE)
 		}
@@ -2388,6 +2415,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 	
 		//a) Fonction pour créer un nouveau canal et le nommer
 		void univers::nvcanal(const string& str) {                    
+			if(canaux.longueur==canaux.taille) {out("Il manque de place pour construire le canal \""); out(str); out("\"!\n\nAugmentez le nombre de canaux dans l'objet \"univers\" pour résoudre ce problème."); abort();}		
 			canaux.ajoutvide();
 			canaux[canaux.longueur-1].nom = str;
 			nomcanaux.ajout(str);
@@ -2403,12 +2431,18 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			canaux[canaux.longueur-1].alinea = val;
 		}
 
+		//d) Fonction pour modifier la terminaison du canal (qui sera ajouté à la fin lorsque l'on forcera le canal à se vider - pour par exemple fermer les guillements d'une réplique)
+		void univers::canalterminaison(const string& str) {
+			canaux[canaux.longueur-1].terminaison = str;
+		}
+
 	//iii) Fonctions pour organiser les chapitres et les motifs (permettent l'activation des textes)	----------------------------------------------------------------------		
 	
 		//a) Fonction pour créer un nouveau chapitre
 		void univers::nvchapt() {
-			histoire.filauto.ajoutvide();											//ATTENTION! ICI, LES CHAPITRES SONT THÉORIQUEMENT SÉPARÉS ENTRE MANUELS ET AUTOMATIQUES,
-			histoire.filmanu.ajoutvide();												//MAIS LE CODE LES TRAITE EN TOUT TEMPS COMME LA MÊME ENTITÉ! LE GARDER EN TÊTE!
+			if(histoire.filauto.longueur==histoire.filauto.taille) {out("Il manque de place pour construire un nouveau chapitre à l'histoire!\n\nAugmentez le nombre de chapitres dans l'objet \"histoire\" pour résoudre ce problème."); abort();}		
+			histoire.filauto.ajoutvide();		
+			histoire.filmanu.ajoutvide();											
 		}
 		
 		//b) Fonction pour définir les conditions d'activation du chapitre
@@ -2417,15 +2451,17 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		}
 	
 		//c) Fonction pour "créer" un nouveau motif et le nommer (manuel)
-		void univers::nvmanu(const string& str) {		
+		void univers::nvmanu(const string& str) {
 			int poschap = histoire.filmanu.longueur-1;
+			if(histoire.filmanu[poschap].longueur==histoire.filmanu[poschap].taille) {out("Il manque de place pour construire le nouveau motif manuel \""); out(str); ;out("\" à l'intérieur du dernier chapitre!\n\nAugmentez le nombre de motifs dans l'objet \"histoire\", ou passez au prochain chapitre, pour résoudre ce problème."); abort();}						
 			histoire.filmanu[poschap].ajoutvide();			//Passer au prochain motif
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
 			histoire.filmanu[poschap][posmotif].titre = str;     //Conserver le titre, pour y référer au cas où une même commande appelerait plusieurs motifs.
 		} 
 		//c)Fonction pour "créer" un nouveau motif (automatique)
-		void univers::nvauto() {		
+		void univers::nvauto() {				
 			int poschap = histoire.filauto.longueur-1;
+			if(histoire.filauto[poschap].longueur==histoire.filauto[poschap].taille) {out("Il manque de place pour construire un nouveau motif automatique à l'intérieur du dernier chapitre!\n\nAugmentez le nombre de motifs dans l'objet \"histoire\", ou passez au prochain chapitre, pour résoudre ce problème."); abort();}		
 			histoire.filauto[poschap].ajoutvide();			//Passer au prochain motif
 		}
 		
@@ -2453,13 +2489,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int strnb = str.length();		//Aller chercher la taille du string
 			int debmaille = 0;				//Créer un compteur pour le début de la maille actuelle
 			for(int countstr=0; countstr<strnb; countstr++){
-				if(str[countstr]=='µ') {										
+				if(str[countstr]=='µ') {
+					if(histoire.filmanu[poschap][posmotif].maille.longueur==histoire.filmanu[poschap][posmotif].maille.taille) {out("Dans le motif manuel :\n\n\""); out(str); out("\"\n\n   il y a trop de \"mailles\" différentes, c'est-à-dire de bouts de phrases séparés par 'µ'. Augmentez le nombre de mailles d'un motif manuel ou séparez celui-ci en plusieurs pour résoudre ce problème."); abort();}		
 					if(countstr-debmaille>0) {
 						histoire.filmanu[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,countstr-1));
 					} else histoire.filmanu[poschap][posmotif].maille.ajout("");   
 					debmaille = countstr+1;		//if(...) : évite les intervalles [1,0] (à la place de [0,1]), et skippe seulement la maille si la maille est vide (ex: "µµ")
 				}
 			}
+			if(histoire.filmanu[poschap][posmotif].maille.longueur==histoire.filmanu[poschap][posmotif].maille.taille) {out("Dans le motif manuel :\n\n\""); out(str); out("\"\n\n   il y a trop de \"mailles\" différentes, c'est-à-dire de bouts de phrases séparés par 'µ'. Augmentez le nombre de mailles d'un motif manuel ou séparez celui-ci en plusieurs pour résoudre ce problème."); abort();}					
 			histoire.filmanu[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
 			//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre, avec une probabilité de 1 (peut alors être écrasé par les commandes suivantes)
 			histoire.filmanu[poschap][posmotif].enchainement.ajoutvide();      //Créer le premier enchaînement
@@ -2478,11 +2516,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			for(int countstr=0; countstr<strnb; countstr++){
 				if(str[countstr]=='µ') {										
 					if(countstr-debmaille>0) {
+						if(histoire.filauto[poschap][posmotif].maille.longueur==histoire.filauto[poschap][posmotif].maille.taille) {out("Dans le motif automatique :\n\n\""); out(str); out("\"\n\n   il y a trop de \"mailles\" différentes, c'est-à-dire de bouts de phrases séparés par 'µ'. Augmentez le nombre de mailles d'un motif automatique ou séparez celui-ci en plusieurs pour résoudre ce problème."); abort();}		
 						histoire.filauto[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,countstr-1));
 					} else histoire.filauto[poschap][posmotif].maille.ajout("");   
 					debmaille = countstr+1;		//if(...) : évite les intervalles [1,0] (à la place de [0,1]), et skippe seulement la maille si la maille est vide (ex: "µµ")
 				}
 			}
+			if(histoire.filauto[poschap][posmotif].maille.longueur==histoire.filauto[poschap][posmotif].maille.taille) {out("Dans le motif automatique :\n\n\""); out(str); out("\"\n\n   il y a trop de \"mailles\" différentes, c'est-à-dire de bouts de phrases séparés par 'µ'. Augmentez le nombre de mailles d'un motif automatique ou séparez celui-ci en plusieurs pour résoudre ce problème."); abort();}					
 			histoire.filauto[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
 			//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre, avec une probabilité de 1 (peut alors être écrasé par les commandes suivantes)
 			histoire.filauto[poschap][posmotif].enchainement.ajoutvide();      //Créer le premier enchaînement
@@ -2506,11 +2546,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Ajouter les enchaînements inscrits
 			for(int countstr=0; countstr<strnb; countstr++){
 				if(str[countstr]=='-'||str[countstr]==';') {
+					if(histoire.filmanu[poschap][posmotif].enchainement[countordre].longueur==histoire.filmanu[poschap][posmotif].enchainement[countordre].taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop de \"mailles\" à l'\"enchaînement\" #"); out(countordre+1); out(" ( fonction mordre() ). Augmentez le nombre de mailles par enchaînement ou faites ça moins compliqué, pour résoudre ce problème."); abort();}		
 					if(countstr-debnombre>0) {
 						histoire.filmanu[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
 					} else {out("L'enchaînement \""); out(str); out("\" contient une valeur vide qui fait planter le parsing à la position "); out(countstr); out(". Changer ça svp."); abort();}			
 					if(str[countstr]=='-') {}
-					if(str[countstr]==';') {countordre++; histoire.filmanu[poschap][posmotif].enchainement.ajoutvide();}
+					if(str[countstr]==';') {
+						if(histoire.filmanu[poschap][posmotif].enchainement.longueur==histoire.filmanu[poschap][posmotif].enchainement.taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif manuel ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}							
+						countordre++; histoire.filmanu[poschap][posmotif].enchainement.ajoutvide();
+					}
 					debnombre = countstr+1;
 				}
 			}
@@ -2533,11 +2577,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Ajouter les enchaînements inscrits
 			for(int countstr=0; countstr<strnb; countstr++){
 				if(str[countstr]=='-'||str[countstr]==';') {
+					if(histoire.filauto[poschap][posmotif].enchainement[countordre].longueur==histoire.filauto[poschap][posmotif].enchainement[countordre].taille) {out("Dans le motif automatique :\n\n\""); out(histoire.filauto[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop de \"mailles\" à l'\"enchaînement\" #"); out(countordre+1); out(" ( fonction mordre() ). Augmentez le nombre de mailles par enchaînement ou faites ça moins compliqué, pour résoudre ce problème."); abort();}							
 					if(countstr-debnombre>0) {
 						histoire.filauto[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
 					} else {out("L'enchaînement \""); out(str); out("\" contient une valeur vide qui fait planter le parsing à la position "); out(countstr); out(". Changer ça svp."); abort();}			
 					if(str[countstr]=='-') {}
-					if(str[countstr]==';') {countordre++; histoire.filauto[poschap][posmotif].enchainement.ajoutvide();}
+					if(str[countstr]==';') {
+						if(histoire.filauto[poschap][posmotif].enchainement.longueur==histoire.filauto[poschap][posmotif].enchainement.taille) {out("Dans le motif automatique :\n\n\""); out(histoire.filauto[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif automatique ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}													
+						countordre++; histoire.filauto[poschap][posmotif].enchainement.ajoutvide();
+						}
 					debnombre = countstr+1;
 				}
 			}
@@ -2561,7 +2609,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}				
 			//Ajouter les probabilités inscrites
 			for(int countstr=0; countstr<strnb; countstr++){
-				if(str[countstr]==';') {
+				if(str[countstr]==';') {					
 					if(countstr-debench>0){
 						histoire.filmanu[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,countstr-1),biblio);
 					} else histoire.filmanu[poschap][posmotif].enchaineprob[countench].set("0",biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 0. Ça lui apprendra.
@@ -2675,6 +2723,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			for(int countstr=0; countstr<strnb; countstr++){
 				if(str[countstr]=='('|str[countstr]=='[') {		
 					if(str[countstr]=='(') {
+						if(histoire.filmanu[poschap][posmotif].commandes.inclus.longueur==histoire.filmanu[poschap][posmotif].commandes.inclus.taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\", appelé par ::\n\n\""); out(str); out("\"\n\n   il y a trop de différentes façons d'appeler le motif (chaque façon différente est supposée être entre parenthèses). Augmentez le nombre de façons différentes dans la classe \"commande\" ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'augmenter à la fois les mots inclus et les mots exclus, si vous faites la première option!"); abort();}
 						histoire.filmanu[poschap][posmotif].commandes.inclus.ajoutvide();         //Noter qu'une nouvelle façon de dire la commande commence
 						histoire.filmanu[poschap][posmotif].commandes.exclus.ajoutvide();	
 					} else if(str[countstr]=='[') exclus = true;
@@ -2688,18 +2737,23 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							//Enregistrer le mot comme commande
 							if(mot[0]==' ') mot = strintervalle(mot,1,mot.length()-1);		//Enlever les espaces en début et en fin de mot; permet d'espacer l'écriture des commandes au besoin
 							if(mot[mot.length()]==' ') mot = strintervalle(mot,0,mot.length()-2);
-							if(exclus) {histoire.filmanu[poschap][posmotif].commandes.exclus[posfac].ajout(mot);		//Enregistrer le mot
+							if(exclus) {
+								if(histoire.filmanu[poschap][posmotif].commandes.exclus[posfac].longueur==histoire.filmanu[poschap][posmotif].commandes.exclus[posfac].taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\", appelé par ::\n\n\""); out(str); out("\"\n\n   il y a trop de mots à exclure dans la "); out(posfac); out("e façon de dire la commande (chaque mot à exclure est séparé par '|', et inclus entre crochets \"[]\"). Augmentez le nombre de mots à exclure dans la classe \"commande\" pour résoudre ce problème."); abort();}
+								histoire.filmanu[poschap][posmotif].commandes.exclus[posfac].ajout(mot);		//Enregistrer le mot
 							} else {
 								if(histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].longueur==0) histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].ajoutvide();	//Noter qu'un nouveau groupe de mots commence
+								if(histoire.filmanu[poschap][posmotif].commandes.inclus[posfac][posgr].longueur==histoire.filmanu[poschap][posmotif].commandes.inclus[posfac][posgr].taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\", appelé par ::\n\n\""); out(str); out("\"\n\n   il y a trop de synonymes dans le "); out(posgr); out("e groupe de la "); out(posfac); out("e façon de dire la commande (chaque synonyme est séparé par '|'). Augmentez le nombre synonymes dans la classe \"commande\" our supprimez les plus farfelus, pour résoudre ce problème."); abort();}
 								histoire.filmanu[poschap][posmotif].commandes.inclus[posfac][posgr].ajout(mot);
 							}
 							mot.clear();			//Vider le string de stockage temporaire
 							//Interpréter le caractère exact
 							if(str[countstr]=='|') {						//Ne rien faire
-							}else if(str[countstr]=='&') {posgr++; histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].ajoutvide();
+							}else if(str[countstr]=='&') {
+								if(histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].longueur==histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].taille)  {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\", appelé par ::\n\n\""); out(str); out("\"\n\n   il y a trop de groupes de mots à inclure dans la "); out(posfac); out("e façon de dire la commande (chaque façon groupe de mot à inclure est séparé par '&'). Augmentez le nombre de groupes de mots à inclure dans la classe \"commande\" ou simplifiez votre commande pour résoudre ce problème."); abort();}						
+								posgr++; histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].ajoutvide();
 							} else if(str[countstr]==')') {posgr=0; posfac++;
-							} else if(str[countstr]==']') {exclus = false;								//ATTENTION!!! 	METTRE MESSAGE D'ERREUR + abort() SI ON SE REND
-							}																				//AU-DELÀ DES LIMITES!!! À FAIRE!!!
+							} else if(str[countstr]==']') {exclus = false;
+							}
 						} 
 					} else mot+=str[countstr];		//Ajouter la lettre si c'est un caractère simple	
 				}
@@ -2714,12 +2768,14 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int debmot = 0;			//Noter la position d'indexation du début du mot
 			for(int countstr=0; countstr<strnb; countstr++){
 				if(str[countstr]=='|') {
+					if(histoire.filmanu[poschap][posmotif].commandes.exact.longueur==histoire.filmanu[poschap][posmotif].commandes.exact.taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\", appelé par les commandes exactes :\n\n\""); out(str); out("\"\n\n   il y a trop de façons exactes d'appeler le motif (séparées par '|'). Augmentez le nombre de façons exactes différentes dans la classe \"commande\" ou changez de méthode pour des groupes de mots, ou encore divisez le motif en deux motifs différents, pour résoudre ce problème."); abort();}					
 					if(countstr-debmot>0){ 
 						histoire.filmanu[poschap][posmotif].commandes.exact.ajout(strintervalle(str,debmot,countstr-1));
 					} else histoire.filmanu[poschap][posmotif].commandes.exact.ajout(""); //Si deux ';' se suivent, mettre *RIEN* comme commande exacte possible
 					debmot = countstr + 1;
 				}
 			}	
+			if(histoire.filmanu[poschap][posmotif].commandes.exact.longueur==histoire.filmanu[poschap][posmotif].commandes.exact.taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\", appelé par les commandes exactes :\n\n\""); out(str); out("\"\n\n   il y a trop de façons exactes d'appeler le motif (séparées par '|'). Augmentez le nombre de façons exactes différentes dans la classe \"commande\" ou changez de méthode pour des groupes de mots, ou encore divisez le motif en deux motifs différents, pour résoudre ce problème."); abort();}								
 			if(debmot!=strnb) histoire.filmanu[poschap][posmotif].commandes.exact.ajout(strintervalle(str,debmot,strnb-1));		//Entrer le dernier mot
 		}
 	
