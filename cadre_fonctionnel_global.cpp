@@ -543,16 +543,20 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				//Ajouter le rayon des couleurs			//Contient les différentes couleurs de la console
 				rayon.ajoutvide();	
 				nomrayon.ajout("couleur");
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("cantxt"); nomlivre[poscouleur].ajout("cantxt"); this->modif("couleur","cantxt",8);				//Gris foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("canbg"); nomlivre[poscouleur].ajout("canbg"); this->modif("couleur","canbg",0);					//Noir
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbontxt"); nomlivre[poscouleur].ajout("commbontxt"); this->modif("couleur","commbontxt",8);	//Gris foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbonbg"); nomlivre[poscouleur].ajout("commbonbg"); this->modif("couleur","commbonbg",0);		//Noir
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbusytxt"); nomlivre[poscouleur].ajout("commbusytxt"); this->modif("couleur","commbusytxt",8);	//Gris foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbusybg"); nomlivre[poscouleur].ajout("commbusybg"); this->modif("couleur","commbusybg",0);	//Noir
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commmauvtxt"); nomlivre[poscouleur].ajout("commmauvtxt"); this->modif("couleur","commmauvtxt",4);	//Rouge foncé
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commmauvbg"); nomlivre[poscouleur].ajout("commmauvbg"); this->modif("couleur","commmauvbg",0);	//Noir												
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commpostxt"); nomlivre[poscouleur].ajout("commpostxt"); this->modif("couleur","commpostxt",15);	//Blanc
-					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commposbg"); nomlivre[poscouleur].ajout("commposbg"); this->modif("couleur","commposbg",0);		//Noir		
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("actutxt"); this->modif("couleur","actutxt",8);			//Gris foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("actubg"); this->modif("couleur","actubg",0);				//Noir				
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("cantxt"); this->modif("couleur","cantxt",8);				//Gris foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("canbg"); this->modif("couleur","canbg",0);				//Noir
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("msntxt"); this->modif("couleur","msntxt",7);				//Gris clair
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("msnbg"); this->modif("couleur","msnbg",0);				//Noir	
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbontxt"); this->modif("couleur","commbontxt",8);		//Gris foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbonbg"); this->modif("couleur","commbonbg",0);		//Noir
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbusytxt"); this->modif("couleur","commbusytxt",4);	//Rouge foncé
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commbusybg"); this->modif("couleur","commbusybg",0);		//Noir
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commmauvtxt"); this->modif("couleur","commmauvtxt",12);	//Rouge clair
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commmauvbg"); this->modif("couleur","commmauvbg",0);		//Noir												
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commpostxt"); this->modif("couleur","commpostxt",15);	//Blanc
+					rayon[poscouleur].ajoutvide(); nomlivre[poscouleur].ajout("commposbg"); this->modif("couleur","commposbg",0);		//Noir		
 				//Ajouter le rayon des genres			//Contient le genre de chaque personnage: 0 = féminin, 1 = non binaire, 2 = masculin
 				rayon.ajoutvide();
 				nomrayon.ajout("genre");
@@ -563,6 +567,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int acces(int posrayon, string livrestr) {int poslivre = ColNameFind(livrestr,nomlivre[posrayon]); return(rayon[posrayon][poslivre]);}	//Pour les rayons fixes
 			//Fonction de modification : modif ; modifie la valeur à certaines positions
 			void modif(int posrayon, int poslivre, int value) {rayon[posrayon][poslivre] = value;}
+			void modif(int posrayon, string livrestr, int value) {int poslivre = ColNameFind(livrestr,nomlivre[posrayon]); rayon[posrayon][poslivre] = value;}	//Pour les rayons fixes
 			void modif(string rayonstr, string livrestr, int value) {
 				int posrayon = ColNameFind(rayonstr,nomrayon); 
 				int poslivre = ColNameFind(livrestr,nomlivre[posrayon]);
@@ -1122,8 +1127,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				bool actif;									//Compteur d'activité
 				bool pause;									//Compteur qui s'active si le canal est arrêté par un processus indépendant (ex: un menu, ou le code spécial "freeze")
 				string nom;									//Nom que porte le canal
+				string terminaison;							//Texte à placer juste après toute interruption ("override"), pour en quelque sorte terminer sur une belle note. Peut être changé à tout moment par le code spécial "§t§".
 			//Constructeur						
-			canal() : delay(150), posx(-1), posy(0), alinea(0), actif(false), nom("defaut"), nxtt(0), pausedt(0), pause(false) {}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
+			canal() : delay(150), posx(-1), posy(0), alinea(0), actif(false), nom("defaut"), terminaison(""), nxtt(0), pausedt(0), pause(false) {}  //Créer un constructeur par défaut, pour initialiser tous les paramètres
 		};
 
 		//b) Classe : msn ; permet d'afficher des messages instantannés par-dessus le texte du "fond de la console", qui s'effacent d'eux-mêmes après un moment
@@ -1154,10 +1160,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				StaticVect<char,200> commande;          	//Phrase que contient le buffer        
 				int inputpos;                   //Position d'indexation du prochain caractère    == StaticVect.fin? Non! Car ça peut bouger!
 				bool accepted;                  //Flag concernant la dernière commande; utile pour l'affichage visuel
-				bool busy;						//Flag concernant la dernière commande; utile pour l'affichage visuel
+				bool reserve;					//Flag concernant la dernière commande; met le motif en réserve et bloque l'acceptation de nouvelles commandes
+				int reservechap;				//Position du chapitre du motif à mettre en réserve
+				int reservemotif;				//Position du motif à mettre en réserve (à l'intérieur de son chapitre)
 				double vit;						//Multiplicateur de délais de défilement du texte, pour modifier la vitesse de lecture			
 			//Constructeur par défaut
-				input() : inputpos(0), accepted(false), busy(false), vit(1) {}
+				input() : inputpos(0), accepted(false), reserve(false), vit(1) {}
 		};							
 							
 		//b) classe : inputecho ; permet l'affichage résiduel des commandes (acceptées ou refusées)	
@@ -1187,7 +1195,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						//Niveau le plus extérieur: Différentes façon de dire la commande (ex: manger le concombre / se nourrir / mastiquer) ... Genre?
 						//Niveau médian: Différents groupes de mots qui doivent être inclus (ex: manger / concombre)
 						//Niveau le plus intérieur: Différents synonymes à l'intérieur du groupe de mots (ex: manger/absorber/grignoter/engouffrer/avaler)
-				StaticVect<StaticVect<string,taillegroupes>,tailledifferentes> exclus;						//Mots qui doivent être absents de l'expression
+				StaticVect<StaticVect<string,taillesynonymes>,tailledifferentes> exclus;						//Mots qui doivent être absents de l'expression
 						//Niveau le plus extérieur: Différentes façon de dire la commande
 						//Niveau le plus intérieur: Différents mots qui ne doivent pas se retrouver dans la commande
 				StaticVect<string,taillegroupes> exact;										//Expressions qui doivent exactement être recopiées, sans faute (soit seule manière d'appeler, soit confirmation si ambiguité; voir UserInputInterpret())
@@ -1228,10 +1236,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				int canal;											//Position du canal dans lequel écrire le texte
 				bool msn;											//Si TRUE, le motif va activer un nouveau msn à la place de s'inscrire dans un canal			
 				commande commandes;                					//Mots à rechercher pour l'ajout au canal à partir du UserInput			
-				bool getbusy;                                       //TRUE si le UserInput devient bloqué après que ce motif ait été appelé
+				bool reserve;                                       //TRUE si le UserInput devient bloqué après que ce motif ait été appelé (le motif est stocké en réserve, jusqu'à son activation)
 				string titre;										//Sert à identifier le motif + à savoir quel motif est appelé en cas d'ambiguité de la commande
 			//Constructeur
-			motifmanu() : getbusy(true), override(false), msn(false) {};	
+			motifmanu() : reserve(true), override(false), msn(false) {};	
 		};
 		
 		//d) classe : ouvrage ; permet de stocker toutes les textes + commandes selon des catégories (ex: chapitres), pour faciliter la recherche
@@ -1261,7 +1269,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			msnmemoire msnmem;
 			//Membres d'affichage à court terme
 			static const int taillecanaux = 2;			//Taille des objets de type StaticVect<canal,Taille>				
-			static const int taillemessagerie = 10;		//Taille des objets de type StaticVect<msn,Taille>
+			static const int taillemessagerie = 15;		//Taille des objets de type StaticVect<msn,Taille>
 			static const int taillegroupes = 5;			//Taille des groupes de mots qui doivent être bons dans une commande; copie de la ligne présente dans "class commande"; pas idéal			
 			StaticVect<canal,taillecanaux> canaux;
 			StaticVect<string,taillecanaux> nomcanaux;
@@ -1289,6 +1297,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				void overridecanal(int canpos);
 				void ReecrireMemoire();
 				void ReecrireMsn(int msnpos); void EffacerMsn(int msnpos);
+				void chgcolcan(); void chgcolmsn();
 			//Fonctions pour transférer le texte d'un motif vers un canal ou un msn	
 				void integrationmanu(int chapitrepos, int motifpos);
 				void integrationauto(int chapitrepos, int motifpos);
@@ -1322,7 +1331,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				void mdeb(const string& str); void adeb(const string& str);												
 				void mfin(const string& str); void afin(const string& str);	
 				void mcond(const string& str); void acond(const string& str);
-				void mover(bool bl); void aover(bool bl);
+				void mover(); void aover();
+				void mreserve();
 				void mcomm(const string& str); 
 				void mcommexact(const string& str);
 	};
@@ -1344,7 +1354,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			msnmem.setsize(base.limtxtx,base.limtxty);	
 		}
 		
-		
 		//b) Fonction : UserInputEcho ; validant graphiquement l'acceptation ou le refus des commandes envoyées
 		void univers::UserInputEcho() {	
 			if(inpecho.actif&&inpecho.nxtt<clock.currentt) {
@@ -1355,7 +1364,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				} else {
 					curspos(cons,inp.commande.longueur,base.limtxty); for(int pos=inp.commande.longueur; pos < inpecho.commande.fin; pos++) out(' ');		
 				}
-				chgcol(cons,biblio.acces(biblio.poscouleur,"cantxt"),biblio.acces(biblio.poscouleur,"canbg"));                       //Revenir à la couleur de base	
+				chgcol(cons,biblio.acces(biblio.poscouleur,"actutxt"),biblio.acces(biblio.poscouleur,"actubg"));                       //Revenir à la couleur de base	
 				inpecho.nxtt = clock.currentt + round(abs(inpecho.clignote[0])*pow(inp.vit,1/2));        //Updater le "next time"		//vit ^ (1/2), pour ne pas TROP modifier la vitesse...
 				inpecho.clignote.suppression(1);            //Passer à la prochaine instruction
 				if(inpecho.clignote.longueur==0) inpecho.actif = false;			//Vérifier s'il reste toujours du stock à passer dans le canal	
@@ -1378,6 +1387,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		
 		//d) Fonction : overridecanal() ; vide le canal, en appliquant cependant les codes spéciaux sélectionnés qui s'y trouvent
 		void univers::overridecanal(int canpos) {
+			//Passer tous les codes spéciaux importants
 			int strnb = canaux[canpos].txt.length(); bool cdsp = false;
 			for(int txtpos=0; txtpos<strnb; txtpos++) { 
 				if(cdsp) {		//Si l'on est dans un code spécial
@@ -1390,8 +1400,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					txtpos++; cdsp = false;      //Terminer le code spécial actuel
 				} else if(canaux[canpos].txt[txtpos]=='§') cdsp = true;          //Si l'on n'est pas dans un code spécial
 			}
-			canaux[canpos].txt = "";      //Vider le canal
-			canaux[canpos].actif = false;           //Désactiver le canal
+			canaux[canpos].txt = canaux[canpos].terminaison;      //Remplacer ce qui était dans le canal par la "terminaison" de ce canal (par défaut, c'est "" - c'est à dire rien)
+			if(canaux[canpos].txt.length()==0) canaux[canpos].actif = false;           //Désactiver le canal, si le canal est vide
 		}
 
 		//e) Fonction ReecrireMemoire()			
@@ -1438,70 +1448,91 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}		
 		}         
 
+		//h) Fonction chgcolcan/msn
+		void univers::chgcolcan(){
+			if(biblio.acces(biblio.poscouleur,"actutxt")!=biblio.acces(biblio.poscouleur,"cantxt")||biblio.acces(biblio.poscouleur,"actubg")!=biblio.acces(biblio.poscouleur,"canbg")) {
+				chgcol(cons,biblio.acces(biblio.poscouleur,"cantxt"),biblio.acces(biblio.poscouleur,"canbg"));		//Mettre la couleur des canaux
+				biblio.modif(biblio.poscouleur,"actutxt",biblio.acces(biblio.poscouleur,"cantxt")); biblio.modif(biblio.poscouleur,"actubg",biblio.acces(biblio.poscouleur,"canbg"));
+			}
+		}
+		void univers::chgcolmsn(){
+			if(biblio.acces(biblio.poscouleur,"actutxt")!=biblio.acces(biblio.poscouleur,"msntxt")||biblio.acces(biblio.poscouleur,"actubg")!=biblio.acces(biblio.poscouleur,"msnbg")) {
+				chgcol(cons,biblio.acces(biblio.poscouleur,"msntxt"),biblio.acces(biblio.poscouleur,"msnbg"));		//Mettre la couleur des msn
+				biblio.modif(biblio.poscouleur,"actutxt",biblio.acces(biblio.poscouleur,"msntxt")); biblio.modif(biblio.poscouleur,"actubg",biblio.acces(biblio.poscouleur,"msnbg"));
+			}
+		}
+
+
 	//ii) Fonctions pour transférer le texte d'un motif vers un canal ou un msn	----------------------------------------------------------------------		
 		
 		//a) Fonction : integration ; ajoute un motif à un canal
 		void univers::integrationmanu(int chapitrepos, int motifpos) {
-			bool msnbool = histoire.filmanu[chapitrepos][motifpos].msn;
-			bool msnskip = false; 
-			int xpos; int ypos;
-			//Vérifier s'il y a de la place pour un nouveau msn (si c'est un msn qui est updaté)
-			if(msnbool) {
-				//Choisir le msn qui sera utilisé
-				bool msnvide = false; bool lignelibrechoisie = false;
-				if(messagerie.longueur<messagerie.taille) msnvide = true;
-				if(msnvide) {
-					//Choisir la position de départ!
-						xpos = round(min(max(randnorm(25,15,rand_nb_gen),0),80)*base.limtxtx/100);		//Dist normale(mean=0.25,sd=0.15), bornée à 0% et 80% de la console
-						ypos = round(min(max(randnorm(30,20,rand_nb_gen),0),75)*base.limtxty/100);
-						//Choisir une ligne de départ non occupée
-						lignelibrechoisie = true; 
-						if(!msnmem.accesligne(ypos)) {
-							lignelibrechoisie = false; int countligne = 1;
-							while(!lignelibrechoisie) {
-								if(ypos+countligne<base.limtxty&&msnmem.accesligne(ypos+countligne)) { ypos += countligne; lignelibrechoisie = true;
-								} else if(ypos-countligne>=0&&msnmem.accesligne(ypos-countligne)) { ypos -= countligne; lignelibrechoisie = true;}
-								countligne++;
-								if(ypos+countligne>=base.limtxty&&ypos-countligne<0) break;		//Si on arrive hors des limites à la fois vers le haut et vers le bas, aucune ligne n'est libre
-							}
-						}
-				}
-				if(!msnvide||!lignelibrechoisie) {msnskip = true; inp.accepted = false;}	//Aucune ligne ou msn n'est libre : refuser d'intégrer le motif, même si la commande est bonne			
-			} 
-			if(!msnskip){
-				//Choisir l'enchaînement à insérer
-				int sumprob = 0; StaticVect<int,10> vectprob;
-				for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
-					sumprob += histoire.filmanu[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
-				}
-				int randval = randunif(0,sumprob-1,rand_nb_gen);  //Obtenir un integer aléatoire entre [0,sumprob[
-				int choix; 
-				for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
-					if(randval<vectprob[posprob]) {choix = posprob; break;}
-				}	
-				//Définir le texte à insérer
-				string txtmotif;
-				txtmotif += histoire.filmanu[chapitrepos][motifpos].codespeciauxdebut;   //Codes spéciaux début
-				for(int posench=0; posench<histoire.filmanu[chapitrepos][motifpos].enchainement[choix].longueur; posench++) {
-					txtmotif += histoire.filmanu[chapitrepos][motifpos].maille[histoire.filmanu[chapitrepos][motifpos].enchainement[choix][posench]];
-				}		
-				txtmotif += histoire.filmanu[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin  
-				//Updater le canal/msn 
+			//Vérifier d'abord si on doit mettre le motif en réserve
+			if(histoire.filmanu[chapitrepos][motifpos].reserve&&!inp.reserve) {		//La fonction integrationmanu() ne sera jamais lancée si la réserve est pleine, hormis dans le cas du code spécial "§r§". Donc c'est safe.
+				inp.reservechap = chapitrepos; inp.reservemotif = motifpos; inp.reserve = true;
+			} else {
+				bool msnbool = histoire.filmanu[chapitrepos][motifpos].msn;
+				bool msnskip = false; 
+				int xpos; int ypos;
+				//Vérifier s'il y a de la place pour un nouveau msn (si c'est un msn qui est updaté)
 				if(msnbool) {
-					messagerie.ajoutvide();																					//Ajouter officiellement un objet msn à la messagerie
-					messagerie[messagerie.longueur-1].posdebx = xpos; messagerie[messagerie.longueur-1].posdeby = ypos;		//Définir les positions de départ
-					messagerie[messagerie.longueur-1].posx = xpos-1; messagerie[messagerie.longueur-1].posy = ypos;			//Définir les positions du curseur (avant la première entrée)
-					messagerie[messagerie.longueur-1].postxt = 0;															//Remettre au début du texte
-					messagerie[messagerie.longueur-1].construire = true; messagerie[messagerie.longueur-1].nbysupp = 0;		//Remettre les autres compteurs à leur position initiale
-					messagerie[messagerie.longueur-1].delay = randnorm(80,10,rand_nb_gen);									//Mettre un délai aléatoire
-					messagerie[messagerie.longueur-1].txt += txtmotif;														//Ajouter le texte				
-					messagerie[messagerie.longueur-1].nxtt = clock.currentt; 														//Updater le nxtt pour qu'il commence à partir de l'intégration
-				} else {
-					if(histoire.filmanu[chapitrepos][motifpos].override) overridecanal(histoire.filmanu[chapitrepos][motifpos].canal);	//Overloader le canal si nécessaire			//Ne s'applique pas aux msn			
-					canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt += txtmotif;																			//Ajouter le texte				
-					if(!canaux[histoire.filmanu[chapitrepos][motifpos].canal].actif) canaux[histoire.filmanu[chapitrepos][motifpos].canal].nxtt = clock.currentt; 		//Updater le nxtt pour qu'il commence à partir de l'intégration
-					if(canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt.length()>0) canaux[histoire.filmanu[chapitrepos][motifpos].canal].actif = true;	//Marquer le canal comme actif
-				}	
+					//Choisir le msn qui sera utilisé
+					bool msnvide = false; bool lignelibrechoisie = false;
+					if(messagerie.longueur<messagerie.taille) msnvide = true;
+					if(msnvide) {
+						//Choisir la position de départ!
+							xpos = round(min(max(randnorm(25,15,rand_nb_gen),0),80)*base.limtxtx/100);		//Dist normale(mean=0.25,sd=0.15), bornée à 0% et 80% de la console
+							ypos = round(min(max(randnorm(30,20,rand_nb_gen),0),75)*base.limtxty/100);
+							//Choisir une ligne de départ non occupée
+							lignelibrechoisie = true; 
+							if(!msnmem.accesligne(ypos)) {
+								lignelibrechoisie = false; int countligne = 1;
+								while(!lignelibrechoisie) {
+									if(ypos+countligne<base.limtxty&&msnmem.accesligne(ypos+countligne)) { ypos += countligne; lignelibrechoisie = true;
+									} else if(ypos-countligne>=0&&msnmem.accesligne(ypos-countligne)) { ypos -= countligne; lignelibrechoisie = true;}
+									countligne++;
+									if(ypos+countligne>=base.limtxty&&ypos-countligne<0) break;		//Si on arrive hors des limites à la fois vers le haut et vers le bas, aucune ligne n'est libre
+								}
+							}
+					}
+					if(!msnvide||!lignelibrechoisie) {msnskip = true; inp.accepted = false;}	//Aucune ligne ou msn n'est libre : refuser d'intégrer le motif, même si la commande est bonne			
+				} 
+				if(!msnskip){
+					//Choisir l'enchaînement à insérer
+					int sumprob = 0; StaticVect<int,10> vectprob;
+					for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
+						sumprob += histoire.filmanu[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
+					}
+					int randval = randunif(0,sumprob-1,rand_nb_gen);  //Obtenir un integer aléatoire entre [0,sumprob[
+					int choix; 
+					for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
+						if(randval<vectprob[posprob]) {choix = posprob; break;}
+					}	
+					//Définir le texte à insérer
+					string txtmotif;
+					txtmotif += histoire.filmanu[chapitrepos][motifpos].codespeciauxdebut;   //Codes spéciaux début
+					for(int posench=0; posench<histoire.filmanu[chapitrepos][motifpos].enchainement[choix].longueur; posench++) {
+						txtmotif += histoire.filmanu[chapitrepos][motifpos].maille[histoire.filmanu[chapitrepos][motifpos].enchainement[choix][posench]];
+					}		
+					txtmotif += histoire.filmanu[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin  
+					//Updater le canal/msn 
+					if(msnbool) {
+						messagerie.ajoutvide();																					//Ajouter officiellement un objet msn à la messagerie
+						messagerie[messagerie.longueur-1].posdebx = xpos; messagerie[messagerie.longueur-1].posdeby = ypos;		//Définir les positions de départ
+						msnmem.modifligne(ypos,false);																			//Définir la ligne comme occupée
+						messagerie[messagerie.longueur-1].posx = xpos-1; messagerie[messagerie.longueur-1].posy = ypos;			//Définir les positions du curseur (avant la première entrée)
+						messagerie[messagerie.longueur-1].postxt = 0;															//Remettre au début du texte
+						messagerie[messagerie.longueur-1].construire = true; messagerie[messagerie.longueur-1].nbysupp = 0;		//Remettre les autres compteurs à leur position initiale
+						messagerie[messagerie.longueur-1].delay = randnorm(110,10,rand_nb_gen);									//Mettre un délai aléatoire
+						messagerie[messagerie.longueur-1].txt += txtmotif;														//Ajouter le texte				
+						messagerie[messagerie.longueur-1].nxtt = clock.currentt; 														//Updater le nxtt pour qu'il commence à partir de l'intégration
+					} else {
+						if(histoire.filmanu[chapitrepos][motifpos].override) overridecanal(histoire.filmanu[chapitrepos][motifpos].canal);	//Overloader le canal si nécessaire			//Ne s'applique pas aux msn			
+						canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt += txtmotif;																			//Ajouter le texte				
+						if(!canaux[histoire.filmanu[chapitrepos][motifpos].canal].actif) canaux[histoire.filmanu[chapitrepos][motifpos].canal].nxtt = clock.currentt; 		//Updater le nxtt pour qu'il commence à partir de l'intégration
+						if(canaux[histoire.filmanu[chapitrepos][motifpos].canal].txt.length()>0) canaux[histoire.filmanu[chapitrepos][motifpos].canal].actif = true;	//Marquer le canal comme actif
+					}	
+				}			
 			}
 		}
 		void univers::integrationauto(int chapitrepos, int motifpos) {
@@ -1556,12 +1587,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(msnbool) {
 					messagerie.ajoutvide();																					//Ajouter officiellement un objet msn à la messagerie
 					messagerie[messagerie.longueur-1].posdebx = xpos; messagerie[messagerie.longueur-1].posdeby = ypos;		//Définir les positions de départ
+					msnmem.modifligne(ypos,false);																			//Définir la ligne comme occupée
 					messagerie[messagerie.longueur-1].posx = xpos-1; messagerie[messagerie.longueur-1].posy = ypos;			//Définir les positions du curseur (avant la première entrée)
 					messagerie[messagerie.longueur-1].postxt = 0;															//Remettre au début du texte
 					messagerie[messagerie.longueur-1].construire = true; messagerie[messagerie.longueur-1].nbysupp = 0;		//Remettre les autres compteurs à leur position initiale
 					messagerie[messagerie.longueur-1].attente = false; messagerie[messagerie.longueur-1].pause = false;
-					messagerie[messagerie.longueur-1].delay = randnorm(80,10,rand_nb_gen);									//Mettre un délai aléatoire
-					messagerie[messagerie.longueur-1].txt += txtmotif;														//Ajouter le texte				
+					messagerie[messagerie.longueur-1].delay = randnorm(100,10,rand_nb_gen);									//Mettre un délai aléatoire
+					messagerie[messagerie.longueur-1].txt = txtmotif;														//Ajouter le texte				
 					messagerie[messagerie.longueur-1].nxtt = clock.currentt; 												//Updater le nxtt pour qu'il commence à partir de l'intégration
 				} else {
 					if(histoire.filauto[chapitrepos][motifpos].override) overridecanal(histoire.filauto[chapitrepos][motifpos].canal);	//Overloader le canal si nécessaire			//Ne s'applique pas aux msn			
@@ -1600,7 +1632,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							canaux[canpos].nxtt = clock.currentt + round(val * inp.vit);      //Ajouter le temps d'attente        //round() est nécessaire pour arrondir correctement					
 						} else if(canaux[canpos].txt[1]=='d'){      //'d' pour "délai" -> changer le délai entre chaque lettre, donc la vitesse de lecture
 							int val = CodeSpecialExtractInt(canaux[canpos].txt,CodeSpecialLong);       //Extraire le temps entre les lettres		
-							canaux[canpos].delay = val;					
+							canaux[canpos].delay = val;
+						} else if(canaux[canpos].txt[1]=='t'){      //'t' pour "terminaison" -> changer le texte de terminaison, qui sera ajouté après chaque override (si du texte a effectivement été effacé)
+							string nomcanal; string terminaison; int posSpecial = 2;
+							while(canaux[canpos].txt[posSpecial] != '¶') nomcanal += canaux[canpos].txt[posSpecial++]; 
+							posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') terminaison += canaux[canpos].txt[posSpecial++];							
+							canaux[ColNameFind(nomcanal,nomcanaux)].terminaison = terminaison;
 						} else if(canaux[canpos].txt[1]=='g'){		//'g' pour "gender" -> choisir le bon accord   format: §gNomAGenrer(féminin;non binaire/neutre;masculin)§
 							int genreselect;										 //Sélectionner le genre
 								string NomAGenrer;
@@ -1635,7 +1672,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							int posSpecial = 2;
 							while(canaux[canpos].txt[posSpecial] != ';') poschap += canaux[canpos].txt[posSpecial++]; 
 							posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') posmotif += canaux[canpos].txt[posSpecial++];
-							histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
+							histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en 
+						} else if(canaux[canpos].txt[1]=='r'){		//'r' pour "réserve" -> intégrer les motifs manuels qui attendent dans la réserve; sert à ne pas couper une phrase en deux
+							if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);		
 						} else if(canaux[canpos].txt[1]=='s'){		//'s' pour "skip" -> descendre le canal dans la dernière ligne possible, sans couper le canal qui l'occupe.
 							//Crée une nouvelle ligne pour que le texte puisse vraiment descendre
 							mem.newline(mem.accesfrontline());                   
@@ -1643,6 +1682,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							if(base.refoule) base.consy++; else if(mem.accesfrontline()>=base.limtxty) {base.refoule = true; base.consy++;} 				
 							//Sauter une ligne dans la console
 							if(base.refoule) {                         //La console est saturée: on pousse le texte vers le haut!
+								chgcolcan();	//Mettre la bonne couleur
 								//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
 									curspos(cons,0,mem.accesfrontline()-base.consy); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
 								//Tout ré-écrire, mais une ligne plus haut
@@ -1651,6 +1691,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 										for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));
 									}	
 								//Ré-écrire tous les msn
+									chgcolmsn();	//Mettre la bonne couleur								
 									for(int countmsn=0; countmsn<messagerie.longueur; countmsn++) ReecrireMsn(countmsn);										                 
 							}	   	        
 							//Updater les positions dans le canal actuel
@@ -1664,6 +1705,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							if(base.refoule) base.consy++; else if(mem.accesfrontline()>=base.limtxty) {base.refoule = true; base.consy++;} 				
 							//Sauter deux lignes dans la console
 							if(base.refoule) {                         //La console est saturée: on pousse le texte vers le haut!
+								chgcolcan();	//Mettre la bonne couleur					
 								//Effacer toute les deux lignes avec des espaces (en "reléguant ce qui y était déjà vers le haut")
 									curspos(cons,0,mem.accesfrontline()-base.consy-1); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
 									curspos(cons,0,mem.accesfrontline()-base.consy); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
@@ -1673,6 +1715,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 										for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));
 									}	
 								//Ré-écrire tous les msn
+									chgcolmsn();	//Mettre la bonne couleur					
 									for(int countmsn=0; countmsn<messagerie.longueur; countmsn++) ReecrireMsn(countmsn);										      
 							}	   	        
 							//Updater les positions dans le canal actuel
@@ -1709,15 +1752,18 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							if(!base.refoule) {          //La console n'est pas encore saturée: on pousse vers le bas!
 								if(canaux[canpos].posy<mem.accesfrontline()) {                             //S'il y a d'autres lignes à repousser vers le bas
 									//Ré-écrire tout ce qu'il y avait en-dessous de la position actuelle, mais une ligne plus basse
+										chgcolcan();	//Mettre la bonne couleur					
 										curspos(cons,0,canaux[canpos].posy+1);  //Mettre le curseur au début de la reconstruction
 										for(int county = canaux[canpos].posy + 1 ; county <= mem.accesfrontline() ; county++) {   
 											for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));
 										}
 									//Ré-écrire tous les msn
+										chgcolmsn();	//Mettre la bonne couleur									
 										for(int countmsn=0; countmsn<messagerie.longueur; countmsn++) ReecrireMsn(countmsn);	
 								}
 							} else {                         //La console est saturée: on pousse le texte vers le haut!
-								//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")
+								chgcolcan();	//Mettre la bonne couleur					
+								//Effacer toute la ligne avec des espaces (en "reléguant ce qui y était déjà vers le haut")								
 									curspos(cons,0,canaux[canpos].posy-base.consy+1); for(int countx = 0; countx < base.limtxtx ; countx++) out(' '); 												
 								//Tout ré-écrire, mais une ligne plus haut
 			    					curspos(cons,0,0);   //Commencer en haut, puis descendre naturellement
@@ -1725,6 +1771,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 										for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));
 									}				                 
 								//Ré-écrire tous les msn
+									chgcolmsn();	//Mettre la bonne couleur
 									for(int countmsn=0; countmsn<messagerie.longueur; countmsn++) ReecrireMsn(countmsn);		
 							}	
 							//Updater les positions dans les autres canaux    //Parce que leur position dans la mémoire a bougé //la position dans la console est quant à elle gérée par base.consy
@@ -1739,6 +1786,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						} else {canaux[canpos].posx++;}       //Updater seulement posx s'il n'y a pas de mouvement vertical
 					//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du charactère actuel (dans la mémoire)!
 					if(canaux[canpos].txt[0]!='\n') {
+						chgcolcan();	//Mettre la bonne couleur
 						if(canaux[canpos].posx==0){	if(canaux[canpos].alinea>0) {										//Mettre l'alinéa
 							for(int alinpos=0; alinpos<canaux[canpos].alinea; alinpos++){
 								if(msnmem.accescase(alinpos,canaux[canpos].posy-base.consy)) {curspos(cons,alinpos,canaux[canpos].posy-base.consy) ; out(' ');}  //Inscrire dans la console seulement si la place n'est pas déjà prise par un msn
@@ -1776,6 +1824,11 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							} else if(txtrc[1]=='d'){      //'d' pour "délai" -> changer le délai entre chaque lettre, donc la vitesse de lecture
 								int val = CodeSpecialExtractInt(txtrc,CodeSpecialLong);       //Extraire le temps entre les lettres		
 								messagerie[msnpos].delay = val;					
+							} else if(txtrc[1]=='t'){      //'t' pour "terminaison" -> changer le texte de terminaison, qui sera ajouté après chaque override (si du texte a effectivement été effacé)
+								string nomcanal; string terminaison; int posSpecial = 2;
+								while(txtrc[posSpecial] != '¶') nomcanal += txtrc[posSpecial++]; 
+								posSpecial++; while(txtrc[posSpecial] != '§') terminaison += txtrc[posSpecial++];							
+								canaux[ColNameFind(nomcanal,nomcanaux)].terminaison = terminaison;
 							} else if(txtrc[1]=='g'){		//'g' pour "gender" -> choisir le bon accord   format: §gNomAGenrer(féminin;non binaire/neutre;masculin)§
 								int genreselect;										 //Sélectionner le genre
 									string NomAGenrer;
@@ -1812,6 +1865,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								while(txtrc[posSpecial] != ';') poschap += txtrc[posSpecial++]; 
 								posSpecial++; while(txtrc[posSpecial] != '§') posmotif += txtrc[posSpecial++];
 								histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
+							} else if(txtrc[1]=='r'){		//'r' pour "réserve" -> intégrer les motifs manuels qui attendent dans la réserve; sert à ne pas couper une phrase en deux
+								if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);									
 										//Pas de codes spéciaux 's' ou 'c', car les msn ne s'inscrivent pas dans la mémoire
 							} else if(txtrc[1]=='o') {		//'o' pour "override" -> effacer le contenu du canal (ou msn) mentionné
 								string canaloverr = strintervalle(txtrc,2,CodeSpecialLong-2);   //Obtenir le nom du canal à overrider
@@ -1826,26 +1881,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								}
 							}
 							   //AUTRE CODE SPÉCIAL?				
-							   
-							   
-							   	//DEBUGGG
-							   	//int debug = messagerie[msnpos].txt.length()-posrc;
-							   	//out(debug); 
-								   //out("\n"); out(txtrc); 
-								   //clock.stop(5000);
-							   	
-							   
-							   				
 						//Passer à la prochaine position du texte à lire
 						messagerie[msnpos].postxt += (CodeSpecialLong);
-					} else 	messagerie[msnpos].postxt -= CodeSpecialLongueurInv(strintervalle(messagerie[msnpos].txt,0,posrc));		//Si le msn est en déconstruction 
-					
-					//DEBUGGG
-					//out(strintervalle(messagerie[msnpos].txt,0,posrc)); abort();
-					
-					
-					
-					
+					} else 	messagerie[msnpos].postxt -= CodeSpecialLongueurInv(strintervalle(messagerie[msnpos].txt,0,posrc));		//Si le msn est en déconstruction 			
 				} else {  //Interpréter le reste des caractères (pas des codes spéciaux)
 					//Updater le "next time"
 						if(messagerie[msnpos].construire) {messagerie[msnpos].nxtt = clock.currentt + round(messagerie[msnpos].delay * inp.vit);
@@ -1927,7 +1965,9 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 															int posSpecial = 2;
 															while(txtrc[posSpecial] != ';') poschap += txtrc[posSpecial++]; 
 															posSpecial++; while(txtrc[posSpecial] != '§') posmotif += txtrc[posSpecial++];
-															histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours										
+															histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
+														} else if(txtrc[1]=='r'){		//'r' pour "réserve" -> intégrer les motifs manuels qui attendent dans la réserve; sert à ne pas couper une phrase en deux
+															if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);																										
 														} else if(txtrc[1]=='o') {		//'o' pour "override" -> effacer le contenu du canal (ou msn) mentionné
 															string canaloverr = strintervalle(txtrc,2,CodeSpecialLong-1);   //Obtenir le nom du canal à overrider
 															overridecanal(ColNameFind(canaloverr,nomcanaux)); 	
@@ -1964,73 +2004,26 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						//Inscrire le caractère       //À partir d'ici, les posx et posy sont la position du caractère actuel!
 						if(messagerie[msnpos].txt[posrc]!='\n') {
 							if(messagerie[msnpos].construire) {			//Si on est en train d'écrire
+								chgcolmsn();	//Mettre la bonne couleur
 								curspos(cons,messagerie[msnpos].posx,messagerie[msnpos].posy); out(messagerie[msnpos].txt[posrc]);	//Inscrire le caractère dans la console
 								msnmem.modifcase(messagerie[msnpos].posx, messagerie[msnpos].posy, false); 						//Noter que la position est prise par un msn				
 							} else {									//Si on est en train d'effacer
+								chgcolcan();	//Mettre la bonne couleur
 								curspos(cons,messagerie[msnpos].posx,messagerie[msnpos].posy); out(mem.acces(messagerie[msnpos].posx,messagerie[msnpos].posy+base.consy));     //Remettre la console comme elle était
-								msnmem.modifcase(messagerie[msnpos].posx, messagerie[msnpos].posy, true); 						//Noter que la position est maintenant libre
-								
-								
-								
-								//DEBUGGG
-						//curspos(cons,messagerie[msnpos].posx,messagerie[msnpos].posy+4); out(messagerie[msnpos].txt[posrc]);
-								
-								
-								
-																						
+								msnmem.modifcase(messagerie[msnpos].posx, messagerie[msnpos].posy, true); 						//Noter que la position est maintenant libre															
 							}
 						}	
 						if(messagerie[msnpos].construire) messagerie[msnpos].postxt++; else messagerie[msnpos].postxt--;       //Passer à la prochaine position du texte à lire	   
-					}
-					
-					
-					//DEBUGGG
-						//curspos(cons,messagerie[msnpos].posx,messagerie[msnpos].posy+4); out(messagerie[msnpos].txt[posrc]);
-					
-					
-					
-					
+					}	
 				}
-				if(messagerie[msnpos].construire&&messagerie[msnpos].postxt==messagerie[msnpos].txt.length()) {			//Vérifier s'il reste toujours du texte à lire
-					
-					
-					
-						//DEBUGG
-						//curspos(cons,messagerie[msnpos].posx,messagerie[msnpos].posy+4); out("\nVoici le caractère: "); out(messagerie[msnpos].txt[messagerie[msnpos].postxt]);
-						//ReecrireMsn(msnpos);
-							//abort();
-							//DEBUGG
-					
-					
-					
+				if(messagerie[msnpos].construire&&messagerie[msnpos].postxt==messagerie[msnpos].txt.length()) {			//Vérifier s'il reste toujours du texte à lire		
 					messagerie[msnpos].construire = false; 
 					//Replacer les compteurs pour repartir à la bonne place
-					//if(messagerie[msnpos].txt[posrc]=='§') {	//Si ce qui a été lu était un code spécial (posrc réfère à postxt "non updaté")
-						//messagerie[msnpos].postxt -= CodeSpecialLongueurInv(strintervalle(messagerie[msnpos].txt,posrc,messagerie[msnpos].txt.length()-1));} else 
-					messagerie[msnpos].postxt--; 
-					messagerie[msnpos].posx++;		//on fait posx++, pour être à la "position précédente", mais à l'envers (genre plus à droite de ce qui va être effacé à un moment donné)		
-					
-								//LE PROBLÈME EST ICI!!!!!!
-											//ON RECOMMENCE EN FAISANT postxt--, MÊME SI C'ÉTAIT UN CODE SPÉCIAL!
-											//FAUDRAIT DONC REPLACER LES COMPTEURS COMME DU MONDE!	//CE QUE JE VIENS DE FAIRE, TECHNIQUEMENT
-											
-												//CE N'ÉTAIT PAS ÇA LE PROBLÈME, FINALEMENT; ON FINISSAIT APRÈS LE TEXTE; POUR REVENIR À LA DERNIÈRE POSITION (TXT.LENGTH()-1), IL FAUT FAIRE --. PIS À LA PROCHAINE ITÉRATION, ON VA S'OCCUPER DU '§'.
-					
-						//DEBUGG
-						//out("\nVoici le caractère: "); out(messagerie[msnpos].txt[messagerie[msnpos].postxt]); out('\n');
-						//ReecrireMsn(msnpos);
-							//abort();
-							//DEBUGG								
-								
-								
-				} else if(!messagerie[msnpos].construire&&messagerie[msnpos].postxt<0) messagerie.supprposition(msnpos);	//Vérifier s'il reste toujours du texte à effacer, et supprimer le msn s'il est fini
-				
-
-							//DEBUGGG	
-						//if(canaux[0].pause) out("\nON EST PASSÉE À LA FIN DE LIREMESSAGERIE()");
-			
-				
-				
+					messagerie[msnpos].postxt--; messagerie[msnpos].posx++;		//on fait posx++, pour être à la "position précédente", mais à l'envers (genre plus à droite de ce qui va être effacé à un moment donné)										
+				} else if(!messagerie[msnpos].construire&&messagerie[msnpos].postxt<0) {		//Vérifier s'il reste toujours du texte à effacer
+					for(int countsupp=1; countsupp<=messagerie[msnpos].nbysupp; countsupp++) msnmem.modifligne(messagerie[msnpos].posdeby+countsupp,true);	//Libérer les lignes dans la mémoire
+					messagerie.supprposition(msnpos);	//"Supprimer" le msn
+				}
 			}}
 		}	
 								
@@ -2057,7 +2050,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								if(exactmauvais==false) exactbon = true; else diffpos++;
 							}
 							if(exactbon)	{         //Intégrer tout de suite le bon motif dans le canal					
-								inp.accepted = true; if(histoire.filmanu[bonchapitre[0]][bonmotif[0]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input					
+								inp.accepted = true; if(histoire.filmanu[bonchapitre[0]][bonmotif[0]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input					
 								integrationmanu(chapitrepos,motifpos); return;            //Intégrer le bon motif dans le canal
 							}   
 						} else {								//Si plusieurs mots clés doivent être présents
@@ -2120,7 +2113,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					inp.accepted = false; 			
 					return;
 				} else if(bonmotif.longueur==1) {	
-					inp.accepted = true; if(histoire.filmanu[bonchapitre[0]][bonmotif[0]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input					
+					inp.accepted = true; if(histoire.filmanu[bonchapitre[0]][bonmotif[0]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input					
 					integrationmanu(bonchapitre[0],bonmotif[0]); return;            //Intégrer le bon motif dans le canal
 				} else {
 					//Déterminer si la commande correspond au titre d'un canal
@@ -2130,7 +2123,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							while(!exactmauvais&&commpos<inp.commande.longueur) {if(inp.commande[commpos]!=histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].titre[commpos]) exactmauvais = true; else commpos++;}	
 							if(exactmauvais==false) {
 								exactbon = true; 	
-								inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].getbusy) inp.busy = true;							
+								inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].reserve) inp.reserve = true;							
 								integrationmanu(bonchapitre[bonpos],bonmotif[bonpos]); return;}            //Intégrer tout de suite le bon motif dans le canal	
 					}	
 					//Si l'ambiguité demeure: mettre le jeu sur pause, et faire apparaître les options	
@@ -2161,7 +2154,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 									clock.stop(1500);
 									curspos(cons,0,0); for(int county = base.consy ; county <= mem.accesfrontline() ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));}			
 									unpauseall();
-									inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input							
+									inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input							
 									integrationmanu(bonchapitre[bonpos],bonmotif[bonpos]); return;}            //Intégrer tout de suite le bon motif dans le canal	
 						}				
 					//Si l'ambiguité persiste: le demander une dernière fois
@@ -2181,7 +2174,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 									clock.stop(1500);
 									curspos(cons,0,0); for(int county = base.consy ; county <= mem.accesfrontline() ; county++) {for(int countx = 0 ; countx < base.limtxtx ; countx++) out(mem.acces(countx,county));}			
 									unpauseall();
-									inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].getbusy) inp.busy = true;		//Envoyer le bon message au gestionnaire d'Input
+									inp.accepted = true; if(histoire.filmanu[bonchapitre[bonpos]][bonmotif[bonpos]].reserve) inp.reserve = true;		//Envoyer le bon message au gestionnaire d'Input
 									integrationmanu(bonchapitre[bonpos],bonmotif[bonpos]); return;}            //Intégrer tout de suite le bon motif dans le canal	
 						}				
 					//Si l'ambiguité est insolvable
@@ -2329,23 +2322,28 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						}
 					}	
 				//Remettre la lettre sélectionnée en surbrillance
-				if(inp.inputpos!=inp.commande.longueur) {chgcol(cons,biblio.acces(biblio.poscouleur,"commpostxt"),biblio.acces(biblio.poscouleur,"commposbg"));  curspos(cons,inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]); chgcol(cons,biblio.acces(biblio.poscouleur,"cantxt"),biblio.acces(biblio.poscouleur,"canbg"));}
+				if(inp.inputpos!=inp.commande.longueur) {chgcol(cons,biblio.acces(biblio.poscouleur,"commpostxt"),biblio.acces(biblio.poscouleur,"commposbg"));  curspos(cons,inp.inputpos,base.limtxty); out(inp.commande[inp.inputpos]); chgcol(cons,biblio.acces(biblio.poscouleur,"actutxt"),biblio.acces(biblio.poscouleur,"actubg"));}
 				//Évaluer la commande		
 				if(enter) {
-					UserInputInterpret();
+					bool dejareserve = false;
+					if(inp.reserve) dejareserve = true; else UserInputInterpret();		//Interpréter la commande seulement s'il n'y a pas déjà un motif en réserve
 					inpecho.commande.remplacement(inp.commande);						
-					inpecho.actif = true; inpecho.nxtt = clock.currentt;          							 //Mettre à l'heure le "nexttime"											
-					if(inp.accepted) {
-						if(inp.busy) {			//Conserver le texte en place, en plus pâle, pendant quelques secondes. Peut être effacé progressivement par une nouvelle commande
+					inpecho.actif = true; inpecho.nxtt = clock.currentt;          							 //Mettre à l'heure le "nexttime"					
+					if(dejareserve)	{		//Faire clignoter le texte lentement pendant quelques secondes
+							inpecho.txtcol = biblio.acces(biblio.poscouleur,"commbusytxt"); inpecho.bgcol = biblio.acces(biblio.poscouleur,"commbusybg");
+							int clignarr [4] {1000,-1000,1000,-1};
+							inpecho.clignote.remplacement(clignarr, 4);						
+					} else if(inp.accepted) {
+						if(inp.reserve) {			//Conserver le texte en place pendant quelques secondes. Peut être effacé progressivement par une nouvelle commande
 							inpecho.txtcol = biblio.acces(biblio.poscouleur,"commbontxt"); inpecho.bgcol = biblio.acces(biblio.poscouleur,"commbonbg");
 							int clignarr [2] {3000,-1};
 							inpecho.clignote.remplacement(clignarr, 2);
-						} else {				//Faire clignoter le texte, en plus pâle, pendant quelques secondes.
-							inpecho.txtcol = biblio.acces(biblio.poscouleur,"commbusytxt"); inpecho.bgcol = biblio.acces(biblio.poscouleur,"commbusybg");
+						} else {				//Faire clignoter le texte pendant quelques secondes.
+							inpecho.txtcol = biblio.acces(biblio.poscouleur,"commbontxt"); inpecho.bgcol = biblio.acces(biblio.poscouleur,"commbonbg");
 							int clignarr [6] {500,-500,500,-500,500,-1};
 							inpecho.clignote.remplacement(clignarr, 6);
 						}                				
-					} else{						//Faire clignoter le texte, en rouge foncé, pendant quelques secondes.    
+					} else{						//Faire clignoter le texte pendant quelques secondes.    
 						inpecho.txtcol = biblio.acces(biblio.poscouleur,"commmauvtxt"); inpecho.bgcol = biblio.acces(biblio.poscouleur,"commmauvbg");
 						int clignarr [8] {500,-500,500,-500,500,-500,500,-1};				
 						inpecho.clignote.remplacement(clignarr,8);	
@@ -2644,20 +2642,27 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			histoire.filauto[poschap][posmotif].condition.set(str,biblio);
 		}
 			
-		//h) Fonction pour définir si le canal sera vidé (override) dès l'activation de ce motif (manuel)
-		void univers::mover(bool bl){
+		//h) Fonction pour définir que le canal sera vidé (override) dès l'activation de ce motif (manuel)   (désactivé par défaut)
+		void univers::mover(){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
-			histoire.filmanu[poschap][posmotif].override = bl;
+			histoire.filmanu[poschap][posmotif].override = true;
 		}				
-		//h) Fonction pour définir si le canal sera vidé (override) dès l'activation de ce motif (automatique)
-		void univers::aover(bool bl){
+		//h) Fonction pour définir que le canal sera vidé (override) dès l'activation de ce motif (automatique)   (désactivé par défaut)
+		void univers::aover(){
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;		
-			histoire.filauto[poschap][posmotif].override = bl;
+			histoire.filauto[poschap][posmotif].override = true;
 		}					
 					
-		//i) Fonction pour définir les combinaisons de mots qui appeleront le motif - les commandes (manuel)
+		//i) Fonction pour définir que le canal sera mis en attente ("réserve") lorsque la bonne commande sera envoyée, et ce jusqu'à la lecture du code spécial "§r§" (manuel seulement)   (désactivé par défaut)
+		void univers::mreserve(){
+			int poschap = histoire.filmanu.longueur-1;
+			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
+			histoire.filmanu[poschap][posmotif].reserve = true;
+		}					
+					
+		//j) Fonction pour définir les combinaisons de mots qui appeleront le motif - les commandes (manuel)
 		void univers::mcomm(const string& str){
 			int poschap = histoire.filmanu.longueur-1;		//ICI, '|' SÉPARE LES SYNONYMES, '&' SÉPARE LES GROUPES DE MOTS NÉCESSAIRES, "[]" DÉNOTE LES MOTS À EXCLURE ET "()" SÉPARENT LES DIFFÉRENTES FAÇONS DE LE DIRE
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;			//NOTE: LES MOTS À EXCLURE N'ONT PAS DE GROUPES DE MOTS, ILS N'ONT QUE DES SYNONYMES!
@@ -2693,15 +2698,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							if(str[countstr]=='|') {						//Ne rien faire
 							}else if(str[countstr]=='&') {posgr++; histoire.filmanu[poschap][posmotif].commandes.inclus[posfac].ajoutvide();
 							} else if(str[countstr]==')') {posgr=0; posfac++;
-							} else if(str[countstr]==']') {exclus = false;
-							}
+							} else if(str[countstr]==']') {exclus = false;								//ATTENTION!!! 	METTRE MESSAGE D'ERREUR + abort() SI ON SE REND
+							}																				//AU-DELÀ DES LIMITES!!! À FAIRE!!!
 						} 
 					} else mot+=str[countstr];		//Ajouter la lettre si c'est un caractère simple	
 				}
 			}
 		}
 		
-		//j) Fonction pour définir les commandes exactes qui appeleront le motif (manuel)
+		//k) Fonction pour définir les commandes exactes qui appeleront le motif (manuel)
 		void univers::mcommexact(const string& str){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
@@ -2770,54 +2775,6 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				un.afin("§p1000§");
 				un.aover(0);						//N'override pas le canal à son début
 				un.atexte("YoYoYo! Les msn marchent!");				
-
-		
-					//FAit que... Ça... met un '§' supplémentaire quand y'a deux codes spéciaux collés?
-												//Mais juste à la fin, quand il reste plus de texte autre que des codes spéciaux à lire?
-													//Pis... tout le temps vraiment aux deux premiers, peu importe combien y'en a d'autres qui suivent?
-													
-													//Pis, ça l'inscrit vraiment juste après le texte, peu importe si le curseur a été déplacé entretemps...
-														//WTF!!!
-
-														//Pis... En fait, j'ai pas la confirmation que ça fait ça quand c'est autre chose qu'un code "§m§"... Non?
-														
-															//Pis... là ça ne le fait plus????		
-
-												//UPDATE:
-															//Quand "un.afin("§p300§");", je n'obtiens pas de '§' à la fin, mais il reste deux lettres qui ne sont pas effacées à la fin.
-																//Quand "un.afin("§d100§");", c'est pareil.
-															
-															
-															//Quand "un.afin("§p1000§");", j'obtiens un "§m0" à la fin, et la première et la dernière lettre ne sont pas effacées.
-												
-															
-															//Quand "un.afin("§d1000§");", j'obtiens un "§m0" à la fin, et la première, ainsi que les trois dernières lettres, ne sont pas effacées.
-
-																	//!!!!!!!
-																			//Et la lenteur de l'égrenage permet de voir ce qui se passe!
-																			//Le msn est "réversé" sans problème: le '!' (dernière lettre) disparaît d'abord.
-																				//Mais ensuite, quand l'avant-dernière lettre disparaît, la dernière lettre + "§m0" apparaissent d'un coup!
-																					//Et restent là, et ne sont pas effacées parce que la ré-écriture de la mémoire est déjà trop loin.
-																					
-																					//Fait que quoi que ce soit, ça permet de "out()" une certaine portion du texte......
-																					
-																						//Vite comme ça, ça me fait penser à "§g§", qui permet... Non, ça permet pas de "out()", ça permet juste de modifier le .txt
-
-
-
-
-
-
-																		//C'est à n'y rien comprendre.
-																		
-																					//Mais... ça doit être lié, soit à la longueur de la pause (je pense que ce serait ça????),
-																							//soit à la longueur du code spécial.
-																							
-																		//Pis... dams tous les cas, les lettres "§m0" apparaissent d'un coup.
-																		
-																		
-																		
-
 
 	//Débuter le jeu
 			
