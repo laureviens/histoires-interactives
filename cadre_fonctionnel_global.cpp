@@ -88,15 +88,9 @@
 					// light red on yellow would be 12 + 14*16 = 236		
 	*/
 
-
-/*
-	2020-03-04:
-				FAUDRAIT VRAIMENT QUE J'METTE DES MESSAGES D'ERREUR DANS LES FONCTIONS DE REMPLISSAGE!!!
-					(GENRE Y'A JUSTE 'X' CHAPITRES, DONC TU PEUX PAS EN RAJOUTER PLUS)
-*/
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
+#define _USE_MATH_DEFINES		//Nécessaire pour aller chercher la valeur de pi
 #include <iostream>   //Pour les entrées/sorties
 #include <string>     //Pour utiliser les objets strings
 #include <cmath>      //Pour utiliser la fonction round() et abs()
@@ -110,7 +104,6 @@
 #include <io.h>					//Nécessaire pour changer l'encodage-out pour l'unicode
 #include <fcntl.h>				//Nécessaire pour décrypter les accents en unicode
 #include <stdlib.h>				//Nécessaire pour jouer avec des nombres aléatoires  /* srand, rand */
-#include <random>				//Nécessaire pour jouer avec des distributions statistiques (uniform_int_distribution, normal_distribution, etc.)	//Nécessite c++11
 
 using namespace std;           //Pour faciliter l'utilisation de cout, cin, string, etc. (sans spécifier ces fonctions proviennent de quel enviro)
 
@@ -431,6 +424,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			void reglerheure() {currentt = std::chrono::duration_cast< std::chrono::milliseconds >(
 		    	std::chrono::system_clock::now().time_since_epoch()
 				).count() - debutt;}
+			//Fonction d'accès
+			int getdebutt() {return(debutt);}	
 			//Fonctions de statis
 			void stop(int val);
 			void egrener(string str, int delay);
@@ -447,26 +442,52 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			for(int pos=0; pos<str.length(); pos++) {out(str[pos]); stop(delay);}
 		}
 
-	//iv) Fonctions de randomisation	----------------------------------------------------------------------		
+	//iv) Classes et fonctions de randomisation	----------------------------------------------------------------------		
 	
-		//a) Fonction : randseed ; construit un générateur de nombres aléatoires à partir de l'heure d'exécution du programme (volé à http://www.cplusplus.com/reference/random/normal_distribution/operator()/)
-		default_random_engine randseed() {
-			unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-			std::default_random_engine rand_nb_gen (seed);
-			return(rand_nb_gen);
+		//a) Fonction : randseed ; initie le générateur de nombre aléatoire rand() avec le "time since epoch" (1er janvier 1970), en millisecondes
+		void randseed(horloge clock) {
+			srand(abs(clock.getdebutt() -	1583418000));		//La soustraction ici est simplement le temps à l'heure où j'écris cette ligne; pour être sûre que ça bug pas si le nombre est trop grand
 		}
 	  
 		//b) Fonction : randunif ; retourne un integer entre [min, max] (les valeurs sont comprises; "inclusivement")
-		int randunif(int min, int max, default_random_engine rand_nb_gen) {
-			uniform_int_distribution<int> distr(min,max);	//Initier l'objet de classe "uniform_int_distribution"
-			return(distr(rand_nb_gen));
+		int randunif(int min, int max) {
+			return(rand() % (max+1) + min);
 		}
-		
-		//c) Fonction : randnorm ; retourne un integer d'une distribution normale (mean, sd)
-		int randnorm(int mean, int sd, default_random_engine rand_nb_gen) {
-			normal_distribution<double> distr(mean,sd);	//Initier l'objet de classe "normal_distribution"
-			return(round(distr(rand_nb_gen)));
-		}
+
+		//c) Classe : normdist ; construit et conserve une distribution de probabilités approximée, afin d'en tirer des nombres aléatoires à l'aide seulement de la fonction rand()
+			class normdist{
+				//Membres
+				private:
+					static const int range = 1000;
+					static const int originmean = 500;
+					static const int originsd = 165;
+					static const unsigned resolution = 10000;
+					unsigned prob[range];
+					unsigned sumprob;
+				//Fonctions
+				public:
+					//Constructeur
+					normdist() {		//Par défaut; permet de construire la distribution de probabilités
+						//Donner une probabilité à chaque valeur de 'x' (les 'x' sont les positions de l'array "prob")
+							//Je me base sur la définition de la distribution normale pour faire ça, qui va un peu comme suit:
+							// f(x) = 1/(sd*(2*pi)^(1/2)) * e^((-1/2)*((x-mean)/sd)^2)
+							//Je multiplie les probabilités données ici par la résolution, pour n'avoir que des integer de taille sensible
+						double yconst = 1/(originsd*pow(2*M_PI,1/2));		//M_PI, c'est la valeur de pi
+						sumprob = 0;
+						for(int x=0; x<range; x++){
+							prob[x] = round(yconst * exp(-pow(x-originmean,2)/pow(2*originsd,2)) * resolution);
+							sumprob += prob[x];				//J'en profite pour aller chercher le total exact des probabilités, qui devrait tendre vers "résolution"
+						}
+					}						
+					//Fonction d'accès : randnormapprox ; retourne un integer aléatoire respectant une distribution normale de (mean,sd)
+					int randnormapprox(int mean, int sd){						
+						int randprob = randunif(1,sumprob);
+						int sumprobnow = 0; int x = -1;
+						while(sumprobnow<randprob) sumprobnow += prob[++x];
+						//Maintenant, on a obtenu un nombre aléatoire 'x' grâce à une distribution normale de mean = originmean et sd = originsd						
+						return(round((x-originmean)*sd/originsd + mean));
+					}
+			};
 		
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //3) Classes-contenantes spécialisées (canaux et autres)
@@ -1193,7 +1214,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				bool reserve;                                       //TRUE si le UserInput devient bloqué après que ce motif ait été appelé (le motif est stocké en réserve, jusqu'à son activation)
 				string titre;										//Sert à identifier le motif + à savoir quel motif est appelé en cas d'ambiguité de la commande
 			//Constructeur
-			motifmanu() : reserve(true), override(false), msn(false) {};	
+			motifmanu() : reserve(false), override(false), msn(false) {};	
 		};
 		
 		//d) classe : ouvrage ; permet de stocker toutes les textes + commandes selon des catégories (ex: chapitres), pour faciliter la recherche
@@ -1233,14 +1254,14 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			inputecho inpecho;
 			//Membre de conditions d'affichage	
 			ouvrage histoire;	
-			//Membre permettant la randomisation	
-			default_random_engine rand_nb_gen;
+			//Membre permettant d'utiliser une distribution normale	
+			normdist normbase;
 			//Membre donnant l'heure
 			horloge clock;
 		//Constructeurs
 			//Constructeur par défaut
 			univers() {
-				default_random_engine rand_nb_gen = randseed();			//Poser un départ unique (basé sur l'heure d'exécution du programme) au générateur de nombres aléatoires
+				randseed(clock);			//Poser un départ unique (basé sur l'heure d'exécution du programme) au générateur de nombres aléatoires
 			};
 		//Fonctions de jeu
 			//Fonctions de petite taille
@@ -1442,8 +1463,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(messagerie.longueur<messagerie.taille) msnvide = true;
 					if(msnvide) {
 						//Choisir la position de départ!
-							xpos = round(min(max(randnorm(25,15,rand_nb_gen),0),80)*base.limtxtx/100);		//Dist normale(mean=0.25,sd=0.15), bornée à 0% et 80% de la console
-							ypos = round(min(max(randnorm(30,20,rand_nb_gen),0),75)*base.limtxty/100);
+							xpos = round(min(max(normbase.randnormapprox(25,15),0),80)*base.limtxtx/100);		//Dist normale(mean=0.25,sd=0.15), bornée à 0% et 80% de la console
+							ypos = round(min(max(normbase.randnormapprox(30,20),0),75)*base.limtxty/100);
 							//Choisir une ligne de départ non occupée
 							lignelibrechoisie = true; 
 							if(!msnmem.accesligne(ypos)) {
@@ -1464,7 +1485,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
 						sumprob += histoire.filmanu[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
 					}
-					int randval = randunif(0,sumprob-1,rand_nb_gen);  //Obtenir un integer aléatoire entre [0,sumprob[
+					int randval = randunif(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
 					int choix; 
 					for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
 						if(randval<vectprob[posprob]) {choix = posprob; break;}
@@ -1484,7 +1505,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						messagerie[messagerie.longueur-1].posx = xpos-1; messagerie[messagerie.longueur-1].posy = ypos;			//Définir les positions du curseur (avant la première entrée)
 						messagerie[messagerie.longueur-1].postxt = 0;															//Remettre au début du texte
 						messagerie[messagerie.longueur-1].construire = true; messagerie[messagerie.longueur-1].nbysupp = 0;		//Remettre les autres compteurs à leur position initiale
-						messagerie[messagerie.longueur-1].delay = randnorm(110,10,rand_nb_gen);									//Mettre un délai aléatoire
+						messagerie[messagerie.longueur-1].delay = normbase.randnormapprox(110,10);								//Mettre un délai aléatoire
 						messagerie[messagerie.longueur-1].txt += txtmotif;														//Ajouter le texte				
 						messagerie[messagerie.longueur-1].nxtt = clock.currentt; 														//Updater le nxtt pour qu'il commence à partir de l'intégration
 					} else {
@@ -1507,8 +1528,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				if(messagerie.longueur<messagerie.taille) msnvide = true;
 				if(msnvide) {
 					//Choisir la position de départ!
-						xpos = round(min(max(randnorm(25,15,rand_nb_gen),0),80)*base.limtxtx/100);		//Dist normale(mean=0.25,sd=0.15), bornée à 0% et 80% de la console
-						ypos = round(min(max(randnorm(30,20,rand_nb_gen),0),75)*base.limtxty/100);
+						xpos = round(min(max(normbase.randnormapprox(25,15),0),80)*base.limtxtx/100);		//Dist normale(mean=0.25,sd=0.15), bornée à 0% et 80% de la console
+						ypos = round(min(max(normbase.randnormapprox(30,20),0),75)*base.limtxty/100);
 						//Choisir une ligne de départ non occupée
 						lignelibrechoisie = true; 
 						if(!msnmem.accesligne(ypos)) {
@@ -1529,7 +1550,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
 					sumprob += histoire.filauto[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
 				}
-				int randval = randunif(0,sumprob-1,rand_nb_gen);  //Obtenir un integer aléatoire entre [0,sumprob[
+				int randval = randunif(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
 				int choix; 
 				for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
 					if(randval<vectprob[posprob]) {choix = posprob; break;}
@@ -1553,7 +1574,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					messagerie[messagerie.longueur-1].postxt = 0;															//Remettre au début du texte
 					messagerie[messagerie.longueur-1].construire = true; messagerie[messagerie.longueur-1].nbysupp = 0;		//Remettre les autres compteurs à leur position initiale
 					messagerie[messagerie.longueur-1].attente = false; messagerie[messagerie.longueur-1].pause = false;
-					messagerie[messagerie.longueur-1].delay = randnorm(100,10,rand_nb_gen);									//Mettre un délai aléatoire
+					messagerie[messagerie.longueur-1].delay = normbase.randnormapprox(100,10);								//Mettre un délai aléatoire
 					messagerie[messagerie.longueur-1].txt = txtmotif;														//Ajouter le texte				
 					messagerie[messagerie.longueur-1].nxtt = clock.currentt; 												//Updater le nxtt pour qu'il commence à partir de l'intégration
 				} else {
@@ -2553,7 +2574,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[countstr]=='-') {}
 					if(str[countstr]==';') {
 						if(histoire.filmanu[poschap][posmotif].enchainement.longueur==histoire.filmanu[poschap][posmotif].enchainement.taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif manuel ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}							
-						countordre++; histoire.filmanu[poschap][posmotif].enchainement.ajoutvide();
+						countordre++; 
+						histoire.filmanu[poschap][posmotif].enchainement.ajoutvide(); histoire.filmanu[poschap][posmotif].enchaineprob.ajoutvide();
 					}
 					debnombre = countstr+1;
 				}
@@ -2584,7 +2606,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					if(str[countstr]=='-') {}
 					if(str[countstr]==';') {
 						if(histoire.filauto[poschap][posmotif].enchainement.longueur==histoire.filauto[poschap][posmotif].enchainement.taille) {out("Dans le motif automatique :\n\n\""); out(histoire.filauto[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif automatique ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}													
-						countordre++; histoire.filauto[poschap][posmotif].enchainement.ajoutvide();
+						countordre++; 
+						histoire.filauto[poschap][posmotif].enchainement.ajoutvide(); histoire.filauto[poschap][posmotif].enchaineprob.ajoutvide();
 						}
 					debnombre = countstr+1;
 				}
