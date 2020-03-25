@@ -105,16 +105,16 @@ int main(void) {
 			
 			u.nvmanu("stop"); u.mcanal("je");
 			u.mcond("intro¶je!=3");	
-			u.mcomm("stop");
-			u.mcommexact("stop");
+			u.mcomm("(stop)");
+			//u.mcommexact("stop");
 			u.mtexte("\n J'arrête de lancer automatiquement. C'est à toi de le faire.");	
 			u.mdeb(""); u.mover();
 			u.mfin("§bintro¶je~>3§");					
 					
 			u.nvmanu("lancer"); u.mcanal("je");	    
 			u.mcond("intro¶je==3");	
-			u.mcomm("lancer|tirer");
-			u.mcommexact("lancer|tirer");
+			u.mcomm("(lancer|tirer)");
+			//u.mcommexact("lancer|tirer");
 			u.mtexte("\npileµ\nface");	
 			u.mordre("1;2");
 			u.mdeb("");
