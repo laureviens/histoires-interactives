@@ -138,8 +138,7 @@ int main(void) {
 					//Nouveau code spécial!
 						//"§f§" ('f' pour FREEZE) sert à mettre en pause tous les autres canaux (et messageries), pour n'avoir que celui qui l'a inscrit qui est actif.
 							//"§f1§" (qui est présent au milieu du mot "quitter", dans le texte du motif) sert à "freezer", tandis que "§f0§" sert à "dé-freezer".
-			u.atexte("§p2200§Pou§f1§r quitter le programme,§p400§ appuie sur §p210§[ESC§p110§].§p1200§"
-			"\nPour modifier la vitesse de défilement,§p600§ appuie sur les touches §p90§[HAUT§p100§] et §p140§[BAS§p90§] (possiblement plusieurs fois).");
+			u.atexte("§p2300§Pou§f1§r modifier la vitesse de défilement,§p600§ appuie sur les touches §p90§[HAUT§p100§] et §p140§[BAS§p90§] (plusieurs fois).");
 				
 			//La harangue de Sara
 			u.nvauto(); u.acanal("sara");		
@@ -169,7 +168,7 @@ int main(void) {
 			u.afin("§bintro¶sara~>2§");
 			u.atexte("§p400§\n\n         T'accélères le pas,§p600§ moins pour la rejoindre§p100§ que pour réchauffer tes jambes.§p1200§§d110§ Le vent,§p500§ gode.§p700§ Le vent transperce.§p1600§"
 			"\n§d90§Tu lèves les yeux§p100§ juste à la limite de ton capuchon§p300§ pis Sara est quand même loin en avant.§p1400§§d80§ Tu te presses un peu plus.§p2800§"
-			"\n\nTraverses une rue,§p400§ t'es au coin de la cathédrale§p300§ pis le vent charge de plus belle depuis ta droite.§p2400§ Caliss.§p3000§§d90§"	//Segment #1
+			"\n\nTraverses une rue,§p400§ t'es au coin de la cathédrale§p300§ pis le vent charge de plus belle depuis ta droite.§p2400§ Caliss.§p3000§§d90§µ"	//Segment #1
 			"\nSara est déjà rendue plus bas,§p500§ 'a longe la grosse chapelle.§p2300§µ"	//Segment #2
 			"\nTon amie est maintenant pas mal plus bas,§p500§ aux pieds de l'imposante église.§p2000§µ"	//Segment #3			
 			"\n§d0§                       §d80§Tu descends au jogging§p120§, §p400§"
@@ -187,13 +186,13 @@ int main(void) {
 			u.afin("\"§bintro¶je~>3§");
 			u.atexte("J'te l'dis,§p260§ t'as vraiment trop hâte d'être rendue su'l'toît du Granada!µ"		//Segment #1
 			"L'accès aux toîts estµ "			//Segment #2
-			"§d50§"								//Segment #3
+			"§d50§µ"								//Segment #3
 			"justeµ"							//Segment #4
 			"-justeµ"							//Segment #5
 			"-justeµ"							//Segment #6
 			" à côté.§d100§µ"					//Segment #7
 			"T'auras jamais vu une vue d'même, juré!µ"			//Segment #8
-			"Tu tough encore genre trois mètres pis on devient les roines du centro!");		//Segment #9
+			"Tu persévères encore genre trois mètres pis on devient les roines du centro!");		//Segment #9
 			u.aordre("1;2-3-4-5-7;2-3-4-5-6-7;2-3-4-5-7-8;2-3-4-5-7-9;2-4-7-9");
 
 			//La suite
@@ -230,9 +229,9 @@ int main(void) {
 			"§d100§\n\n\nElle te sourit,§300§ l'air fière de son explication.§p2000§"
 			"§d110§\nTu clignes des paupières§p800§ une fois.§p2900§"		
 			"§d100§\n\n\nLa tête te soupire§p110§ et t'avances pour constater le chemin toi-même.§p2100§µ"		//#2
-			"§d100§\n\n\nA' s'retourne,§400§ prunelles pétillantes d'encouragement.§p2000§µ"		
+			//"§d100§\n\n\nA' s'retourne,§400§ prunelles pétillantes d'encouragement.§p2000§µ"		
 			"\nTu lui donne un sourire indulgent,§p900§ et vas toi-même voir de quoi elle parlait.§p2100§µ"		//#3			
-			"\n\nAu devant, la grande barrière de grillage en losanges§p90§ a son top en barbelés,§p390§ dressés en angle contre votre direction.§p900§ §d120§Fait que définitivement pas par là.§p2300§"	//#4
+			"\n\nAu devant, la grande barrière de grillage en losanges§p90§ a son top en barbelés,§p390§ dressés en angle contre votre direction.§p900§ §d120§Fait que définitivement pas par là.§p2300§µ"	//#4
 			"\n\nOui,§p370§ le devant du parking est flanqué d'un haute clôture terminée en barbelée.§p1100§ Gentil.§p1200§µ"	//#5
 			"§d150§\n\nÀ droite,§p500§§d130§ par contre,§p430§§d110§ le grillage finit juste avant la falaise,§p290§ et une espèce de grille à gros barreaux verticaux prolonge la clôture au-dessus du précipiceµ"	//#6
 			",§p600§§d100§ probablement pour nous empêcher de juste tourner le coin.§p1800§µ"		//#7
@@ -257,7 +256,7 @@ int main(void) {
 			" rendue l'autre bord de la clôture§p130§,§p220§ déjà passée par-dessus la grille,§p180§ agrippée§p110§ légère encore dans le haut de la barrière,§p330§ accrochée.§p2600§µ"	//#2
 			" les deux pieds 'dans 'clôture,§p360§§d120§ déjà grimpée pas mal haut,§390§§d140§ déjà pas mal proche du coin.§p200§.§p160§.§p3000§µ"					//#3
 			"\n\n\n§d180§Tu ...§p820§,§p1240§§d120§        ...tu penses pas§p210§§d130§ être capable§d140§ de faire§p140§§d160§ ça§p300§?§p2600§µ"					//#4
-			"§d90§\n\n\n\n\n\nTon pouls s'accélère alors que t'imagine §d100§ton corps §d110§frêle §d130§glisser,§p350§ perdre§d150§ pri§d170§se,§p460§§d200§ tomber§p600§ .§p600§"		
+			"§d90§\n\n\n\n\n\nTon pouls s'accélère alors que t'imagine §d100§ton corps §d110§frêle §d130§glisser,§p350§ perdre§d150§ pri§d170§se,§p460§§d200§ tomber§p600§ \n.§p600§"		
 			"\n§d0§      .§p700§"
 			"\n§d0§           .§p600§"
 			"\n§d0§              .§p500§"
@@ -324,15 +323,15 @@ int main(void) {
 			//Sara te rassures
 			u.nvauto(); u.acanal("sara");					//Le texte est parsemé de "§r§". Ce code spécial permet d'intégrer le motif manuel qui était en réserve au bon moment.						
 			u.acond("cloture¶sara==1");						//Cette mécanique est utilisée afin de ne pas interrompre une phrase n'importe quand par la réception d'une commande.
-			u.adeb("§bcloture¶sara~>0§§s§§p4000§\"");
+			u.adeb("§bcloture¶sara~>0§§s§§p4000§");
 			u.afin("§mabandonner§\""); 		//Le code spécial §m§ est pour forcer l'exécution d'un motif manuel dont le nom correspond
-			u.atexte("§d100§\n\n\n\n\nTu vois§r§§p3400§§r§ c'est vraiment simple§r§§p1400§§r§,§p1800§§r§§p2120§§r§ c'est juste la partie où tu changes de bord §r§§2300§qui§p2000§ est un peu tricky§r§,§p6130§§r§ mais sinon y'a vraiment pas à s'inquiéter§r§,§p4700§§r§ tu vas voir ça va full bien s'passer§r§§p3100§§r§,§p4810§§r§ pis j'suis là si y'a d'quoi.\"§r§§p5600§§r§"	
+			u.atexte("§d100§\n\n\n\n\n\"Tu vois§r§§p3400§§r§ c'est vraiment simple§r§§p1400§§r§,§p1800§§r§§p2120§§r§ c'est juste la partie où tu changes de bord §r§§2300§qui§p2000§ est un peu tricky§r§,§p6130§§r§ mais sinon y'a vraiment pas à s'inquiéter§r§,§p4700§§r§ tu vas voir ça va full bien s'passer§r§§p3100§§r§,§p4810§§r§ pis j'suis là si y'a d'quoi.\"§r§§p5600§§r§"	
 			"§p4000§§r§\n\n\"§d110§Ok§r§,§p2430§§r§ fais juste avancer lentement§r§,§p4020§§r§ une fois que t'es dedans§p1400§ ça se fait tu seul.§r§§p5850§§r§ Sérieux.§r§§p4570§§r§§p3000§§r§§p3300§§r§µ"		//#1
-			"§p3100§§r§§d200§\nCommmmmmme ooon§r§nnnnnnnnnnn§r§§p600§.§r§§2200§§r§§d100§ Come on!§p1400§§r§ T'avais dit qu'ça t'tentait!§r§§p2700§§r§§p3000§§r§µ"		//#2
-			"§p2200§§r§§d160§§bcloture¶estucorrecte~>1§§\nOohh nooon,§p900§§r§ t'as l'air un peu cassée -§r§§p400§§d90§§r§"
+			"§p3100§§r§§d200§\nCommmmmmme ooon§r§nnnnnnnnnnn§r§§p600§.§r§§2200§§r§§d100§ Come on!§p1400§§r§ T'avais dit qu'ça t'tentait!\"§r§§p2700§§r§§p3000§§r§µ"		//#2
+			"§p2200§§r§§d160§§bcloture¶estucorrecte~>1§\n\n\n\"Oohh nooon,§p900§§r§ t'as l'air un peu cassée -§r§§p400§§d90§§r§"
 			"§d0§                 §d90§Ben non pas cassée j'voulais pas dire ça §p110§mais genre§r§§p600§§d140§§r§ absent§p200§e?§r§§p1800§§d110§§r§ Genre t'as pas l'air§r§§p670§§r§ là?§r§§2200§§r§"
-			"§d90§Ok j'ai une idée§p300§§r§ :§p500§§r§§d110§ viens mettre tes deux mains§r§ contre la clôture§r§ pis fais juste te soulever§r§ tu vas voir à quel point y'a rien là§r§ pis ça va full te grounder§r§.§p2000§ Right§p300§?§r§§p1800§§r§ Right.§r§§p3200§§bcloture¶estucorrecte~>0§µ"		//#3			
-			"\n§d0§          §d90§ok fais juste bouger,§p1830§ au moins§r§,§p4650§§r§ avance jusqu'à' clotûre§r§§p7560§§r§,§p2630§§r§§p2000§§r§ envoyes§r§,§1470§§r§§p2000§§r§ y fait frette!§r§§p2100§§r§§p2000§§r§");		//#4
+			"§d90§ Ok j'ai une idée§p300§§r§ :§p500§§r§§d110§ viens mettre tes deux mains§r§ contre la clôture§r§ pis fais juste te soulever§r§ tu vas voir à quel point y'a rien là§r§ pis ça va full te grounder§r§.§p2000§ Right§p300§?§r§§p1800§§r§ Right.§r§§p3200§§bcloture¶estucorrecte~>0§µ"		//#3			
+			"\n§d0§          §d90§ok fais juste bouger,§p1830§ au moins§r§,§p4650§§r§ avance jusqu'à' clotûre§r§§p7560§§r§!§p2630§§r§§p2000§§r§ Envoyes§r§,§1470§§r§§p2000§§r§ y fait frette!§r§§p2100§§r§§p2000§§r§");		//#4
 									
 			//Sara constate que t'es correcte parce que tu bouges
 			u.nvauto(); u.acanal("sara");
@@ -355,10 +354,10 @@ int main(void) {
 			//Sara chiale parce que t'abandonne
 			u.nvauto(); u.acanal("sara");
 			u.acond("cloture¶abandon==1&cloture¶sara==2");
-			u.adeb("§dcloture¶sara~>0§§c§§p2200§§d110§\"");
+			u.adeb("§bcloture¶sara~>0§§c§§p2200§§d110§\"");
 			u.afin("\""); u.aover();
-			u.atexte("\n\nAh bin.§p700§  Ah bin nice.§p1200§     Bon.§2000§ Fait que§p700§ bonne soirée,§p500§ là.§p1000§µ"
-			"Come on,§p700§ pars pas!§p1500§ Come§p400§-§p500§on§p200§!§p1800§ Heille!§p2000§");
+			u.atexte("\n\nAh bin.§p700§  §d80§Ah bin nice.§p1200§     §d150§Bon.§p2000§ §d100§Fait que§p700§ bonne soirée,§p500§ là.§p1000§µ"
+			"§d70§Come on,§p700§ pars pas!§p1500§ §d140§Come§p400§-§p500§on§p200§!§p1800§ Heille!§p2000§");
 			u.aordre("1;2");
 			
 			//Choix: "abandonner"    (Premier motif manuel! Wouhou!)
@@ -380,7 +379,7 @@ int main(void) {
 						//"§o§" ('o' pour overwrite) sert à effacer le texte du canal spécifié (ici, "sara") pour arrêter son affichage. En gros, on "coupe à parole" à Sara.
 						//Pour être sûre de bien fermer ça propret, on place la terminaison du canal juste après avoir tout effacé. Ici, ça permet de fermer son dialogue avec de derniers guillements (voir "u.canalterminaison()")
 			u.mreserve();		//Lorsque ce motif sera appelé par une commande, il ne sera pas intégré tout de suite; il faudra attendre qu'un code spécial "§r§" soit atteint.
-			u.mfin("\n\n\nC'EST LA FINNNNNNNNNN");
+			u.mfin("§zend§");						//FIN ABRUPTE!
 			u.mtexte("\nNon,§p300§ non;§p1000§ non.§p2600§ Tu vas pas faire ça.§p1300§ C'est trop glissant pis ça vaut pas la peine.§p2300§");
 																				
 			//Choix: "continuer", "avancer"	et autres formulations vagues
@@ -406,12 +405,12 @@ int main(void) {
 				u.nvauto(); u.acanal("je");
 				u.acond("cloture¶continuer==2");
 				u.adeb("§bcloture¶choix~>2§"); 
-				u.afin("§mgrimper continuer§"); 		//Le code spécial §m§ est pour forcer l'exécution d'un motif manuel dont le nom correspond
+				u.afin("§mgrimper§"); 		//Le code spécial §m§ est pour forcer l'exécution d'un motif manuel dont le nom correspond
 				u.atexte("§d80§\nOuin§r§,§p400§ tu sais pas trop comment prendre ça§r§,§p510§ finalement.§r§§p820§    §r§Tu§p500§.§p420§..§r§§p370§ tu guess qu'il faut que t'escalades?§r§§p1500§§r§§d130§ T'insères tes doigts à l'intérieur des fils losangés.§r§§p3520§§r§ Ben,§p410§ d'ins trous d'la clôture,§p300§ dans l'fond.§r§§p4200§§r§"
 				"\nÇa devrait être simple.§r§§p3600§§r§ T'as juster à te hisser.§r§§p4200§§r§ Te monter§p400§§r§,§p520§ avec un peu de force dans les bras§p300§.§r§§p3500§§r§§p3600§§r§§p4020§§r§ Bon.§p760§");
 			
 				//Suite de "continuer" : faut demander explicitement de grimper (mais il se passe automatiquement si on attend assez longtemps)
-				u.nvmanu("grimper continuer"); u.mcanal("je");
+				u.nvmanu("grimper"); u.mcanal("je");
 				u.mcond("cloture¶continuer==2");
 				u.mcomm("(grimper|monter|escalader|agripper|se hisser|franchir&clôture|grillage|barrière|grille|toît)(grimper|monter|escalader|se hisser)");
 				u.mcommexact("aller de l'avant|avancer|continuer|poursuivre");
@@ -445,17 +444,17 @@ int main(void) {
 				u.nvauto(); u.acanal("je");
 				u.acond("cloture¶franchir==2");
 				u.adeb("§bcloture¶choix~>2§"); 
-				u.afin("§mgrimper franchir§"); 		//Le code spécial §m§ est pour forcer l'exécution d'un motif manuel dont le nom correspond
+				u.afin("§mgrimper§");	//Le code spécial §m§ est pour forcer l'exécution d'un motif manuel dont le nom correspond
 				u.atexte("§d80§");
 			
 				//Suite de "franchir" : faut demander explicitement de grimper (mais il se passe automatiquement si on attend assez longtemps)
-				u.nvmanu("grimper franchir"); u.mcanal("je");
+				u.nvmanu("grimper"); u.mcanal("je");
 				u.mcond("cloture¶franchir==2");
 				u.mcomm("(grimper|monter|escalader|agripper|se hisser|franchir|vaincre|conquérir|braver|soumettre&clôture|grillage|barrière|grille|toît)(grimper|monter|escalader|se hisser)");
 				u.mcommexact("aller de l'avant|avancer|continuer|poursuivre");
 				u.mdeb("§bcloture¶choix~>0§"); 
 				u.mreserve(); u.mover();
-				u.mfin("§bcloture¶grimper~>2§");
+				u.mfin("§bcloture¶grimper~>2§§zend§");						//FIN ABRUPTE!
 				u.mtexte("");
 			
 			//Choix: "Surmonter sa peur" / "Rassembler son courage" / "Prendre son courage à deux mains", etc.
@@ -466,7 +465,7 @@ int main(void) {
 			u.mcommexact("surmonter sa peur|prendre son courage à deux mains|se prendre en mains|rassembler son courage|être courageuse");
 			u.mdeb("§osara§§bcloture¶choix~>0§§bcloture¶courage~>1§§s§§d120§"); 
 			u.mreserve();		//Lorsque ce motif sera appelé par une commande, il ne sera pas intégré tout de suite; il faudra attendre qu'un code spécial "§r§" soit atteint.
-			u.mfin("\n\n\nC'EST LA FINNNNNN");
+			u.mfin("§zend§");						//FIN ABRUPTE!
 			u.mtexte("\n\n\nTU RASSEMBLES TON COURAGE C'EST BEAU CHAMPIONNE");					
 						
 			//Choix: "Grimper" ou autres
@@ -487,7 +486,7 @@ int main(void) {
 				u.nvauto(); u.acanal("je");
 				u.acond("cloture¶grimper==2");
 				u.adeb("§d90§");
-				u.afin("§bcloture¶grimper~>3§");
+				u.afin("§bcloture¶grimper~>3§§zend§");						//FIN ABRUPTE!
 				u.atexte(" Fait que t'imagines que tu dois te traîner à droite,§p800§§r§ dans le haut de la grosse grille verticale.§p2400§§r§§p1100§ ");
 							//Reste à avancer ce texte plus!
 						
@@ -499,6 +498,7 @@ int main(void) {
 				"(poser|passer|mettre|accoter|reposer|déposer&main|gant|doigt&contre|sur|le long|au travers d&clôture|grillage|barrière|grille)");
 				u.mcommexact("grimper|escalader|se hisser");
 				u.mdeb("§bcloture¶grimper~>0§§s§§d120§");
+				u.mfin("§zend§");
 				u.mreserve();		
 				u.mtexte(""); 									
 										
@@ -640,8 +640,8 @@ int main(void) {
 	//Définir la taille minimale possible de la fenêtre à l'aide de ce que je juge être la plus petite fenêtre acceptable possible
 	u.setfenetremin(49,31);
 
-	//Créer le menu principal
-	u.nvmenu("principal");
+	//Créer le menu principal de départ, celui qui commence le jeu
+	u.nvmenu("principal commencement");
 	
 		//Définir l'arrière-plan du menu
 			//Attention! Ici, les caractères '\' doivent être doublés ("\\") pour que le code se lise bien. Ça décale le dessin, mais il s'affichera correctement à l'écran!
@@ -714,18 +714,265 @@ int main(void) {
 		u.menutitrehauteur(0.0285714286);		// = 1/35; mais ça ne marche pas quand on l'écrit en tant que fraction...
 		
 		//Définir le premier bouton de mon menu principal, ainsi que son effet
-		u.menunvbouton("Lancer le jeu","§bintro¶je~>1§§j§");
-			//Ce bouton aura pour effet de modifier un rayon de la bibliothèque, puis de lancer la boucle "jouer" (§j§, 'j' pour "jouer"), qui lance le programme. 
-	
+		u.menunvbouton("Lancer le jeu","§m§§bintro¶je~>1§§j§");
+			//Ce bouton aura pour effet de réinitialiser les objets de sauvegarde, de modifier un rayon de la bibliothèque, puis de lancer la boucle "jouer" (§j§, 'j' pour "jouer"), qui lance le programme. 
+
 		//Définir le deuxième bouton, ainsi que son effet
+		u.menunvbouton("Options","§zoptions§");	
+			//Ce bouton aura pour effet d'appeler le menu d'options (§z§, 'z' pour... rien en fait. 'm' était déjà pris dans les codes spéciaux de canaux, alors j'ai pris z. Que je ré-utilise ici).			
+	
+		//Définir le troisième bouton, ainsi que son effet
 		u.menunvbouton("Quitter","§a§");	
 			//Ce bouton aura pour effet de terminer le programme (§a§, 'a' pour "abort()").
 
+
+	//Ça, c'était le menu principal de départ. Maitenant, j'ai besoin d'un autre menu; qui lui ne va pas COMMENCER le jeu, mais bien le REPRENDRE
+	
+	//Créer ce deuxième menu principal
+	u.nvmenu("principal retour");
+	
+		//Mettre encore les mêmes paramètres:
+		//Arrière-plan:
+		u.menubg("                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                               |¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|¯¯|                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"                                               |                    |  |                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"                                               |                    |  |                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"              ¢       {)                       |                    |  |                                          "
+"     ________/|\\/k__/\\|)_______                | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"    /         ¯¯     ¯        /|               |                    |  |                                          "
+"   /                         /_|_______        | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"  /                         / /       /|       |                    |  |                                          "
+" /_________________________/ /       / |       | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"|                     _____|/       /  |_/\\____|__________          |  |                                          "
+"|  |¯¯¯|    |¯¯¯|    /             /  /  ||              /|¤ ¤ ¤ ¤  |¤¤|                                          "
+"|  |   |    |   |   /_____________/  /                  / |         |  |                                          "
+"|  |___|    |___|  |              | /               ~  /  |¤ ¤ ¤ ¤  |¤¤|                                          "
+"|__________________|__¯¯__¯¯__¯¯__|/__________________/___|_________|__|_______                                   "
+"««««««««\\«««««««««««\\\\«««««««««««\\«««««««««««\\«««««««««««\\«««««««««««\\««««««««\\\\                                  "
+"«««««««««\\«««««««««««\\\\«««««««««««\\«««««««««««\\«««««««««««\\«««««««««««\\««««««««\\\\                                 "
+"¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯||¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯||_____________________________   "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  ",43);		//Indiquer le nombre de lignes du dessin comme second argument
+
+		//Rebords fixes:
+		u.menubglock("left"); u.menubglock("bottom");
+		
+		//Point d'intérêt du dessin:
+		u.menubgpointinteret(18,21,0.2,0.7);
+		
+		//Titre à afficher à l'écran:
+		u.menutitredessin("          /\\                  |                  "
+"          \\                   |   _   /\\         "
+"           \\   | |   |/       |  /_\\  \\          "
+"          \\/   \\_|\\  |        |  \\_  \\/          "		//9 lignes de haut
+"                                                 "
+"               |            |                    "
+"              ¯¯¯       *  ¯¯¯   /\\              "
+"               |   /\\   |   |    \\               "
+"               |   \\/   |   |   \\/               ",9);
+		
+		//Hauteur par rapport à la fenêtre totale (0 = dans le haut complètement):
+		u.menutitrehauteur(0.0285714286);		// = 1/35; mais ça ne marche pas quand on l'écrit en tant que fraction...
+		
+		//Premier bouton de mon menu principal, ainsi que son effet
+		u.menunvbouton("Retour au jeu","§u§");
+			//Ce bouton, contrairement à l'autre, ne fera que "un-pause" le jeu: "§u§" ('u' pour "unpause", repart tous les canaux/msn/etc. qui ne sont pas gelés)
+	
+		//Deuxième bouton, ainsi que son effet
+		u.menunvbouton("Options","§zoptions§");	
+		
+		//Troisième bouton, ainsi que son effet
+		u.menunvbouton("Quitter","§a§");	
+
+//-----------------------------------------------------------------|     Menus d'options     |--------------------------------------------------------------------------------\\
+
+	//Créer le menu d'options
+	u.nvmenu("options");		
+
+		//Mettre l'arrière-plan
+		u.menubg("                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                               |¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|¯¯|                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"                                               |                    |  |                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"                                               |                    |  |                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"              ¢       {)                       |                    |  |                                          "
+"     ________/|\\/k__/\\|)_______                | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"    /         ¯¯     ¯        /|               |                    |  |                                          "
+"   /                         /_|_______        | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"  /                         / /       /|       |                    |  |                                          "
+" /_________________________/ /       / |       | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"|                     _____|/       /  |_/\\____|__________          |  |                                          "
+"|  |¯¯¯|    |¯¯¯|    /             /  /  ||              /|¤ ¤ ¤ ¤  |¤¤|                                          "
+"|  |   |    |   |   /_____________/  /                  / |         |  |                                          "
+"|  |___|    |___|  |              | /               ~  /  |¤ ¤ ¤ ¤  |¤¤|                                          "
+"|__________________|__¯¯__¯¯__¯¯__|/__________________/___|_________|__|_______                                   "
+"««««««««\\«««««««««««\\\\«««««««««««\\«««««««««««\\«««««««««««\\«««««««««««\\««««««««\\\\                                  "
+"«««««««««\\«««««««««««\\\\«««««««««««\\«««««««««««\\«««««««««««\\«««««««««««\\««««««««\\\\                                 "
+"¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯||¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯||_____________________________   "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  ",43);
+		u.menubglock("left"); u.menubglock("bottom");
+		u.menubgpointinteret(18,21,0.2,0.7);
+		
+		//Définir le titre à afficher à l'écran
+		u.menutitredessin(
+" /¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\\ "
+"/          OPTIONS           \\"
+"|                            |"
+"|         ATTENTION!         |"
+"|  Si tu modifies la taille  |"
+"|  de la fenêtre, il faudra  |"
+"|    que tu commences une    |"
+"\\      nouvelle partie!      /"
+" \\__________________________/ ",9);
+
+			//Comme le premier bouton a un texte plutôt long, je vais agrandir les boutons (par défaut: largeur de 19 caractères, dont 15 pouvant héberger du texte; hauteur de 3 caractères, dont une ligne dispo pour du texte)
+			u.menulargeurbouton(31);
+			u.menuhauteurbouton(4);
+
+		//Premier bouton, ainsi que son effet
+		u.menunvbouton("Modifier la taille \nde la fenêtre de jeu","§zmodiffen§");
+		
+		//Deuxième bouton, ainsi que son effet
+		u.menunvbouton("Retour","§y§");
+			//Ce bouton aura comme effet de faire ré-apparaître le menu précédent: "§y§", 'y' pour "précédent"
+			
+		//Définir l'effet de la touche "escape"
+		u.menuescape("§y§");
+		
+	//Créer le menu de modification de la taille de la fenêtre de jeu
+	u.nvmenu("modiffen");
+
+		//Mettre l'arrière-plan
+		u.menubg("                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                                                                                                  "
+"                                               |¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|¯¯|                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"                                               |                    |  |                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"                                               |                    |  |                                          "
+"                                               | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"              ¢       {)                       |                    |  |                                          "
+"     ________/|\\/k__/\\|)_______                | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"    /         ¯¯     ¯        /|               |                    |  |                                          "
+"   /                         /_|_______        | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"  /                         / /       /|       |                    |  |                                          "
+" /_________________________/ /       / |       | ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤ ¤  |¤¤|                                          "
+"|                     _____|/       /  |_/\\____|__________          |  |                                          "
+"|  |¯¯¯|    |¯¯¯|    /             /  /  ||              /|¤ ¤ ¤ ¤  |¤¤|                                          "
+"|  |   |    |   |   /_____________/  /                  / |         |  |                                          "
+"|  |___|    |___|  |              | /               ~  /  |¤ ¤ ¤ ¤  |¤¤|                                          "
+"|__________________|__¯¯__¯¯__¯¯__|/__________________/___|_________|__|_______                                   "
+"««««««««\\«««««««««««\\\\«««««««««««\\«««««««««««\\«««««««««««\\«««««««««««\\««««««««\\\\                                  "
+"«««««««««\\«««««««««««\\\\«««««««««««\\«««««««««««\\«««««««««««\\«««««««««««\\««««««««\\\\                                 "
+"¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯||¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯||_____________________________   "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  "
+"/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||   ||   ||   ||   ||   ||   ||  "
+"\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\||/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/||   ||   ||   ||   ||   ||   ||  ",43);
+		u.menubglock("left"); u.menubglock("bottom");
+		u.menubgpointinteret(18,21,0.2,0.7);		
+
+			//S'assurer que le texte rentre	
+			u.menulargeurbouton(21);
+	
+		//Premier bouton, ainsi que son effet
+		u.menunvbouton("Plus de hauteur","§fh+§§x§");
+			//Ce bouton aura comme effet d'ajouter une ligne à la hauteur de la fenêtre: "§f§", 'f' pour fenêtre; 'h' = hauteur, '+' = augmenter; puis de rester au même menu: "§x§" pour "remettre le même menu"
+			
+		//Deuxième bouton, ainsi que son effet
+		u.menunvbouton("Moins de hauteur","§fh-§§x§");
+		
+		//Troisième bouton, ainsi que son effet
+		u.menunvbouton("Plus de largeur","§fl+§§x§");
+			//'l' = largeur.
+		
+		//Quatrième bouton, ainsi que son effet
+		u.menunvbouton("Moins de largeur","§fl-§§x§");				
+			
+		//Cinquième bouton, ainsi que son effet
+		u.menunvbouton("Retour","§m§§y§");
+			//§m§ ('m' pour "mémoire") ré-initialise les sauvegarde du texte du jeu; ce qui est nécessaire, puisque celles-ci sont conservées dans un format qui prend appui sur la taille de la fenêtre.
+		
+		//Définir l'effet de la touche "escape"
+		u.menuescape("§y§");
+		
+		//Accélérer les effets de sélection
+		u.menuenterdelay(200);
+		u.menuselectdelay(300);
+					
 //-----------------------------------------------------------------|      Menu de pause      |--------------------------------------------------------------------------------\\
 
 	//Créer le menu de pause
-	u.nvmenu("pause");				//Par défaut, si on ne spécifie pas d'arrière-plan, le contenu des mémoires sera utilisé
+	u.nvmenu("pause");	
 
+		//Spécifier que c'est ce menu qu'on veut voir affiché quand le bouton [ESC] sera enfoncé
+		u.menuingameescape("pause");
+		
+		//Par défaut, si on ne spécifie pas d'arrière-plan, le contenu des mémoires sera utilisé
+			
 		//Définir le titre à afficher à l'écran
 		u.menutitredessin("/---------\\"
 "|  PAUSE  |"
@@ -739,7 +986,7 @@ int main(void) {
 			//Ce bouton aura pour effet de remettre le jeu en action (§u§, 'u' pour "unpause").
 
 		//Définir le deuxième bouton, ainsi que son effet
-		u.menunvbouton("Revenir au \nmenu principal","§zprincipal§");	
+		u.menunvbouton("Revenir au \nmenu principal","§zprincipal retour§");
 			//Ce bouton aura pour effet d'appeler le menu principal (§z§, 'z' pour... rien en fait. 'm' était déjà pris dans les codes spéciaux de canaux, alors j'ai pris z. Que je ré-utilise ici).			
 
 			//Comme le deuxième bouton a deux lignes, je vais agrandir tous les boutons à une hauteur de 4 (à la place de 3):
@@ -753,9 +1000,39 @@ int main(void) {
 			//Par défaut, cette touche a pour conséquence la fermeture du programme.
 		u.menuescape("§u§");		//Régler [ESCAPE] pour revenir au jeu
 
+//-----------------------------------------------------------------|       Menu de fin       |--------------------------------------------------------------------------------\\
+
+	//Créer le menu de pause
+	u.nvmenu("end");				//Par défaut, si on ne spécifie pas d'arrière-plan, le contenu des mémoires sera utilisé
+
+		//Définir le titre à afficher à l'écran
+		u.menutitredessin(" /¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\\ "
+"/  POUR L'INSTANT,  \\"
+"|   C'EST TOUT CE   |"
+"| QUE J'AI À OFFRIR |"
+"|                   |"
+"|   MAIS REVENEZ    |"
+"\\    PLUS TARD!     /"
+" \\_________________/ ",8);
+		
+		//Définir sa hauteur par rapport à la fenêtre totale (0 = dans le haut complètement)
+		u.menutitrehauteur(0.05);
+		
+		//Définir le premier bouton, ainsi que son effet
+		u.menunvbouton("Revenir au \nmenu principal","§c§§zprincipal commencement§");	
+			//Ce bouton aura pour effet d'appeler le menu principal (§z§, 'z' pour... rien en fait. 'm' était déjà pris dans les codes spéciaux de canaux, alors j'ai pris z. Que je ré-utilise ici).			
+
+			//Comme le premier bouton a deux lignes, je vais agrandir tous les boutons à une hauteur de 4 (à la place de 3):
+			u.menuhauteurbouton(4);
+
+		//Définir le deuxième bouton, ainsi que son effet
+		u.menunvbouton("Quitter","§a§");	
+			//Ce bouton aura pour effet de terminer le programme (§a§, 'a' pour "abort()").		
+
+
 //-----------------------------------------------------------------|        Exécuter         |--------------------------------------------------------------------------------\\		
 		
 	//Commencer proprement
-	u.debuter();
+	u.debuter("principal commencement");
 
 }		
