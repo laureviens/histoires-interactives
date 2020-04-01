@@ -62,7 +62,31 @@
 							( d' "immersion"  en sélectionnant un bouton à la place de recopier lettre à lettre un mot. Also, c'est plus facile à coder pour moi.)
 					-Le système de "lock" d'arrière-plan semble fonctionner à l'envers de ce qu'il devrait être?
 							C'est pas trop grave pour le moment; mais éventuellement faudrait régler ça
-											
+					-La manière actuelle de gérer la diversité à l'intérieur des motifs n'est pas à la hauteur de mes ambitions...
+							Mon plan :
+										-Changer la méthode par défaut, carrément.
+										-Conserver les mailles (segments de texte)
+										-Limiter l'usage conjoint d'enchaînements (écrits manuellement) + probabilités à cas spéciaux (ex: test de chance)
+										-Pour le "bulk", y aller en deux étapes:
+											-a) Vérifier si on devrait écrire quoi que ce soit du motif at all (odd de n'écrire rien par défaut : 0 (le motif est toujours joué) )
+															//Ça, ça donne l'opportunité d'avoir plusieurs motifs "parallèles" qui concernent la même action, mais d'en jouer juste, disons, 2 out of 24 (en moyenne); au hasard.
+											-b) Si on écrit, compteur le nombre d'enchaînements possible total, puis piger un nombre parmi celui-ci pour sélectionner (tous les enchaînements ont probabilité égale)
+															//Moins lourd à écrire + lire + taxe moins la mémoire dynamique (avec les probs...)
+															
+										-Le nombre d'enchaînements total consisterait en:
+											Les enchaînements définis manuellement (même objet qui serait utilisé si on avait des probs) + les enchaînements définis automatiquement
+											-Pour les enchaînements auto (trouver un autre nom... mécanisés?) n'interpréter que lorsque le motif est lu (pour sauver de la place de stockage; et puisque ce n'est pas souvent...)!
+												-ex: 1-2-3/4-5/6-7;   serait un enchaînement mécanisé, qui comprend les possibilités: 1-2-3-5-7, 1-2-3-6-7, 1-2-4-5-7, 1-2-4-6-7.  
+														On pourrait en définir plusieurs, pour quand même avoir une flexibilité dans les compatibilités.
+														Donc en gros, si on a:
+															digit : 1-2-3/4-5/6-7; 2-7-9/10 		//nan, j'aime pas digit/analg... Trop sexuel.   Mécan + main? Nan. Pas "main". Mécan + bricol. Tiens.
+															analg : 2-9
+																En tout, on a (2^2) + (2^1) + 1 = 7 possibilités.
+						//Techniquement, c'est écrit.
+								//À l'intérieur de "integration()", du moins (manu + auto).
+						
+						//Il ne reste plus qu'à ajouter des fonctions d'écriture (genre la partie où j'remplie les motifs), et... à TESTER.
+									//Fonctions d'écriture + erreurs de compilation réglées! FAUT TESTER MAINTENANT!!!
 */					
 
 /*
@@ -144,6 +168,31 @@
 							
 */
 
+/*
+	2020-04-01:
+				Plan pour pouvoir "rejouer" des sessions pour voir les réactions des joueuses / carrément juste avoir un système de sauvegarde:
+					Simplement y aller en notant quand chaque commande a été entrée.
+				
+				a) Noter le nom du jeu + la version (faudra ajouter ça comme membre à "univers")
+				b) Noter la "random seed", qui est simplement le TIMESINCEEPOCH auquel le jeu a commencé
+				c) Corriger les changements de vitesse ([HAUT] et [BAS]) pour qu'ils modifient aussi les nxtt (pour que le défilement soit 100% prévisible)
+				d) Ajouter un compteur de temps relatif à la boucle jouer():
+					if( (currentt - lastrelativet) * vit >= 1000 ) relativet += round((currentt - lastrelativet) * vit);		(1000 : pour avoir assez de résolution à haute vitesse)
+						//Ajouter aussi cet update de relativet à chaque fois que : [ENTER], [ESCAPE], [HAUT] et [BAS] sont appuyés.
+						//Inclure également relativet dans "pauseall()".
+						
+					//Dans le fichier de sauvegarde créé, utiliser simplement les changements de lignes comme séparateurs:
+					Sur les toîts		//nom
+					1.04				//version
+					193940293940294		//seed
+					
+					4322				//Temps relatif où la première commande a été envoyée
+					Skip				//Première commande
+					40253
+					avancer
+					44885
+					Grimper sur la clôture
+*/	
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //0) Inclure les bonnes library et utiliser les raccourcis pour standard
@@ -376,7 +425,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		}
 				
 		//b) Fonction : strintervalle ; retourne un string
-		string strintervalle(string str, int deb, int fin) {
+		string strintervalle(string str, int deb, int fin) {		//Le début et la fin sont INCLUSIVES!!!
 			string nwstr;
 			for(int pos=deb;pos<=fin;pos++) nwstr+=str[pos];          
 			return(nwstr);
@@ -1247,8 +1296,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Membres
 			public:
 				StaticVect<string,10> maille;						//Texte à lire
-				StaticVect<StaticVect<int,8>,32> enchainement;  	//int réfère aux positions des mailles         
-				StaticVect<intoper,32> enchaineprob;        	 	//Avec le même ordre d'indexation que enchaînement
+				int oddsofsound; int oddsofsilence;					//Chances que le motif soit lu à son intégration (par défaut: 100%) - sert à gérer la diversité de façon de dire une même information
+				string ordre;								//Ordre dans lequel placer les mailles (segments du texte à lire); gros volume possible, mais tous les enchaînements ont une chance égale de se produire - sera interprété seulement lorsque le motif sera intégré
+				bool ordreavecodds;									//Si TRUE, l'ordre va être défini par des enchaînements (ordrespecifique) associés à des probabilités (ordrespecifiqueodds): certains auront plus de chances de se produire
+				static const int tailleordrespecifique = 12;
+				StaticVect<StaticVect<int,8>,tailleordrespecifique> ordrespecifique;		//Ordre dans lequel placer les mailles - bricolé à la main, avec attention. Pour des enchaînements plus spécifiques, ou pour associer les enchaînements à des probabilités.
+				StaticVect<intoper,tailleordrespecifique> ordrespecifiqueodds;	//Probabilités que chaque enchaînement soit joué; peut référer à des rayons de la bibliothèque, et donc évoluer dynamiquement avec le jeu!								
 				boolcompos condition;								//Conditions à respecter pour l'ajout au canal sans UserInput 
 				string codespeciauxdebut;
 				string codespeciauxfin;
@@ -1257,7 +1310,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				int canal;											//Position du canal dans lequel écrire le texte
 				bool msn;											//Si TRUE, le motif va activer un nouveau msn à la place de s'inscrire dans un canal
 			//Constructeur
-			motifauto() : override(false), encours(false), msn(false) {};
+			motifauto() : override(false), encours(false), msn(false), oddsofsound(1), oddsofsilence(0), ordreavecodds(false) {};
 		};
 		
 		//c) classe : motifmanu ; permet le stockage du texte et des conditions d'apparition (manuelle)
@@ -1265,8 +1318,12 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Membres
 			public:
 				StaticVect<string,10> maille;						//Texte à lire
-				StaticVect<StaticVect<int,8>,32> enchainement;  	//int réfère aux positions des mailles         
-				StaticVect<intoper,32> enchaineprob;        	 	//Avec le même ordre d'indexation que enchaînement
+				int oddsofsound; int oddsofsilence;					//Chances que le motif soit lu à son intégration (par défaut: 100%) - sert à gérer la diversité de façon de dire une même information
+				string ordre;								//Ordre dans lequel placer les mailles (segments du texte à lire); gros volume possible, mais tous les enchaînements ont une chance égale de se produire - sera interprété seulement lorsque le motif sera intégré
+				bool ordreavecodds;									//Si TRUE, l'ordre va être défini par des enchaînements (ordrespecifique) associés à des probabilités (ordrespecifiqueodds): certains auront plus de chances de se produire
+				static const int tailleordrespecifique = 12;
+				StaticVect<StaticVect<int,8>,tailleordrespecifique> ordrespecifique;		//Ordre dans lequel placer les mailles - bricolé à la main, avec attention. Pour des enchaînements plus spécifiques, ou pour associer les enchaînements à des probabilités.
+				StaticVect<intoper,tailleordrespecifique> ordrespecifiqueodds;	//Probabilités que chaque enchaînement soit joué; peut référer à des rayons de la bibliothèque, et donc évoluer dynamiquement avec le jeu!				
 				boolcompos condition;								//Conditions à respecter pour l'ajout au canal avec UserInput				
 				string codespeciauxdebut;
 				string codespeciauxfin;
@@ -1277,7 +1334,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				bool reserve;                                       //TRUE si le UserInput devient bloqué après que ce motif ait été appelé (le motif est stocké en réserve, jusqu'à son activation)
 				string titre;										//Sert à identifier le motif + à savoir quel motif est appelé en cas d'ambiguité de la commande
 			//Constructeur
-			motifmanu() : reserve(false), override(false), msn(false) {};	
+			motifmanu() : reserve(false), override(false), msn(false), oddsofsound(1), oddsofsilence(0), ordreavecodds(false) {};	
 		};
 		
 		//d) classe : ouvrage ; permet de stocker toutes les textes + commandes selon des catégories (ex: chapitres), pour faciliter la recherche
@@ -1338,7 +1395,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			//Membres d'affichage à court terme
 			static const int taillecanaux = 2;			//Taille des objets de type StaticVect<canal,Taille>				
 			static const int taillemessagerie = 15;		//Taille des objets de type StaticVect<msn,Taille>
-			static const int taillegroupes = 5;			//Taille des groupes de mots qui doivent être bons dans une commande; copie de la ligne présente dans "class commande"; pas idéal			
+			static const int taillegroupes = 5;			//Taille des groupes de mots qui doivent être bons dans une commande; copie de la ligne présente dans "class commande"; pas idéal
+			static const int tailleordrespecifique = 12;//Taille des enchaînements dans lesquelles les mailles peuvent être jouées; copie de la ligne présente dans "class motif..."; pas idéal
 			StaticVect<canal,taillecanaux> canaux;
 			StaticVect<string,taillecanaux> nomcanaux;
 			StaticVect<msn,taillemessagerie> messagerie;
@@ -1410,7 +1468,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				void mcanal(const string& str); void acanal(const string& str);
 				void mtexte(const string& str);	void atexte(const string& str);
 				void mordre(const string& str); void aordre(const string& str);
-				void mprob(const string& str); void aprob(const string& str); 
+				void mordrespecifique(const string& str); void aordrespecifique(const string& str);				
+				void mordrespecifiqueodds(const string& str); void aordrespecifiqueodds(const string& str); 
 				void mdeb(const string& str); void adeb(const string& str);												
 				void mfin(const string& str); void afin(const string& str);	
 				void mcond(const string& str); void acond(const string& str);
@@ -1427,7 +1486,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				void menunvbouton(const string& strbout, const string& streff);
 				void menuescape(const string& str);
 				void menuingameescape(const string& str);
-			//Fonctions pour tester
+			//Fonctions pour tester le contenu
 				void menchainetest();	void aenchainetest();
 	};
 	
@@ -1610,10 +1669,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			} else {
 				inp.reserve = false;
 				bool msnbool = histoire.filmanu[chapitrepos][motifpos].msn;
-				bool msnskip = false; 
-				int xpos; int ypos;
+				bool msnskip = false; bool silenceskip = false;
+				int xpos; int ypos; int randval;
+				//Vérifier si le motif produit du son ou du silence (il peut avoir une probabilité qu'il ne s'intègre pas finalement - mécanisme intégré pour accomoder plus de variété dans le texte affiché)
+				if(histoire.filmanu[chapitrepos][motifpos].oddsofsilence>0) {
+					randval = randunif(0,histoire.filmanu[chapitrepos][motifpos].oddsofsilence+histoire.filmanu[chapitrepos][motifpos].oddsofsound-1);  //Obtenir un integer aléatoire entre [0,oddsofsilence+oddsofsound[				
+					if(randval<histoire.filmanu[chapitrepos][motifpos].oddsofsilence) silenceskip = true;
+				}
 				//Vérifier s'il y a de la place pour un nouveau msn (si c'est un msn qui est updaté)
-				if(msnbool) {
+				if(!silenceskip&&msnbool) {
 					//Choisir le msn qui sera utilisé
 					bool msnvide = false; bool lignelibrechoisie = false;
 					if(messagerie.longueur<messagerie.taille) msnvide = true;
@@ -1635,24 +1699,85 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 					}
 					if(!msnvide||!lignelibrechoisie) {msnskip = true; inp.accepted = false;}	//Aucune ligne ou msn n'est libre : refuser d'intégrer le motif, même si la commande est bonne			
 				} 
-				if(!msnskip){
-					//Choisir l'enchaînement à insérer
-					int sumprob = 0; StaticVect<int,10> vectprob;
-					for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
-						sumprob += histoire.filmanu[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
-					}
-					int randval = randunif(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
-					int choix; 
-					for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
-						if(randval<vectprob[posprob]) {choix = posprob; break;}
-					}	
+				if(!silenceskip&&!msnskip){
 					//Définir le texte à insérer
 					string txtmotif;
 					txtmotif += histoire.filmanu[chapitrepos][motifpos].codespeciauxdebut;   //Codes spéciaux début
-					for(int posench=0; posench<histoire.filmanu[chapitrepos][motifpos].enchainement[choix].longueur; posench++) {
-						txtmotif += histoire.filmanu[chapitrepos][motifpos].maille[histoire.filmanu[chapitrepos][motifpos].enchainement[choix][posench]];
-					}		
-					txtmotif += histoire.filmanu[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin  
+						//Choisir l'enchaînement à insérer
+						if(histoire.filmanu[chapitrepos][motifpos].ordreavecodds) {		//Chaque enchaînement peut avoir une probabilité différente!
+							int sumprob = 0; StaticVect<int,tailleordrespecifique> vectprob;
+							for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].ordrespecifiqueodds.longueur; posprob++) {	//Évaluer chaque probabilité
+								sumprob += histoire.filmanu[chapitrepos][motifpos].ordrespecifiqueodds[posprob].eval(biblio); vectprob[posprob] = sumprob; 
+							}
+							randval = randunif(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
+							int choix; 
+							for(int posprob=0; posprob<histoire.filmanu[chapitrepos][motifpos].ordrespecifiqueodds.longueur; posprob++) {
+								if(randval<vectprob[posprob]) {choix = posprob; break;}
+							}	
+							for(int posench=0; posench<histoire.filmanu[chapitrepos][motifpos].ordrespecifique[choix].longueur; posench++) {
+								txtmotif += histoire.filmanu[chapitrepos][motifpos].maille[histoire.filmanu[chapitrepos][motifpos].ordrespecifique[choix][posench]];
+							}	
+						} else {		//Chaque enchaînement a une probabilité égale
+							//Trouver le nombre d'enchaînements possible total
+							int nbstr = histoire.filmanu[chapitrepos][motifpos].ordre.length();
+							int enchainetot = 0; int nbrench = 1; int nbrpossible = 1;
+							for(int countstr = 0; countstr<=nbstr; countstr++) {
+								if(countstr<nbstr) {
+									if(histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='/'||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='|') {nbrpossible++;}	//Deux ortographes possibles pour le "ou"
+									if(histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='-'||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]==',') {nbrench *= nbrpossible; nbrpossible = 1;}	//Deux ortographes possibles pour le "et"								
+								}
+								if(countstr==nbstr||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]==';') {nbrench *= nbrpossible; enchainetot += nbrench; nbrench = 1; nbrpossible = 1;}		//Une seule ortographe pour "aussi" + le dernier bout
+							}
+							enchainetot += histoire.filmanu[chapitrepos][motifpos].ordrespecifique.longueur;	//Ajouter le nombre d'enchaînements bricolés
+							//Choisir un des groupes d'enchaînements
+							int randval = randunif(0,enchainetot-1);  //Obtenir un integer aléatoire entre [0,sumprob[
+							bool choixmecan = false;
+							int enchainesum =0; int debchoixstr = 0; int finchoixstr = nbstr; 
+							nbrench = 1; nbrpossible = 1;
+							for(int countstr = 0; countstr<=nbstr; countstr++) {
+								if(countstr<nbstr) {
+									if(histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='/'||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='|') {nbrpossible++;}	//Deux ortographes possibles pour le "ou"
+									if(histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='-'||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]==',') {nbrench *= nbrpossible; nbrpossible = 1;}	//Deux ortographes possibles pour le "et"								
+								}
+								if(countstr==nbstr||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]==';') {			//Une seule ortographe pour "aussi" + le dernier bout de la fin
+									nbrench *= nbrpossible; enchainesum += nbrench; nbrench = 1; nbrpossible = 1;		//Ajouter le nombre d'enchaînements de ces combinaisons à la somme d'enchaînements
+									if(randval<enchainesum) {finchoixstr = countstr; choixmecan = true;} else debchoixstr = countstr+1;
+								}	
+							}						
+							if(choixmecan) {	//Le choix se situe parmi les "ordres mécaniques"; on l'intègre au fur et à mesure, et on décide sur le coup à chaque fois qu'on est confrontée à un choix
+								string posmaille; int debpossiblestr = 0; int finpossiblestr; int debpossiblechoisi; int finpossiblechoisi;
+								nbrpossible = 1;
+								for(int countstr = debchoixstr; countstr<=finchoixstr; countstr++) {
+									//Simplement prendre en note qu'un choix s'en vient
+									if(countstr<finchoixstr&&(histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='/'||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='|')) {nbrpossible++;}	//Deux ortographes possibles pour le "ou"
+									//Ajouter une maille au texte à lire!
+									if(countstr==finchoixstr||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]=='-'||histoire.filmanu[chapitrepos][motifpos].ordre[countstr]==',') {	//Deux ortographes possibles pour le "et" + le dernier bout de la fin
+										finpossiblestr = countstr-1;
+										if(nbrpossible==1) { txtmotif += histoire.filmanu[chapitrepos][motifpos].maille[stoi(strintervalle(histoire.filmanu[chapitrepos][motifpos].ordre,debpossiblestr,finpossiblestr))-1];		//C'est facile: ajouter la maille spécifiée		//-1, parce qu'on doit respecter l'ordre de c++ qui commence par 0!
+										} else {					//Choisir entre les différentes possibilités la maille à ajouter
+											randval = randunif(0,nbrpossible-1);  //Obtenir un integer aléatoire entre [0,nbrpossible[
+											debpossiblechoisi = debpossiblestr; finpossiblechoisi = finpossiblestr; nbrpossible = 0;	//nbrpossible va ici agir comme compteur pour le choix
+											//Trouver les bornes du nombre indiqué
+											for(int countstrposs = debpossiblestr; countstrposs<=finpossiblestr; countstrposs++) {
+												if(histoire.filmanu[chapitrepos][motifpos].ordre[countstrposs]=='/'||histoire.filmanu[chapitrepos][motifpos].ordre[countstrposs]=='|') {
+													if(randval==nbrpossible) {finpossiblechoisi = countstrposs-1; break;} else debpossiblechoisi = countstrposs+1;
+													nbrpossible++;
+												}
+											}
+											//Ajouter la maille sélectionnée
+											txtmotif += histoire.filmanu[chapitrepos][motifpos].maille[stoi(strintervalle(histoire.filmanu[chapitrepos][motifpos].ordre,debpossiblechoisi,finpossiblechoisi))-1];	//Ajouter le texte de la position spécifiée		//-1, parce qu'on doit respecter l'ordre de c++ qui commence par 0!								
+										}
+										nbrpossible = 1;	//Remettre le compteur à la valeur par défaut
+									}
+								}
+							} else {	//Le choix se situe parmi les "ordres bricolés"; on l'intègre de la même manière que si les enchaînements étaient liés à des probabilités!
+								int poschoix = randval - enchainesum;		//Enlever les enchaînements mécanisés: ça donne la position!
+								for(int countench=0; countench<histoire.filmanu[chapitrepos][motifpos].ordrespecifique[poschoix].longueur; countench++) {
+									txtmotif += histoire.filmanu[chapitrepos][motifpos].maille[histoire.filmanu[chapitrepos][motifpos].ordrespecifique[poschoix][countench]];
+								}							
+							}
+						}
+					txtmotif += histoire.filmanu[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin
 					//Updater le canal/msn 
 					if(msnbool) {
 						messagerie.ajoutvide();																					//Ajouter officiellement un objet msn à la messagerie
@@ -1675,10 +1800,15 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		}
 		void univers::integrationauto(int chapitrepos, int motifpos) {
 			bool msnbool = histoire.filauto[chapitrepos][motifpos].msn;
-			bool msnskip = false;
-			int xpos; int ypos;			
+			bool msnskip = false; bool silenceskip = false;
+			int xpos; int ypos; int randval;
+			//Vérifier si le motif produit du son ou du silence (il peut avoir une probabilité qu'il ne s'intègre pas finalement - mécanisme intégré pour accomoder plus de variété dans le texte affiché)
+			if(histoire.filauto[chapitrepos][motifpos].oddsofsilence>0) {
+				randval = randunif(0,histoire.filauto[chapitrepos][motifpos].oddsofsilence+histoire.filauto[chapitrepos][motifpos].oddsofsound-1);  //Obtenir un integer aléatoire entre [0,oddsofsilence+oddsofsound[				
+				if(randval<histoire.filauto[chapitrepos][motifpos].oddsofsilence) silenceskip = true;
+			}
 			//Vérifier s'il y a de la place pour un nouveau msn (si c'est un msn qui est updaté)
-			if(msnbool) {
+			if(!silenceskip&&msnbool) {
 				//Choisir le msn qui sera utilisé
 				bool msnvide = false; bool lignelibrechoisie = false;
 				if(messagerie.longueur<messagerie.taille) msnvide = true;
@@ -1700,23 +1830,92 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 				}
 				if(!msnvide||!lignelibrechoisie) {msnskip = true; }	//Aucune ligne ou msn n'est libre : attendre pour jouer le motif (ne pas l'intégrer)			
 			} 
-			if(!msnskip){
-				//Choisir l'enchaînement à insérer
-				int sumprob = 0; StaticVect<int,10> vectprob;
-				for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {	//Évaluer chaque probabilité
-					sumprob += histoire.filauto[chapitrepos][motifpos].enchaineprob[posprob].eval(biblio); vectprob[posprob] = sumprob; 
-				}
-				int randval = randunif(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
-				int choix; 
-				for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].enchaineprob.longueur; posprob++) {
-					if(randval<vectprob[posprob]) {choix = posprob; break;}
-				}	
+			if(!silenceskip&&!msnskip){
 				//Définir le texte à insérer
 				string txtmotif;
 				txtmotif += histoire.filauto[chapitrepos][motifpos].codespeciauxdebut;   //Codes spéciaux début
-				for(int posench=0; posench<histoire.filauto[chapitrepos][motifpos].enchainement[choix].longueur; posench++) {
-					txtmotif += histoire.filauto[chapitrepos][motifpos].maille[histoire.filauto[chapitrepos][motifpos].enchainement[choix][posench]];
-				}		
+					//Choisir l'enchaînement à insérer
+					if(histoire.filauto[chapitrepos][motifpos].ordreavecodds) {		//Chaque enchaînement peut avoir une probabilité différente!
+						int sumprob = 0; StaticVect<int,tailleordrespecifique> vectprob;
+						for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].ordrespecifiqueodds.longueur; posprob++) {	//Évaluer chaque probabilité
+							sumprob += histoire.filauto[chapitrepos][motifpos].ordrespecifiqueodds[posprob].eval(biblio); vectprob[posprob] = sumprob; 
+						}
+						randval = randunif(0,sumprob-1);  //Obtenir un integer aléatoire entre [0,sumprob[
+						int choix; 
+						for(int posprob=0; posprob<histoire.filauto[chapitrepos][motifpos].ordrespecifiqueodds.longueur; posprob++) {
+							if(randval<vectprob[posprob]) {choix = posprob; break;}
+						}	
+						for(int posench=0; posench<histoire.filauto[chapitrepos][motifpos].ordrespecifique[choix].longueur; posench++) {
+							txtmotif += histoire.filauto[chapitrepos][motifpos].maille[histoire.filauto[chapitrepos][motifpos].ordrespecifique[choix][posench]];
+						}	
+					} else {		//Chaque enchaînement a une probabilité égale
+					
+					
+					
+						//DEBUGGG
+						//out("DEBUG"); abort();
+					
+					
+						//Trouver le nombre d'enchaînements possible total
+						int nbstr = histoire.filauto[chapitrepos][motifpos].ordre.length();
+						int enchainetot = 0; int nbrench = 1; int nbrpossible = 1;
+						for(int countstr = 0; countstr<=nbstr; countstr++) {
+							if(countstr<nbstr) {
+								if(histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='/'||histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='|') {nbrpossible++;}	//Deux ortographes possibles pour le "ou"
+								if(histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='-'||histoire.filauto[chapitrepos][motifpos].ordre[countstr]==',') {nbrench *= nbrpossible; nbrpossible = 1;}	//Deux ortographes possibles pour le "et"								
+							}
+							if(countstr==nbstr||histoire.filauto[chapitrepos][motifpos].ordre[countstr]==';') {nbrench *= nbrpossible; enchainetot += nbrench; nbrench = 1; nbrpossible = 1;}		//Une seule ortographe pour "aussi" + le dernier bout
+						}
+						enchainetot += histoire.filauto[chapitrepos][motifpos].ordrespecifique.longueur;	//Ajouter le nombre d'enchaînements bricolés
+						//Choisir un des groupes d'enchaînements
+						int randval = randunif(0,enchainetot-1);  //Obtenir un integer aléatoire entre [0,sumprob[
+						bool choixmecan = false;
+						int enchainesum =0; int debchoixstr = 0; int finchoixstr = nbstr; 
+						nbrench = 1; nbrpossible = 1;
+						for(int countstr = 0; countstr<=nbstr; countstr++) {
+							if(countstr<nbstr) {
+								if(histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='/'||histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='|') {nbrpossible++;}	//Deux ortographes possibles pour le "ou"
+								if(histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='-'||histoire.filauto[chapitrepos][motifpos].ordre[countstr]==',') {nbrench *= nbrpossible; nbrpossible = 1;}	//Deux ortographes possibles pour le "et"								
+							}
+							if(countstr==nbstr||histoire.filauto[chapitrepos][motifpos].ordre[countstr]==';') {			//Une seule ortographe pour "aussi" + le dernier bout de la fin
+								nbrench *= nbrpossible; enchainesum += nbrench; nbrench = 1; nbrpossible = 1;		//Ajouter le nombre d'enchaînements de ces combinaisons à la somme d'enchaînements
+								if(randval<enchainesum) {finchoixstr = countstr; choixmecan = true;} else debchoixstr = countstr+1;
+							}	
+						}						
+						if(choixmecan) {	//Le choix se situe parmi les "ordres mécaniques"; on l'intègre au fur et à mesure, et on décide sur le coup à chaque fois qu'on est confrontée à un choix
+							string posmaille; int debpossiblestr = 0; int finpossiblestr; int debpossiblechoisi; int finpossiblechoisi;
+							nbrpossible = 1;
+							for(int countstr = debchoixstr; countstr<=finchoixstr; countstr++) {
+								//Simplement prendre en note qu'un choix s'en vient
+								if(countstr<finchoixstr&&(histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='/'||histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='|')) {nbrpossible++;}	//Deux ortographes possibles pour le "ou"
+								//Ajouter une maille au texte à lire!
+								if(countstr==finchoixstr||histoire.filauto[chapitrepos][motifpos].ordre[countstr]=='-'||histoire.filauto[chapitrepos][motifpos].ordre[countstr]==',') {	//Deux ortographes possibles pour le "et" + le dernier bout de la fin
+									finpossiblestr = countstr-1;
+									if(nbrpossible==1) { txtmotif += histoire.filauto[chapitrepos][motifpos].maille[stoi(strintervalle(histoire.filauto[chapitrepos][motifpos].ordre,debpossiblestr,finpossiblestr))-1];		//C'est facile: ajouter la maille spécifiée		//-1, parce qu'on doit respecter l'ordre de c++ qui commence par 0!
+									} else {					//Choisir entre les différentes possibilités la maille à ajouter
+										randval = randunif(0,nbrpossible-1);  //Obtenir un integer aléatoire entre [0,nbrpossible[
+										debpossiblechoisi = debpossiblestr; finpossiblechoisi = finpossiblestr; nbrpossible = 0;	//nbrpossible va ici agir comme compteur pour le choix
+										//Trouver les bornes du nombre indiqué
+										for(int countstrposs = debpossiblestr; countstrposs<=finpossiblestr; countstrposs++) {
+											if(histoire.filauto[chapitrepos][motifpos].ordre[countstrposs]=='/'||histoire.filauto[chapitrepos][motifpos].ordre[countstrposs]=='|') {
+												if(randval==nbrpossible) {finpossiblechoisi = countstrposs-1; break;} else debpossiblechoisi = countstrposs+1;
+												nbrpossible++;
+											}
+										}
+										//Ajouter la maille sélectionnée
+										txtmotif += histoire.filauto[chapitrepos][motifpos].maille[stoi(strintervalle(histoire.filauto[chapitrepos][motifpos].ordre,debpossiblechoisi,finpossiblechoisi))-1];	//Ajouter le texte de la position spécifiée				//-1, parce qu'on doit respecter l'ordre de c++ qui commence par 0!								
+									}
+									nbrpossible = 1;	//Remettre le compteur à la valeur par défaut
+									debpossiblestr = countstr + 1;	//Updater le début du prochain string
+								}
+							}							
+						} else {	//Le choix se situe parmi les "ordres bricolés"; on l'intègre de la même manière que si les enchaînements étaient liés à des probabilités!
+							int poschoix = randval - enchainesum;		//Enlever les enchaînements mécanisés: ça donne la position!
+							for(int countench=0; countench<histoire.filauto[chapitrepos][motifpos].ordrespecifique[poschoix].longueur; countench++) {
+								txtmotif += histoire.filauto[chapitrepos][motifpos].maille[histoire.filauto[chapitrepos][motifpos].ordrespecifique[poschoix][countench]];
+							}							
+						}
+					}
 				txtmotif += histoire.filauto[chapitrepos][motifpos].codespeciauxfin;		//Codes spéciaux fin
 				txtmotif += "§a" + to_string(chapitrepos) + ';' + to_string(motifpos) +'§';		//Code spécial permettant d'enlever le status en cours du motif     //Faut convertir les int en string...
 				//Marquer le motif comme "en cours"
@@ -1772,7 +1971,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
 						} else if(canaux[canpos].txt[1]=='b'){		//'b' pour "biblio" -> modifier la bibliothèque
 							string nomrayon; string nomlivre; string val;
-							int posSpecial = 2;
+							int posSpecial = 2; if(canaux[canpos].txt[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 							while(canaux[canpos].txt[posSpecial] != '¶') nomrayon += canaux[canpos].txt[posSpecial++]; 
 							posSpecial++; while(!(canaux[canpos].txt[posSpecial] == '~' && canaux[canpos].txt[posSpecial+1] == '>')) nomlivre += canaux[canpos].txt[posSpecial++];  //ex: "§bintro¶desuet~>1§"
 							posSpecial+=2; while(canaux[canpos].txt[posSpecial] != '§') val += canaux[canpos].txt[posSpecial++];							
@@ -1818,18 +2017,21 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 						} else if(canaux[canpos].txt[1]=='g'){		//'g' pour "gender" -> choisir le bon accord   format: §gNomAGenrer(féminin;non binaire/neutre;masculin)§
 							int genreselect;										 //Sélectionner le genre
 								string NomAGenrer;
-								for(int posSpecial=2;posSpecial<CodeSpecialLong;posSpecial++) {
-									if(canaux[canpos].txt[posSpecial]=='(') {break; 			//Sortir de la boucle si on a atteint la fin du Nom-À-Genrer           
-									} else NomAGenrer += canaux[canpos].txt[posSpecial];							//PEUT-ÊTRE OPTIMISER CETTE BOUCLE AVEC strintervalle()????????
-								}
+								int posSpecial = 2; if(canaux[canpos].txt[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
+								while(posSpecial<CodeSpecialLong) {
+									if(canaux[canpos].txt[posSpecial]=='~') {posSpecial++; break; 			//Sortir de la boucle si on a atteint la fin du Nom-À-Genrer           
+									} else NomAGenrer += canaux[canpos].txt[posSpecial];
+									posSpecial++;
+								} 
 								genreselect = biblio.acces(biblio.posgenre,ColNameFind(NomAGenrer,biblio.nomlivre[biblio.posgenre]));		//Le rayon "genre" de la bibliothèque contient le genre de tous les personnages (0 = féminin, 1 = non binaire, 2 = masculin)
 							int genreactuel = 0;										//Aller chercher le bon accord
-								int posdebut = 3; int posfin = CodeSpecialLong - 2;		//Valeurs par défauts		//Code spécial Long -2 : pour ne pas avoir ")§" à la fin!
-								for(int posSpecial=3;posSpecial<CodeSpecialLong; posSpecial++) {				 //Délimiter le bon accord				
+								int posdebut = posSpecial; int posfin = CodeSpecialLong - 2;		//Valeurs par défauts		//Code spécial Long -2 : pour ne pas avoir ")§" à la fin!
+								while(posSpecial<CodeSpecialLong) {				 //Délimiter le bon accord				
 									if(canaux[canpos].txt[posSpecial]==';') {
 										genreactuel++;
 										if(genreactuel==genreselect) posdebut = posSpecial + 1; else if(genreactuel==genreselect+1) posfin = posSpecial - 1;
 									}
+									posSpecial++;
 								}
 							string temporairetxt;										//Ajouter le bon accord à la suite du code spécial 
 								temporairetxt  += strintervalle(canaux[canpos].txt,0,CodeSpecialLong-1); 		//Ajouter le code spécial
@@ -1837,7 +2039,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								temporairetxt += strintervalle(canaux[canpos].txt,CodeSpecialLong,canaux[canpos].txt.length()-1);	//Ajouter le reste du texte	
 								canaux[canpos].txt = temporairetxt;
 						} else if(canaux[canpos].txt[1]=='m'){		//'m' pour "manuel" -> forcer l'intégration d'un motif manuel (quand ça fait trop longtemps qu'on attend pour une commande)
-							string titremotif; int posSpecial = 2;
+							string titremotif; 
+							int posSpecial = 2; if(canaux[canpos].txt[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 							while(canaux[canpos].txt[posSpecial] != '§') titremotif += canaux[canpos].txt[posSpecial++];
 							//Rechercher quel motif correspond à ce titre
 							bool exacttrouve = false; int chapitrepos=0; int motifpos=0;
@@ -1888,12 +2091,14 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							canaux[canpos].posy = mem.accesfrontline();			//en y 	
 
 						} else if(canaux[canpos].txt[1]=='t'){      //'t' pour "terminaison" -> changer le texte de terminaison, qui sera ajouté après chaque override (si du texte a effectivement été effacé)
-							string nomcanal; string terminaison; int posSpecial = 2;
+							string nomcanal; string terminaison; 
+							int posSpecial = 2; if(canaux[canpos].txt[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 							while(canaux[canpos].txt[posSpecial] != '¶') nomcanal += canaux[canpos].txt[posSpecial++]; 
 							posSpecial++; while(canaux[canpos].txt[posSpecial] != '§') terminaison += canaux[canpos].txt[posSpecial++];							
 							canaux[ColNameFind(nomcanal,nomcanaux)].terminaison = terminaison;
 						} else if(canaux[canpos].txt[1]=='z'){      //'z' pour ... rien, en fait. "menu" (mais 'm' était déjà pris) -> ouvrir le menu spécifié!
-							string titremenu; int posSpecial = 2;
+							string titremenu; 
+							int posSpecial = 2; if(canaux[canpos].txt[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 							while(canaux[canpos].txt[posSpecial] != '§') titremenu += canaux[canpos].txt[posSpecial++];
 							LireMenus(titremenu);
 						}	
@@ -1987,7 +2192,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours						
 							} else if(txtrc[1]=='b'){		//'b' pour "biblio" -> modifier la bibliothèque
 								string nomrayon; string nomlivre; string val;
-								int posSpecial = 2;
+								int posSpecial = 2; if(txtrc[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 								while(txtrc[posSpecial] != '¶') nomrayon += txtrc[posSpecial++]; 
 								posSpecial++; while(!(txtrc[posSpecial] == '~' && txtrc[posSpecial+1] == '>')) nomlivre += txtrc[posSpecial++];
 								posSpecial+=2; while(txtrc[posSpecial] != '§') val += txtrc[posSpecial++];							
@@ -2007,18 +2212,21 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 							} else if(txtrc[1]=='g'){		//'g' pour "gender" -> choisir le bon accord   format: §gNomAGenrer(féminin;non binaire/neutre;masculin)§
 								int genreselect;										 //Sélectionner le genre
 									string NomAGenrer;
-									for(int posSpecial=2;posSpecial<CodeSpecialLong;posSpecial++) {
-										if(txtrc[posSpecial]=='(') {break; 			//Sortir de la boucle si on a atteint la fin du Nom-À-Genrer           
-										} else NomAGenrer += txtrc[posSpecial];							//PEUT-ÊTRE OPTIMISER CETTE BOUCLE AVEC strintervalle()????????
-									}
+									int posSpecial = 2; if(txtrc[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
+									while(posSpecial<CodeSpecialLong) {
+										if(txtrc[posSpecial]=='~') {posSpecial++; break; 			//Sortir de la boucle si on a atteint la fin du Nom-À-Genrer           
+										} else NomAGenrer += txtrc[posSpecial];
+										posSpecial++;
+									} 
 									genreselect = biblio.acces(biblio.posgenre,ColNameFind(NomAGenrer,biblio.nomlivre[biblio.posgenre]));		//Le rayon "genre" de la bibliothèque contient le genre de tous les personnages (0 = féminin, 1 = non binaire, 2 = masculin)
 								int genreactuel = 0;										//Aller chercher le bon accord
-									int posdebut = 3; int posfin = CodeSpecialLong - 2;		//Valeurs par défauts			//Code spécial Long -2 : pour ne pas avoir ")§" à la fin!
-									for(int posSpecial=3;posSpecial<CodeSpecialLong; posSpecial++) {				 //Délimiter le bon accord				
+									int posdebut = posSpecial; int posfin = CodeSpecialLong - 2;		//Valeurs par défauts		//Code spécial Long -2 : pour ne pas avoir ")§" à la fin!
+									while(posSpecial<CodeSpecialLong) {				 //Délimiter le bon accord				
 										if(txtrc[posSpecial]==';') {
 											genreactuel++;
 											if(genreactuel==genreselect) posdebut = posSpecial + 1; else if(genreactuel==genreselect+1) posfin = posSpecial - 1;
 										}
+										posSpecial++;
 									}
 								string temporairetxt;										//Ajouter le bon accord à la place du code spécial dans le texte à lire
 									temporairetxt += strintervalle(messagerie[msnpos].txt, 0, posrc);	//Ajouter le texte avant le code spécial
@@ -2027,7 +2235,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 									messagerie[msnpos].txt = temporairetxt;
 									messagerie[msnpos].postxt -= (CodeSpecialLong);					//Neutraliser l'avancement de la position qui va venir après, puisqu'on a supprimé le code spécial
 							} else if(txtrc[1]=='m'){		//'m' pour "manuel" -> forcer l'intégration d'un motif manuel (quand ça fait trop longtemps qu'on attend pour une commande)
-								string titremotif; int posSpecial = 2;
+								string titremotif; 
+								int posSpecial = 2; if(txtrc[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 								while(txtrc[posSpecial] != '§') titremotif += txtrc[posSpecial++];
 								//Rechercher quel motif correspond à ce titre
 								bool exacttrouve = false; int chapitrepos=0; int motifpos=0;
@@ -2060,7 +2269,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 								posSpecial++; while(txtrc[posSpecial] != '§') terminaison += txtrc[posSpecial++];							
 								canaux[ColNameFind(nomcanal,nomcanaux)].terminaison = terminaison;
 							} else if(txtrc[1]=='z'){      //'z' pour ... rien, en fait. "menu" (mais 'm' était déjà pris) -> ouvrir le menu spécifié!
-								string titremenu; int posSpecial = 2;
+								string titremenu; 
+								int posSpecial = 2; if(txtrc[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 								while(txtrc[posSpecial] != '§') titremenu += txtrc[posSpecial++];
 								LireMenus(titremenu);
 							}		
@@ -2143,7 +2353,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 															histoire.filauto[stoi(poschap)][stoi(posmotif)].encours = false;    //Désigner le motif signalé comme n'étant plus en cours
 														} else if(txtrc[1]=='b'){		//'b' pour "biblio" -> modifier la bibliothèque
 															string nomrayon; string nomlivre; string val;
-															int posSpecial = 2;
+															int posSpecial = 2; if(txtrc[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 															while(txtrc[posSpecial] != '¶') nomrayon += txtrc[posSpecial++]; 
 															posSpecial++; while(!(txtrc[posSpecial] == '~' && txtrc[posSpecial+1] == '>')) nomlivre += txtrc[posSpecial++];
 															posSpecial+=2; while(txtrc[posSpecial] != '§') val += txtrc[posSpecial++];							
@@ -2158,7 +2368,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 																for(int countmsn=0; countmsn<messagerie.longueur; countmsn++) if(countmsn!=msnpos) {unpausemsn(countmsn); messagerie[countmsn].frozen = false;}
 															}
 														} else if(txtrc[1]=='m'){		//'m' pour "manuel" -> forcer l'intégration d'un motif manuel (quand ça fait trop longtemps qu'on attend pour une commande)
-															string titremotif; int posSpecial = 2;
+															string titremotif; 
+															int posSpecial = 2; if(txtrc[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 															while(txtrc[posSpecial] != '§') titremotif += txtrc[posSpecial++];
 															//Rechercher quel motif correspond à ce titre
 															bool exacttrouve = false; int chapitrepos=0; int motifpos=0;
@@ -2183,7 +2394,8 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 														} else if(txtrc[1]=='r'){		//'r' pour "réserve" -> intégrer les motifs manuels qui attendent dans la réserve; sert à ne pas couper une phrase en deux
 															if(inp.reserve) integrationmanu(inp.reservechap,inp.reservemotif);																										
 														} else if(txtrc[1]=='z'){      //'z' pour ... rien, en fait. "menu" (mais 'm' était déjà pris) -> ouvrir le menu spécifié!
-															string titremenu; int posSpecial = 2;
+															string titremenu; 
+															int posSpecial = 2; if(txtrc[2]==' ') posSpecial = 3;		//Ignorer l'espace du début
 															while(txtrc[posSpecial] != '§') titremenu += txtrc[posSpecial++];
 															LireMenus(titremenu);
 														}																
@@ -2916,13 +3128,13 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 			if(histoire.filmanu[poschap][posmotif].maille.longueur==histoire.filmanu[poschap][posmotif].maille.taille) {out("Dans le motif manuel :\n\n\""); out(str); out("\"\n\n   il y a trop de \"mailles\" différentes, c'est-à-dire de bouts de phrases séparés par 'µ'. Augmentez le nombre de mailles d'un motif manuel ou séparez celui-ci en plusieurs pour résoudre ce problème."); abort();}					
 			histoire.filmanu[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
-			//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre, avec une probabilité de 1 (peut alors être écrasé par les commandes suivantes)
-			histoire.filmanu[poschap][posmotif].enchainement.ajoutvide();      //Créer le premier enchaînement
-			for(int countmaille = 0; countmaille<histoire.filmanu[poschap][posmotif].maille.longueur; countmaille++){
-				histoire.filmanu[poschap][posmotif].enchainement[0].ajout(countmaille);	
-			}
-			histoire.filmanu[poschap][posmotif].enchaineprob.ajoutvide();      //Créer la première probabilité
-			histoire.filmanu[poschap][posmotif].enchaineprob[0].set("1",biblio);	
+			//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre (peut alors être écrasé par les commandes suivantes)
+			if(histoire.filmanu[poschap][posmotif].ordre == "") {
+				for(int countmaille = 0; countmaille<histoire.filmanu[poschap][posmotif].maille.longueur; countmaille++){
+					histoire.filmanu[poschap][posmotif].ordre += to_string(countmaille); 
+					if(countmaille<histoire.filmanu[poschap][posmotif].maille.longueur-1) histoire.filmanu[poschap][posmotif].ordre += '-';
+				}				
+			}	
 		}																						
 		//b) Fonction pour écire le texte ("mailles") du motif (automatique)
 		void univers::atexte(const string& str) {
@@ -2941,195 +3153,191 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 			if(histoire.filauto[poschap][posmotif].maille.longueur==histoire.filauto[poschap][posmotif].maille.taille) {out("Dans le motif automatique :\n\n\""); out(str); out("\"\n\n   il y a trop de \"mailles\" différentes, c'est-à-dire de bouts de phrases séparés par 'µ'. Augmentez le nombre de mailles d'un motif automatique ou séparez celui-ci en plusieurs pour résoudre ce problème."); abort();}					
 			histoire.filauto[poschap][posmotif].maille.ajout(strintervalle(str,debmaille,strnb-1));		//Entrer la dernière maille
-			//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre, avec une probabilité de 1 (peut alors être écrasé par les commandes suivantes)
-			histoire.filauto[poschap][posmotif].enchainement.ajoutvide();      //Créer le premier enchaînement
-			for(int countmaille = 0; countmaille<histoire.filauto[poschap][posmotif].maille.longueur; countmaille++){
-				histoire.filauto[poschap][posmotif].enchainement[0].ajout(countmaille);	
+			//Ajouter par défaut un enchaînement lisant l'intégralité des mailles, dans l'ordre (peut alors être écrasé par les commandes suivantes)
+			if(histoire.filauto[poschap][posmotif].ordre == "") {
+				for(int countmaille = 0; countmaille<histoire.filauto[poschap][posmotif].maille.longueur; countmaille++){
+					histoire.filauto[poschap][posmotif].ordre += to_string(countmaille); 
+					if(countmaille<histoire.filauto[poschap][posmotif].maille.longueur-1) histoire.filauto[poschap][posmotif].ordre += '-';
+				}				
 			}
-			histoire.filauto[poschap][posmotif].enchaineprob.ajoutvide();      //Créer la première probabilité
-			histoire.filauto[poschap][posmotif].enchaineprob[0].set("1",biblio);	
 		}		
 			
-		//c) Fonction pour définir les enchaînements possibles (manuel)
+			
+		//c) Fonction pour définir les enchaînements spécifiques possibles (manuel)
 		void univers::mordre(const string& str) {
+			int poschap = histoire.filmanu.longueur-1;
+			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;
+			histoire.filmanu[poschap][posmotif].ordre = str;
+		}		
+		//c) Fonction pour définir les enchaînements spécifiques possibles (automatique)
+		void univers::aordre(const string& str) {
+			int poschap = histoire.filauto.longueur-1;
+			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;
+			histoire.filauto[poschap][posmotif].ordre = str;
+		}
+				
+		//d) Fonction pour définir les enchaînements spécifiques possibles (manuel)
+		void univers::mordrespecifique(const string& str) {
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
 			int strnb = str.length();		//Aller chercher la taille du string
 			int countordre = 0;				//Créer un compteur pour l'ordre
 			int debnombre = 0;				//Créer un compteur d'indexation pour le début du nombre
-			//Effacer les enchaînements déjà existants (celles par défaut)
-			histoire.filmanu[poschap][posmotif].enchainement[0].vide();        //Conserve quand même le fait qu'un premier enchaînement a été créé
-			histoire.filmanu[poschap][posmotif].enchaineprob[0].clean();        //Conserve quand même le fait qu'une première probabilité a été créée    
+			histoire.filmanu[poschap][posmotif].ordrespecifique.ajoutvide();	//Créer un premier "objet" pour stocker les enchaînements
 			//Ajouter les enchaînements inscrits
-			for(int countstr=0; countstr<strnb; countstr++){
-				if(str[countstr]=='-'||str[countstr]==';') {
-					if(histoire.filmanu[poschap][posmotif].enchainement[countordre].longueur==histoire.filmanu[poschap][posmotif].enchainement[countordre].taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop de \"mailles\" à l'\"enchaînement\" #"); out(countordre+1); out(" ( fonction mordre() ). Augmentez le nombre de mailles par enchaînement ou faites ça moins compliqué, pour résoudre ce problème."); abort();}		
+			for(int countstr=0; countstr<=strnb; countstr++){
+				if(countstr==strnb||str[countstr]=='-'||str[countstr]==';') {
+					if(histoire.filmanu[poschap][posmotif].ordrespecifique[countordre].longueur==histoire.filmanu[poschap][posmotif].ordrespecifique[countordre].taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop de \"mailles\" à l'\"enchaînement\" #"); out(countordre+1); out(" ( fonction mordre() ). Augmentez le nombre de mailles par enchaînement ou faites ça moins compliqué, pour résoudre ce problème."); abort();}		
 					if(countstr-debnombre>0) {
-						histoire.filmanu[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
+						histoire.filmanu[poschap][posmotif].ordrespecifique[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
 					} else {out("L'enchaînement \""); out(str); out("\" contient une valeur vide qui fait planter le parsing à la position "); out(countstr); out(". Changer ça svp."); abort();}			
-					if(str[countstr]=='-') {}
-					if(str[countstr]==';') {
-						if(histoire.filmanu[poschap][posmotif].enchainement.longueur==histoire.filmanu[poschap][posmotif].enchainement.taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif manuel ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}							
+					if(countstr!=strnb&&str[countstr]=='-') {}		//Rien ne se passe (mais je préférais l'expliciter)
+					if(countstr<strnb-1&&str[countstr]==';') {		//Si ';' est le dernier caractère du string, on ne crée pas de nouvel enchaînement (parce qu'il serait complètement vide)
+						if(histoire.filmanu[poschap][posmotif].ordrespecifique.longueur==histoire.filmanu[poschap][posmotif].ordrespecifique.taille) {out("Dans le motif manuel :\n\n\""); out(histoire.filmanu[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif manuel ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}							
 						countordre++; 
-						histoire.filmanu[poschap][posmotif].enchainement.ajoutvide(); histoire.filmanu[poschap][posmotif].enchaineprob.ajoutvide();
+						histoire.filmanu[poschap][posmotif].ordrespecifique.ajoutvide();
 					}
 					debnombre = countstr+1;
 				}
 			}
-			histoire.filmanu[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb-1))-1);		//Entrer le dernier chiffre	
-			//Ajouter par défaut une probabilité de 1 pour tous les enchaînements inscrits (peut alors être écrasé par la commande suivante)
-			for(int countench = 0; countench<histoire.filmanu[poschap][posmotif].enchainement.longueur; countench++){
-				histoire.filmanu[poschap][posmotif].enchaineprob[countench].set("1",biblio);	
-			}		
 		}																						
-		//c) Fonction pour définir les enchaînements possibles (automatique)
-		void univers::aordre(const string& str) {
+		//d) Fonction pour définir les enchaînements spécifiques possibles (automatique)
+		void univers::aordrespecifique(const string& str) {
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;		
 			int strnb = str.length();		//Aller chercher la taille du string
 			int countordre = 0;				//Créer un compteur pour l'ordre
 			int debnombre = 0;				//Créer un compteur d'indexation pour le début du nombre
-			//Effacer les enchaînements déjà existants (celles par défaut)
-			histoire.filauto[poschap][posmotif].enchainement[0].vide();        //Conserve quand même le fait qu'un premier enchaînement a été créé
-			histoire.filauto[poschap][posmotif].enchaineprob[0].clean();        //Conserve quand même le fait qu'une première probabilité a été créée    
+			histoire.filauto[poschap][posmotif].ordrespecifique.ajoutvide();	//Créer un premier "objet" pour stocker les enchaînements
 			//Ajouter les enchaînements inscrits
-			for(int countstr=0; countstr<strnb; countstr++){
-				if(str[countstr]=='-'||str[countstr]==';') {
-					if(histoire.filauto[poschap][posmotif].enchainement[countordre].longueur==histoire.filauto[poschap][posmotif].enchainement[countordre].taille) {out("Dans le motif automatique :\n\n\""); out(histoire.filauto[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop de \"mailles\" à l'\"enchaînement\" #"); out(countordre+1); out(" ( fonction mordre() ). Augmentez le nombre de mailles par enchaînement ou faites ça moins compliqué, pour résoudre ce problème."); abort();}							
+			for(int countstr=0; countstr<=strnb; countstr++){
+				if(countstr==strnb||str[countstr]=='-'||str[countstr]==';') {
+					if(histoire.filauto[poschap][posmotif].ordrespecifique[countordre].longueur==histoire.filauto[poschap][posmotif].ordrespecifique[countordre].taille) {out("Dans le motif autoel :\n\n\""); out(histoire.filauto[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop de \"mailles\" à l'\"enchaînement\" #"); out(countordre+1); out(" ( fonction mordre() ). Augmentez le nombre de mailles par enchaînement ou faites ça moins compliqué, pour résoudre ce problème."); abort();}		
 					if(countstr-debnombre>0) {
-						histoire.filauto[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
+						histoire.filauto[poschap][posmotif].ordrespecifique[countordre].ajout(stoi(strintervalle(str,debnombre,countstr-1))-1);			//La fonction stoi() transforme les strings en int
 					} else {out("L'enchaînement \""); out(str); out("\" contient une valeur vide qui fait planter le parsing à la position "); out(countstr); out(". Changer ça svp."); abort();}			
-					if(str[countstr]=='-') {}
-					if(str[countstr]==';') {
-						if(histoire.filauto[poschap][posmotif].enchainement.longueur==histoire.filauto[poschap][posmotif].enchainement.taille) {out("Dans le motif automatique :\n\n\""); out(histoire.filauto[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif automatique ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}													
+					if(countstr!=strnb&&str[countstr]=='-') {}		//Rien ne se passe (mais je préférais l'expliciter)
+					if(countstr<strnb-1&&str[countstr]==';') {		//Si ';' est le dernier caractère du string, on ne crée pas de nouvel enchaînement (parce qu'il serait complètement vide)
+						if(histoire.filauto[poschap][posmotif].ordrespecifique.longueur==histoire.filauto[poschap][posmotif].ordrespecifique.taille) {out("Dans le motif autoel :\n\n\""); out(histoire.filauto[poschap][posmotif].maille[0]); out("...\"\n\n   il y a trop d'\"enchaînements\" ( fonction mordre() ). Augmentez le nombre d'enchaînements dans un motif autoel ou mettez moins de variété, pour résoudre ce problème. N'oubliez pas d'aussi augmenter le nombre de probabilités si vous faites la première option!"); abort();}							
 						countordre++; 
-						histoire.filauto[poschap][posmotif].enchainement.ajoutvide(); histoire.filauto[poschap][posmotif].enchaineprob.ajoutvide();
-						}
+						histoire.filauto[poschap][posmotif].ordrespecifique.ajoutvide();
+					}
 					debnombre = countstr+1;
 				}
 			}
-			histoire.filauto[poschap][posmotif].enchainement[countordre].ajout(stoi(strintervalle(str,debnombre,strnb-1))-1);		//Entrer le dernier chiffre	
-			//Ajouter par défaut une probabilité de 1 pour tous les enchaînements inscrits (peut alors être écrasé par la commande suivante)
-			for(int countench = 0; countench<histoire.filauto[poschap][posmotif].enchainement.longueur; countench++){
-				histoire.filauto[poschap][posmotif].enchaineprob[countench].set("1",biblio);	
-			}		
-		}			
+		}		
 		
-		//d) Fonction pour définir les probabilités associées avec chaque enchaînement (manuel)
-		void univers::mprob(const string& str){
+		//e) Fonction pour définir les probabilités associées avec chaque enchaînement spécifique (manuel)
+		void univers::mordrespecifiqueodds(const string& str){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
 			int strnb = str.length();		//Aller chercher la taille du string
 			int debench = 0;				//Noter la position d'indexation du début de l'enchaînement
 			int countench = 0;				//Position de l'enchaînement visé
-			//Effacer les probabilités déjà existantes (celles par défaut)
-			for(int countench = 0; countench<histoire.filmanu[poschap][posmotif].enchainement.longueur; countench++){
-				histoire.filmanu[poschap][posmotif].enchaineprob[countench].clean();				//Conserve le fait que les probabilités ont été créées en nombre égal au nombre d'enchaînements
-			}				
+			//Marquer le fait qu'on va utiliser des probabilités spécifiques
+			histoire.filmanu[poschap][posmotif].ordreavecodds = true;
 			//Ajouter les probabilités inscrites
-			for(int countstr=0; countstr<strnb; countstr++){
-				if(str[countstr]==';') {					
+			for(int countstr=0; countstr<=strnb; countstr++){
+				if(countstr==strnb||str[countstr]==';') {					
+					histoire.filmanu[poschap][posmotif].ordrespecifiqueodds.ajoutvide();		//Noter le fait qu'on ajoute une probabilité
 					if(countstr-debench>0){
-						histoire.filmanu[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,countstr-1),biblio);
-					} else histoire.filmanu[poschap][posmotif].enchaineprob[countench].set("0",biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 0. Ça lui apprendra.
+						histoire.filmanu[poschap][posmotif].ordrespecifiqueodds[countench].set(strintervalle(str,debench,countstr-1),biblio);
+					} else histoire.filmanu[poschap][posmotif].ordrespecifiqueodds[countench].set("1",biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 1 (odds par défaut).
 					debench = countstr + 1; countench++;
 				}
 			}
-			if(debench!=strnb) {		//Entrer le dernier chiffre
-			histoire.filmanu[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,strnb-1),biblio);
-			}
-			while(countench++<histoire.filmanu[poschap][posmotif].enchainement.longueur-1){             //Si moins de probabilités ont été inscrites qu'il n'y a d'enchaînements
-				histoire.filmanu[poschap][posmotif].enchaineprob[countench].set("0",biblio);
+			while(countench<histoire.filmanu[poschap][posmotif].ordrespecifique.longueur-1){             //Si moins de probabilités ont été inscrites qu'il n'y a d'enchaînements
+				histoire.filmanu[poschap][posmotif].ordrespecifiqueodds.ajoutvide();		//Noter le fait qu'on ajoute une probabilité				
+				histoire.filmanu[poschap][posmotif].ordrespecifiqueodds[countench].set("1",biblio);
+				countench++;
 			}
 		}
-		//d) Fonction pour définir les probabilités associées avec chaque enchaînement (automatique)
-		void univers::aprob(const string& str){
+		//e) Fonction pour définir les probabilités associées avec chaque enchaînement spécifique (automatique)
+		void univers::aordrespecifiqueodds(const string& str){
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;		
 			int strnb = str.length();		//Aller chercher la taille du string
 			int debench = 0;				//Noter la position d'indexation du début de l'enchaînement
 			int countench = 0;				//Position de l'enchaînement visé
-			//Effacer les probabilités déjà existantes (celles par défaut)
-			for(int countench = 0; countench<histoire.filauto[poschap][posmotif].enchainement.longueur; countench++){
-				histoire.filauto[poschap][posmotif].enchaineprob[countench].clean();				//Conserve le fait que les probabilités ont été créées en nombre égal au nombre d'enchaînements
-			}				
+			//Marquer le fait qu'on va utiliser des probabilités spécifiques
+			histoire.filauto[poschap][posmotif].ordreavecodds = true;
 			//Ajouter les probabilités inscrites
-			for(int countstr=0; countstr<strnb; countstr++){
-				if(str[countstr]==';') {
+			for(int countstr=0; countstr<=strnb; countstr++){
+				if(countstr==strnb||str[countstr]==';') {					
+					histoire.filauto[poschap][posmotif].ordrespecifiqueodds.ajoutvide();		//Noter le fait qu'on ajoute une probabilité
 					if(countstr-debench>0){
-						histoire.filauto[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,countstr-1),biblio);
-					} else histoire.filauto[poschap][posmotif].enchaineprob[countench].set("0",biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 0. Ça lui apprendra.
+						histoire.filauto[poschap][posmotif].ordrespecifiqueodds[countench].set(strintervalle(str,debench,countstr-1),biblio);
+					} else histoire.filauto[poschap][posmotif].ordrespecifiqueodds[countench].set("1",biblio); //Si deux ';' se suivent, mettre la probabilité de l'enchaînement vide comme 1 (odds par défaut).
 					debench = countstr + 1; countench++;
 				}
 			}
-			if(debench!=strnb) {		//Entrer le dernier chiffre
-			histoire.filauto[poschap][posmotif].enchaineprob[countench].set(strintervalle(str,debench,strnb-1),biblio);
-			}
-			while(countench++<histoire.filauto[poschap][posmotif].enchainement.longueur-1){             //Si moins de probabilités ont été inscrites qu'il n'y a d'enchaînements
-				histoire.filauto[poschap][posmotif].enchaineprob[countench].set("0",biblio);
+			while(countench<histoire.filauto[poschap][posmotif].ordrespecifique.longueur-1){             //Si moins de probabilités ont été inscrites qu'il n'y a d'enchaînements
+				histoire.filauto[poschap][posmotif].ordrespecifiqueodds.ajoutvide();		//Noter le fait qu'on ajoute une probabilité				
+				histoire.filauto[poschap][posmotif].ordrespecifiqueodds[countench].set("1",biblio);
+				countench++;
 			}
 		}
 		
-		//e) Fonction pour définir les codes spéciaux appelés au début du motif (manuel)
+		//f) Fonction pour définir les codes spéciaux appelés au début du motif (manuel)
 		void univers::mdeb(const string& str){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
 			histoire.filmanu[poschap][posmotif].codespeciauxdebut = str;
 		}
-		//e) Fonction pour définir les codes spéciaux appelés au début du motif (automatique)
+		//f) Fonction pour définir les codes spéciaux appelés au début du motif (automatique)
 		void univers::adeb(const string& str){
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;		
 			histoire.filauto[poschap][posmotif].codespeciauxdebut = str;
 		}
 		
-		//f) Fonction pour définir les codes spéciaux appelés à la fin du motif (manuel)
+		//g) Fonction pour définir les codes spéciaux appelés à la fin du motif (manuel)
 		void univers::mfin(const string& str){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;
 			histoire.filmanu[poschap][posmotif].codespeciauxfin = str;
 		}
-		//f) Fonction pour définir les codes spéciaux appelés à la fin du motif (automatique)
+		//g) Fonction pour définir les codes spéciaux appelés à la fin du motif (automatique)
 		void univers::afin(const string& str){
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;
 			histoire.filauto[poschap][posmotif].codespeciauxfin = str;
 		}
 		
-		//g) Fonction pour définir les conditions sous lesquelles le motif pourra être appelé (manuel)
+		//h) Fonction pour définir les conditions sous lesquelles le motif pourra être appelé (manuel)
 		void univers::mcond(const string& str){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
 			histoire.filmanu[poschap][posmotif].condition.set(str,biblio);
 		}
-		//g) Fonction pour définir les conditions sous lesquelles le motif pourra être appelé (automatique)
+		//h) Fonction pour définir les conditions sous lesquelles le motif pourra être appelé (automatique)
 		void univers::acond(const string& str){
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;		
 			histoire.filauto[poschap][posmotif].condition.set(str,biblio);
 		}
 			
-		//h) Fonction pour définir que le canal sera vidé (override) dès l'activation de ce motif (manuel)   (désactivé par défaut)
+		//i) Fonction pour définir que le canal sera vidé (override) dès l'activation de ce motif (manuel)   (désactivé par défaut)
 		void univers::mover(){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
 			histoire.filmanu[poschap][posmotif].override = true;
 		}				
-		//h) Fonction pour définir que le canal sera vidé (override) dès l'activation de ce motif (automatique)   (désactivé par défaut)
+		//i) Fonction pour définir que le canal sera vidé (override) dès l'activation de ce motif (automatique)   (désactivé par défaut)
 		void univers::aover(){
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;		
 			histoire.filauto[poschap][posmotif].override = true;
 		}					
 					
-		//i) Fonction pour définir que le canal sera mis en attente ("réserve") lorsque la bonne commande sera envoyée, et ce jusqu'à la lecture du code spécial "§r§" (manuel seulement)   (désactivé par défaut)
+		//j) Fonction pour définir que le canal sera mis en attente ("réserve") lorsque la bonne commande sera envoyée, et ce jusqu'à la lecture du code spécial "§r§" (manuel seulement)   (désactivé par défaut)
 		void univers::mreserve(){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
 			histoire.filmanu[poschap][posmotif].reserve = true;
 		}					
 					
-		//j) Fonction pour définir les combinaisons de mots qui appeleront le motif - les commandes (manuel)
+		//k) Fonction pour définir les combinaisons de mots qui appeleront le motif - les commandes (manuel)
 		void univers::mcomm(const string& str){
 			int poschap = histoire.filmanu.longueur-1;		//ICI, '|' SÉPARE LES SYNONYMES, '&' SÉPARE LES GROUPES DE MOTS NÉCESSAIRES, "[]" DÉNOTE LES MOTS À EXCLURE ET "()" SÉPARENT LES DIFFÉRENTES FAÇONS DE LE DIRE
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;			//NOTE: LES MOTS À EXCLURE N'ONT PAS DE GROUPES DE MOTS, ILS N'ONT QUE DES SYNONYMES!
@@ -3179,7 +3387,7 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			}
 		}
 		
-		//k) Fonction pour définir les commandes exactes qui appeleront le motif (manuel)
+		//l) Fonction pour définir les commandes exactes qui appeleront le motif (manuel)
 		void univers::mcommexact(const string& str){
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;		
@@ -3267,17 +3475,17 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 		//m) Fonction pour définir quel menu appelera la touche ESC lorsque le jeu est en cours
 		void univers::menuingameescape(const string& str) {quelmenuingameescape = str;} 
 	
-	//v) Fonctions pour nommer les livres et les rayons de la bibliothèque	----------------------------------------------------------------------		
+	//v) Fonctions pour tester le contenu	----------------------------------------------------------------------		
 	
 		//a) Fonction pour voir tous les enchaînements
 		void univers::menchainetest() {
 			int poschap = histoire.filmanu.longueur-1;
 			int posmotif = histoire.filmanu[histoire.filmanu.longueur-1].longueur-1;			
 			base.curspos(0,0);
-			for(int countench=0; countench<histoire.filmanu[poschap][posmotif].enchainement.longueur; countench++) {
+			for(int countench=0; countench<histoire.filmanu[poschap][posmotif].ordrespecifique.longueur; countench++) {
 				out(countench); out(") : ");
-				for(int countmaille=0; countmaille<histoire.filmanu[poschap][posmotif].enchainement[countench].longueur; countmaille++) {
-					out(histoire.filmanu[poschap][posmotif].maille[histoire.filmanu[poschap][posmotif].enchainement[countench][countmaille]]);
+				for(int countmaille=0; countmaille<histoire.filmanu[poschap][posmotif].ordrespecifique[countench].longueur; countmaille++) {
+					out(histoire.filmanu[poschap][posmotif].maille[histoire.filmanu[poschap][posmotif].ordrespecifique[countench][countmaille]]);
 				}
 				out("\n\n");						
 			}
@@ -3286,10 +3494,10 @@ using namespace std;           //Pour faciliter l'utilisation de cout, cin, stri
 			int poschap = histoire.filauto.longueur-1;
 			int posmotif = histoire.filauto[histoire.filauto.longueur-1].longueur-1;			
 			base.curspos(0,0);
-			for(int countench=0; countench<histoire.filauto[poschap][posmotif].enchainement.longueur; countench++) {
+			for(int countench=0; countench<histoire.filauto[poschap][posmotif].ordrespecifique.longueur; countench++) {
 				out(countench); out(") : ");
-				for(int countmaille=0; countmaille<histoire.filauto[poschap][posmotif].enchainement[countench].longueur; countmaille++) {
-					out(histoire.filauto[poschap][posmotif].maille[histoire.filauto[poschap][posmotif].enchainement[countench][countmaille]]);
+				for(int countmaille=0; countmaille<histoire.filauto[poschap][posmotif].ordrespecifique[countench].longueur; countmaille++) {
+					out(histoire.filauto[poschap][posmotif].maille[histoire.filauto[poschap][posmotif].ordrespecifique[countench][countmaille]]);
 				}
 				out("\n\n");						
 			}
